@@ -7330,6 +7330,7 @@
     "viewportStretchNoView": "La vue de la carte n’est pas disponible.",
     "viewportStretchNoValues": "Aucune valeur raster dans la vue.",
     "viewportStretchNoRange": "Les valeurs de la vue ne définissent pas une plage.",
+    "viewportStretchMoved": "La carte a été déplacée avant la fin de la lecture. Appliquez de nouveau.",
     "index": "Indice",
     "classifyToggle": "Classer en classes discrètes",
     "method": "Méthode",

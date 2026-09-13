@@ -23,7 +23,7 @@ import {
   warmColormapColors,
   readRasterWindow,
 } from "@geolibre/plugins";
-import type { MapEngine } from "@geolibre/map";
+import type { MapEngine, MapExtent } from "@geolibre/map";
 import {
   Button,
   ColorField,
@@ -1221,6 +1221,15 @@ function ViewportStretchControls({
       try {
         const values = await readViewportValues(layerId, band, bounds, controller.signal);
         if (controller.signal.aborted) return;
+        // A read only describes the extent it started for, and panning changes
+        // neither layerId, band, nor method -- so nothing above cancels it.
+        // Drop it here instead of persisting a range for an extent the map no
+        // longer shows. With auto-update on, the camera-idle listener has
+        // already queued a fresh read for the new extent.
+        if (!sameExtent(mapControllerRef?.current?.getViewBounds?.(), bounds)) {
+          if (!silent) setMessage(t("rasterSymbology.viewportStretchMoved"));
+          return;
+        }
         if (values.length === 0) {
           if (!silent) setMessage(t("rasterSymbology.viewportStretchNoValues"));
           return;
@@ -1311,6 +1320,12 @@ function ViewportStretchControls({
       {message && <p className="text-[10px] text-muted-foreground">{message}</p>}
     </div>
   );
+}
+
+// getViewBounds derives from the camera, so an unmoved map yields the identical
+// numbers and an exact comparison is enough here.
+function sameExtent(current: MapExtent | null | undefined, started: MapExtent): boolean {
+  return current != null && current.every((value, index) => value === started[index]);
 }
 
 async function readViewportValues(

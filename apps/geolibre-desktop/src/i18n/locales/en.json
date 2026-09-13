@@ -7447,6 +7447,7 @@
     "viewportStretchNoView": "The map view is not available.",
     "viewportStretchNoValues": "No raster values found in the viewport.",
     "viewportStretchNoRange": "The viewport values do not define a range.",
+    "viewportStretchMoved": "The map moved before the read finished. Apply again.",
     "index": "Index",
     "classifyToggle": "Classify into discrete classes",
     "method": "Method",
