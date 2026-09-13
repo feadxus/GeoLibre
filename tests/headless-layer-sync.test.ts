@@ -75,6 +75,25 @@ describe("createLayerSync", () => {
       10,
       0.4,
     ]);
+    // `coalesce` arguments and a `let` result are the only other places
+    // MapLibre lets a zoom curve live; descend so it stays a direct input.
+    assert.deepEqual(
+      arcgisOpacity(["coalesce", ["step", ["zoom"], 0.2, 10, 0.8], ["get", "alpha"], 1], 0.5),
+      ["coalesce", ["step", ["zoom"], 0.1, 10, 0.4], ["*", ["get", "alpha"], 0.5], 0.5],
+    );
+    assert.deepEqual(
+      arcgisOpacity(
+        ["let", "base", 0.2, ["interpolate", ["linear"], ["zoom"], 0, 0.2, 18, 1]],
+        0.5,
+      ),
+      ["let", "base", 0.2, ["interpolate", ["linear"], ["zoom"], 0, 0.1, 18, 0.5]],
+    );
+    // A `case`/`match` cannot legally hold a zoom curve, so wrapping it is safe.
+    assert.deepEqual(arcgisOpacity(["case", ["get", "hidden"], 0, 1], 0.5), [
+      "*",
+      ["case", ["get", "hidden"], 0, 1],
+      0.5,
+    ]);
     assert.deepEqual(
       arcgisOpacity(
         {

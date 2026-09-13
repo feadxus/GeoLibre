@@ -1,7 +1,13 @@
 import type { GeoLibreLayer } from "@geolibre/core";
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
 
-/** Scale outputs without nesting a camera expression below an arithmetic node. */
+/**
+ * Scale outputs without nesting a camera expression below an arithmetic node.
+ *
+ * MapLibre accepts a zoom curve only at the top of an expression, as a
+ * `coalesce` argument, or as the result of a `let`, so those are the only
+ * heads that need descending; every other array is safe to multiply whole.
+ */
 export function arcgisOpacity(value: unknown, opacity: number): unknown {
   if (value == null) return opacity;
   if (typeof value === "number") return value * opacity;
@@ -10,6 +16,14 @@ export function arcgisOpacity(value: unknown, opacity: number): unknown {
       const start = value[0] === "step" ? 2 : 4;
       return value.map((part, index) =>
         index >= start && (index - start) % 2 === 0 ? arcgisOpacity(part, opacity) : part,
+      );
+    }
+    if (value[0] === "coalesce") {
+      return value.map((part, index) => (index === 0 ? part : arcgisOpacity(part, opacity)));
+    }
+    if (value[0] === "let" && value.length > 1) {
+      return value.map((part, index) =>
+        index === value.length - 1 ? arcgisOpacity(part, opacity) : part,
       );
     }
     return ["*", value, opacity];
