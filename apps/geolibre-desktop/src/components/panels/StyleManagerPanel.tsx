@@ -157,11 +157,13 @@ function EntryPreview({ entry }: { entry: StyleLibraryEntry }) {
 /** Each row owns its draft so filtering or closing the panel cancels editing. */
 function EntryName({
   entry,
+  kindLabel,
   scope,
   readOnly,
   onDelete,
 }: {
   entry: StyleLibraryEntry;
+  kindLabel: string;
   scope: "app" | "project";
   readOnly: boolean;
   onDelete: () => void;
@@ -190,12 +192,6 @@ function EntryName({
       }
     }
     setDraft(null);
-  };
-  const kindLabels: Record<StyleLibraryEntryKind, string> = {
-    style: t("styleManager.kindStyle"),
-    symbol: t("styleManager.kindSymbol"),
-    labels: t("styleManager.kindLabels"),
-    ramp: t("styleManager.kindRamp"),
   };
   return (
     <>
@@ -228,7 +224,7 @@ function EntryName({
           </p>
         )}
         <p className="truncate text-xs text-muted-foreground">
-          {kindLabels[entry.kind]}
+          {kindLabel}
           {entry.tags.length > 0 ? ` · ${entry.tags.join(", ")}` : ""}
         </p>
       </div>
@@ -829,6 +825,7 @@ export function StyleManagerPanel() {
                           <EntryPreview entry={entry} />
                           <EntryName
                             entry={entry}
+                            kindLabel={kindLabels[entry.kind]}
                             scope={section.key === "project" ? "project" : "app"}
                             readOnly={section.readOnly}
                             onDelete={() => {
