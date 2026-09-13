@@ -24,6 +24,8 @@ describe("local import filenames", () => {
 
   it("preserves literal percent escapes in desktop filenames", () => {
     assert.equal(localFileName("/tmp/map%20style.qml"), "map%20style.qml");
+    assert.equal(localFileName("Report%3AQ1.geojson"), "Report%3AQ1.geojson");
+    assert.equal(localFileName("/tmp/Report%3AQ1%2F2024.geojson"), "Report%3AQ1%2F2024.geojson");
     assert.equal(localFileName("C:\\Users\\me\\map.geojson"), "map.geojson");
     assert.equal(localFileName(""), "");
   });

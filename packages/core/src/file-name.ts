@@ -5,7 +5,9 @@ export function localFileName(path: string): string {
   const segment = value.split(/[/\\]/).pop() ?? value;
   // A browser File can also carry a SAF document ID after a native import.
   // Do not decode ordinary filenames: percent escapes can be literal text.
-  if (!isContentUri && !/^[^%/\\:]+%3a/i.test(segment)) return segment;
+  if (!isContentUri && (!/^[^%/\\:]+%3a.*%2f/i.test(segment) || /[/\\]/.test(path))) {
+    return segment;
+  }
   let decoded = segment;
   try {
     decoded = decodeURIComponent(segment);
