@@ -31,6 +31,7 @@ import {
   createLayerLibraryEntryId,
   copyableLayerStyleKind,
   hasActiveLayerFilter,
+  hasActiveQuickFilter,
   isCesiumOnlyLayer,
   pluginOwnsPaint,
   supportsBridgedOpacity,
@@ -347,18 +348,6 @@ type LayerRefreshTimer = {
   intervalMs: number;
   timer: number;
 };
-
-/**
- * Pick the label for the row's clear-filters action. Quick Filter controls
- * survive with their values emptied, but a persistent expression has no
- * separate value to reset and is deleted outright, so say so before a user
- * discards an authored expression expecting a reset.
- */
-function layerClearFiltersKey(layer: GeoLibreLayer): ParseKeys {
-  return activeLayerFilterExpression(layer) !== null
-    ? "quickFilters.clearAllWithExpression"
-    : "quickFilters.clearAll";
-}
 
 function layerTypeLabel(layer: GeoLibreLayer, t: TFunction): string {
   if (layer.metadata?.sourceKind === "maplibre-basemap-control") {
@@ -3350,6 +3339,12 @@ export function LayerPanel({
             // and attributes, so a read-only reference layer can still be
             // renamed or taken off the map.
             const layerEditable = canEditLayer(layer.id);
+            // Emptying Quick Filter answers narrows a view; discarding the
+            // authored expression changes the project. A read-only
+            // collaborator may do the first but not the second, so the row's
+            // clear action offers whichever half they are allowed.
+            const clearsExpression = layerEditable && activeLayerFilterExpression(layer) !== null;
+            const clearableQuickFilters = hasActiveQuickFilter(layer);
             const refreshConfig = getLayerRefreshConfig(layer);
             // Live SQL query layers (issue #1295) refresh by re-running their
             // stored DuckDB statement and offer a shortcut to edit it.
@@ -3787,22 +3782,26 @@ export function LayerPanel({
                               from scratch. */}
                           {hasActiveLayerFilter(layer) && (
                             <DropdownMenuItem
-                              disabled={!layerEditable}
+                              disabled={!clearsExpression && !clearableQuickFilters}
                               onSelect={() => {
-                                if (!layerEditable) return;
+                                if (!clearsExpression && !clearableQuickFilters) return;
                                 const quickFilters = clearQuickFilterValues(layer.quickFilters);
                                 updateLayer(layer.id, {
-                                  filterExpression: undefined,
+                                  ...(clearsExpression ? { filterExpression: undefined } : {}),
                                   quickFilters: quickFilters.length > 0 ? quickFilters : undefined,
                                 });
                               }}
                             >
-                              {activeLayerFilterExpression(layer) !== null ? (
+                              {clearsExpression ? (
                                 <FilterX className="me-2 h-3.5 w-3.5" />
                               ) : (
                                 <Filter className="me-2 h-3.5 w-3.5" />
                               )}
-                              {t(layerClearFiltersKey(layer))}
+                              {t(
+                                clearsExpression
+                                  ? "quickFilters.clearAllWithExpression"
+                                  : "quickFilters.clearAll",
+                              )}
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem

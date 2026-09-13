@@ -392,6 +392,16 @@ compiled output, so a saved filter can always be reopened and changed:
 }
 ```
 
+`kind` picks the control and the comparison: `categorical` (checkboxes over
+`values`), `range` (inclusive numeric `min`/`max`, either side `null` for an
+open bound), `date` (inclusive `YYYY-MM-DD` `start`/`end`), and `text`
+(case-insensitive `contains` / `startsWith` / `equals` against `text`).
+`dateKind` says how the field stores its timestamps — `iso` (the default,
+comparing the leading `YYYY-MM-DD` of ISO text), `epochMs`, or `epochS` — and
+`enabled: false` mutes a control without discarding what it was answered with.
+A control with nothing chosen places no constraint, so an emptied selection
+shows every feature rather than none.
+
 A vector layer may also carry a persistent boolean MapLibre expression filter.
 This is authored from **Select by Expression → Filter layer** and hides
 non-matching features without changing or copying the source data:
@@ -411,16 +421,6 @@ variables (`@project_name`, `@layer_name`, `@feature_count`, `@map_zoom`,
 `@map_scale`) are resolved to literal values at the moment the filter is
 applied and do not track the map afterwards. Use the MapLibre `["zoom"]`
 operator instead when the filter should follow the current zoom.
-
-`kind` picks the control and the comparison: `categorical` (checkboxes over
-`values`), `range` (inclusive numeric `min`/`max`, either side `null` for an
-open bound), `date` (inclusive `YYYY-MM-DD` `start`/`end`), and `text`
-(case-insensitive `contains` / `startsWith` / `equals` against `text`).
-`dateKind` says how the field stores its timestamps — `iso` (the default,
-comparing the leading `YYYY-MM-DD` of ISO text), `epochMs`, or `epochS` — and
-`enabled: false` mutes a control without discarding what it was answered with.
-A control with nothing chosen places no constraint, so an emptied selection
-shows every feature rather than none.
 
 A point layer using the cluster renderer is worth noting, because MapLibre
 clusters at the source, before the renderer evaluates any filter. GeoLibre
