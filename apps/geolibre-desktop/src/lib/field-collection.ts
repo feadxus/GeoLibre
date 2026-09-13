@@ -79,8 +79,7 @@ export function buildPhotoProperties(photos: CollectionPhoto[]): Record<string, 
 }
 
 /**
- * Cap embedded photos so a capture session can't bloat the project JSON without
- * bound. Photos are stored inline as data URLs, so this is a hard per-photo cap.
+ * Cap each embedded data URL, not the combined size of an observation or session.
  */
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 

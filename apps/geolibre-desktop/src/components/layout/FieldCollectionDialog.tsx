@@ -187,6 +187,8 @@ export function FieldCollectionDialog({
   const [pending, setPending] = useState<Vertex[] | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
   const [photos, setPhotos] = useState<CollectionPhoto[]>([]);
+  // Count batches: separate file selections can read concurrently.
+  const [photoReads, setPhotoReads] = useState(0);
   const [picking, setPicking] = useState(false); // point: one-shot map click
   const [drawing, setDrawing] = useState(false); // line/polygon: multi-vertex
   const [vertices, setVertices] = useState<Vertex[]>([]);
@@ -219,7 +221,7 @@ export function FieldCollectionDialog({
   // rather than overwriting a newer capture.
   const gpsSeqRef = useRef(0);
   // Context generation: bumped only when the capture's *context* turns over —
-  // a different target layer, a different project, the dialog being dismissed.
+  // a different target layer/project, a saved capture, or an ended session.
   // Async work that belongs to the capture rather than to one placement (the
   // photo read) pins itself to this, so repositioning a point mid-read keeps
   // the photo instead of silently discarding it.
@@ -288,6 +290,7 @@ export function FieldCollectionDialog({
   const invalidateCapture = useCallback(() => {
     gpsSeqRef.current += 1;
     contextSeqRef.current += 1;
+    setPhotoReads(0);
   }, []);
 
   // Everything one capture owns: the placed geometry, the form, the photo, the
@@ -771,6 +774,7 @@ export function FieldCollectionDialog({
       // sequence: repositioning the point or adding a vertex stays inside the
       // same capture and must not throw the photo away.
       const seq = contextSeqRef.current;
+      setPhotoReads((count) => count + 1);
       Promise.all(
         files.map(
           (file) =>
@@ -796,6 +800,9 @@ export function FieldCollectionDialog({
           if (contextSeqRef.current !== seq) return;
           if (error instanceof RangeError) tooLarge();
           else setNotice(t("fieldCollection.photoReadError"));
+        })
+        .finally(() => {
+          if (contextSeqRef.current === seq) setPhotoReads((count) => count - 1);
         });
     },
     [t],
@@ -823,7 +830,7 @@ export function FieldCollectionDialog({
   }, [drafts, layerName, geometry, addGeoJsonLayer, updateLayer, t]);
 
   const handleSave = useCallback(() => {
-    if (!activeLayer || !schema || !pending) return;
+    if (!activeLayer || !schema || !pending || photoReads > 0) return;
     // Fields hidden by a visibility expression never block a save, so the
     // schema's own required/type checks run against the visible subset only.
     const candidate = buildPropertiesWithForm(schema, values, attributeForm);
@@ -869,6 +876,7 @@ export function FieldCollectionDialog({
         })
       : feature;
     updateLayer(activeLayer.id, { geojson: appendFeature(fc, tracked) });
+    invalidateCapture();
 
     savedCountRef.current += 1;
     setNotice(
@@ -878,6 +886,7 @@ export function FieldCollectionDialog({
       }),
     );
     setPending(null);
+    setLocating(false);
     setLastGpsFix(null);
     setValues({});
     setPhotos([]);
@@ -892,6 +901,8 @@ export function FieldCollectionDialog({
     pending,
     values,
     photos,
+    photoReads,
+    invalidateCapture,
     activeGeometry,
     updateLayer,
     t,
@@ -1037,9 +1048,10 @@ export function FieldCollectionDialog({
                   errors={errors}
                   errorText={errorText}
                   photos={photos}
+                  readingPhotos={photoReads > 0}
                   onPhotos={handlePhotos}
                   onRemovePhoto={(index) =>
-                    setPhotos((current) => current.filter((_, item) => item !== index))
+                    setPhotos((current) => current.filter((_, i) => i !== index))
                   }
                   locating={locating}
                   gpsFix={lastGpsFix}
@@ -1311,6 +1323,7 @@ interface CaptureStepProps {
   errors: Record<string, string>;
   errorText: (code: string | undefined) => string | null;
   photos: CollectionPhoto[];
+  readingPhotos: boolean;
   onPhotos: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemovePhoto: (index: number) => void;
   locating: boolean;
@@ -1331,6 +1344,7 @@ function CaptureStep({
   errors,
   errorText,
   photos,
+  readingPhotos,
   onPhotos,
   onRemovePhoto,
   locating,
@@ -1489,7 +1503,7 @@ function CaptureStep({
           {/* Save sits above the optional photo so the primary action is
               reachable without scrolling past the upload, and the photo reads
               as the optional extra it is (#711). */}
-          <Button className="w-full" onClick={onSave}>
+          <Button className="w-full" onClick={onSave} disabled={readingPhotos}>
             <Save className="me-2 h-4 w-4" />
             {t(`fieldCollection.save.${geometry}`)}
           </Button>
@@ -1510,7 +1524,7 @@ function CaptureStep({
                       variant="secondary"
                       size="icon"
                       className="absolute end-0 top-0 h-6 w-6"
-                      aria-label={t("fieldCollection.removePhoto")}
+                      aria-label={`${t("fieldCollection.removePhoto")} (${index + 1}${photo.name ? `: ${photo.name}` : ""})`}
                       onClick={() => onRemovePhoto(index)}
                     >
                       <X className="h-3.5 w-3.5" />
