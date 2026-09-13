@@ -90,7 +90,9 @@ the section deletes the controls outright.
 Filters are saved with the project, so a shared map opens with the same view of
 the data. Quick Filter controls also appear in the read-only viewer chrome
 (`?layout=viewer`), so the person you shared it with can adjust those controls
-even though the authoring panels are hidden.
+even though the authoring panels are hidden. A persistent expression filter has
+no control to offer there, but the layer still carries the funnel icon, so a
+viewer can see that features are being held back rather than missing.
 
 Tile-backed layers (vector tiles, PMTiles, MBTiles) carry no local features, so
 their value lists are read from the tiles currently loaded and grow as you pan

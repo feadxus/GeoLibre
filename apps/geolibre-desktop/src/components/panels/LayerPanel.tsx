@@ -28,7 +28,6 @@ import {
   captureLayerLibraryEntry,
   activeLayerFilterExpression,
   clearQuickFilterValues,
-  compileQuickFilters,
   createLayerLibraryEntryId,
   copyableLayerStyleKind,
   hasActiveLayerFilter,
@@ -43,6 +42,7 @@ import {
   resolveLayerCapabilities,
 } from "@geolibre/core";
 import type { EllipsoidId, GeoLibreLayer, LayerGroup } from "@geolibre/core";
+import { layerFilteredHintKey } from "../../lib/layer-filter-hint";
 import type { FeatureCollection } from "geojson";
 import {
   buildTimeBindingFromRecords,
@@ -358,19 +358,6 @@ function layerClearFiltersKey(layer: GeoLibreLayer): ParseKeys {
   return activeLayerFilterExpression(layer) !== null
     ? "quickFilters.clearAllWithExpression"
     : "quickFilters.clearAll";
-}
-
-/**
- * Pick the tooltip text for a filtered layer's funnel icon. A persistent
- * expression and Quick Filters can narrow the same layer at once, so name both
- * rather than letting the expression wording hide the controls doing half the
- * work.
- */
-function layerFilteredHintKey(layer: GeoLibreLayer): ParseKeys {
-  const hasExpression = activeLayerFilterExpression(layer) !== null;
-  const hasQuickFilters = compileQuickFilters(layer.quickFilters) !== null;
-  if (hasExpression && hasQuickFilters) return "selection.layerFilteredBothHint";
-  return hasExpression ? "selection.layerFilteredHint" : "quickFilters.layerFilteredHint";
 }
 
 function layerTypeLabel(layer: GeoLibreLayer, t: TFunction): string {
