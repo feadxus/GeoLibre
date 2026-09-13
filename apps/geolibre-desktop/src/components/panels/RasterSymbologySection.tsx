@@ -59,6 +59,7 @@ type RasterStateRecord = {
   nodata: number | "auto" | "off";
   stretch: "linear" | "log" | "sqrt";
   gamma: number;
+  viewportStretchAuto?: boolean;
 };
 
 const CLASSIFICATION_METHODS: {
@@ -121,6 +122,7 @@ function readRasterState(layer: GeoLibreLayer): RasterStateRecord {
         : "auto",
     stretch: raw.stretch === "log" || raw.stretch === "sqrt" ? raw.stretch : "linear",
     gamma: typeof raw.gamma === "number" && raw.gamma > 0 ? raw.gamma : 1,
+    viewportStretchAuto: raw.viewportStretchAuto === true,
   };
 }
 
@@ -805,6 +807,8 @@ export function RasterSymbologySection({
           layerId={layer.id}
           band={band}
           mapControllerRef={mapControllerRef}
+          autoUpdateInitial={state.viewportStretchAuto === true}
+          onAutoUpdate={(enabled) => commit({ statePatch: { viewportStretchAuto: enabled } })}
           onChange={(rescale) => commit({ statePatch: { rescale } })}
         />
       )}
@@ -1171,19 +1175,27 @@ function ViewportStretchControls({
   layerId,
   band,
   mapControllerRef,
+  autoUpdateInitial,
+  onAutoUpdate,
   onChange,
 }: {
   layerId: string;
   band: number;
   mapControllerRef?: RefObject<MapEngine | null>;
+  autoUpdateInitial: boolean;
+  onAutoUpdate: (enabled: boolean) => void;
   onChange: (rescale: [number, number][] | null) => void;
 }) {
   const { t } = useTranslation();
   const [method, setMethod] = useState<ViewportStretchMethod>("minmax");
-  const [autoUpdate, setAutoUpdate] = useState(false);
+  const [autoUpdate, setAutoUpdate] = useState(autoUpdateInitial);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    setAutoUpdate(autoUpdateInitial);
+  }, [autoUpdateInitial]);
 
   const apply = useCallback(
     async (silent = false): Promise<void> => {
@@ -1216,10 +1228,20 @@ function ViewportStretchControls({
           setMessage(error instanceof Error ? error.message : String(error));
         }
       } finally {
-        if (!controller.signal.aborted) setBusy(false);
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+          setBusy(false);
+        }
       }
     },
     [band, layerId, mapControllerRef, method, onChange, t],
+  );
+
+  useEffect(
+    () => () => {
+      abortRef.current?.abort();
+    },
+    [layerId, band, method],
   );
 
   useEffect(() => {
@@ -1262,7 +1284,10 @@ function ViewportStretchControls({
           type="checkbox"
           className="h-4 w-4"
           checked={autoUpdate}
-          onChange={(event) => setAutoUpdate(event.target.checked)}
+          onChange={(event) => {
+            setAutoUpdate(event.target.checked);
+            onAutoUpdate(event.target.checked);
+          }}
         />
         {t("rasterSymbology.viewportAuto")}
       </label>
