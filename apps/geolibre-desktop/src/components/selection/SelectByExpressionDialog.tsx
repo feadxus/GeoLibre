@@ -198,13 +198,8 @@ export function SelectByExpressionDialog({
       setRunError(checked.errors[0] ?? t("selection.invalidExpression"));
       return;
     }
-    // The project stores a plain MapLibre expression, which has no binding for
-    // the builder's `@` variables, so they are resolved to literals here and
-    // stop tracking the map. `["zoom"]` is the live alternative (docs/user-guide/styling.md).
-    const expression = substituteExpressionVariables(checked.parsed, liveVariables) as unknown[];
-    setLayerFilterExpression(targetLayer.id, expression);
-    seededFilterLayerId.current = targetLayer.id;
-
+    // Count the matches before persisting anything, so a failure here cannot
+    // leave the filter saved on the layer while the panel reports an error.
     const result = matchFeaturesByExpression(features, source, {
       zoom: liveZoom,
       variables: liveVariables,
@@ -213,6 +208,12 @@ export function SelectByExpressionDialog({
       setRunError(result.errors[0] ?? t("selection.invalidExpression"));
       return;
     }
+    // The project stores a plain MapLibre expression, which has no binding for
+    // the builder's `@` variables, so they are resolved to literals here and
+    // stop tracking the map. `["zoom"]` is the live alternative (docs/user-guide/styling.md).
+    const expression = substituteExpressionVariables(checked.parsed, liveVariables) as unknown[];
+    setLayerFilterExpression(targetLayer.id, expression);
+    seededFilterLayerId.current = targetLayer.id;
     setSummary({
       kind: "filter",
       matched: result.ids.length,

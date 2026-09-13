@@ -349,12 +349,6 @@ type LayerRefreshTimer = {
 };
 
 /**
- * Pick the tooltip text for a filtered layer's funnel icon. A persistent
- * expression and Quick Filters can narrow the same layer at once, so name both
- * rather than letting the expression wording hide the controls doing half the
- * work.
- */
-/**
  * Pick the label for the row's clear-filters action. Quick Filter controls
  * survive with their values emptied, but a persistent expression has no
  * separate value to reset and is deleted outright, so say so before a user
@@ -366,6 +360,12 @@ function layerClearFiltersKey(layer: GeoLibreLayer): ParseKeys {
     : "quickFilters.clearAll";
 }
 
+/**
+ * Pick the tooltip text for a filtered layer's funnel icon. A persistent
+ * expression and Quick Filters can narrow the same layer at once, so name both
+ * rather than letting the expression wording hide the controls doing half the
+ * work.
+ */
 function layerFilteredHintKey(layer: GeoLibreLayer): ParseKeys {
   const hasExpression = activeLayerFilterExpression(layer) !== null;
   const hasQuickFilters = compileQuickFilters(layer.quickFilters) !== null;
