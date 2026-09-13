@@ -21,7 +21,7 @@ import {
   type PaletteLegendEntry,
   savedRasterSymbology,
   warmColormapColors,
-  readRasterPixel,
+  readRasterWindow,
 } from "@geolibre/plugins";
 import type { MapEngine } from "@geolibre/map";
 import {
@@ -1268,21 +1268,14 @@ async function readViewportValues(
   bounds: [number, number, number, number],
   signal?: AbortSignal,
 ): Promise<number[]> {
-  const sampleCount = 4;
-  const points: [number, number][] = [];
-  for (let y = 0; y < sampleCount; y += 1) {
-    for (let x = 0; x < sampleCount; x += 1) {
-      points.push([
-        bounds[0] + ((x + 0.5) / sampleCount) * (bounds[2] - bounds[0]),
-        bounds[1] + ((y + 0.5) / sampleCount) * (bounds[3] - bounds[1]),
-      ]);
-    }
-  }
-  const readings = await Promise.all(points.map((point) => readRasterPixel(layerId, point, { signal })));
-  return readings.flatMap((reading) => {
-    const sample = reading?.bands.find((item) => item.index === band) ?? reading?.bands[0];
-    return sample && !sample.isNodata && Number.isFinite(sample.value) ? [sample.value] : [];
+  const reading = await readRasterWindow(layerId, {
+    bounds,
+    band,
+    width: 32,
+    height: 32,
+    signal,
   });
+  return reading?.values.filter(Number.isFinite) ?? [];
 }
 
 function viewportRange(values: number[], method: ViewportStretchMethod): [number, number] {
