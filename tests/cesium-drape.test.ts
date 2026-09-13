@@ -75,6 +75,31 @@ function vectorTiles(patch: Partial<GeoLibreLayer> = {}): GeoLibreLayer {
 }
 
 describe("isDrapedLayer", () => {
+  it("only promises ArcGIS rendering when the resolved vector style is present", () => {
+    const layer = vectorTiles({
+      type: "arcgis",
+      metadata: { nativeLayerIds: ["parcels-fill"] },
+      source: {
+        arcgisSources: {
+          parcels: { type: "vector", tiles: ["https://example.com/{z}/{x}/{y}.pbf"] },
+        },
+        arcgisLayers: [{ id: "parcels-fill", type: "fill", source: "parcels" }],
+      },
+    });
+    assert.equal(isDrapedLayer(layer), true);
+    assert.equal(isCesiumSupportedLayerType(layer), true);
+    assert.equal(
+      isDrapedLayer({ ...layer, source: { url: "https://example.com/VectorTileServer" } }),
+      false,
+    );
+    assert.equal(
+      isDrapedLayer({
+        ...layer,
+        source: { ...layer.source, arcgisLayers: [{ id: "bad", type: "fill", source: "missing" }] },
+      }),
+      false,
+    );
+  });
   it("drapes tile-backed vector kinds and leaves raster archives and controls alone", () => {
     assert.equal(isDrapedLayer(vectorTiles()), true);
     assert.equal(isDrapedLayer(vectorTiles({ source: { type: "vector" } })), false, "no source");

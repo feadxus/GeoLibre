@@ -319,9 +319,6 @@ export async function addArcGISLayer(
   }
 
   const map = app.getMap?.();
-  if (!map) {
-    throw new Error("The map is not ready.");
-  }
 
   const arcgis = await import("@esri/maplibre-arcgis");
   const hostedLayer = await createArcGISHostedLayer(arcgis, options, input);
@@ -330,7 +327,7 @@ export async function addArcGISLayer(
   const nativeLayerIds = prefixArcGISStyleLayerIds(hostedLayer, id);
   const bounds = await resolveArcGISLayerBounds(input, options, hostedLayer);
 
-  addArcGISRuntimeLayerToMap(hostedLayer, map);
+  if (map) addArcGISRuntimeLayerToMap(hostedLayer, map, nativeLayerIds);
   ensureArcGISStoreCleanup();
   arcgisLayerInstances.set(id, hostedLayer);
 
@@ -342,6 +339,13 @@ export async function addArcGISLayer(
     bounds,
     sourceIds,
   });
+  // Keep the resolved sources and style layers with the data so a second
+  // renderer (including the Cesium drape) can rebuild them without a control.
+  layer.source.arcgisSources = structuredClone(hostedLayer.sources);
+  layer.source.arcgisLayers = hostedLayer.layers.map((spec, index) => ({
+    ...structuredClone(spec),
+    id: nativeLayerIds[index],
+  }));
   const store = useAppStore.getState();
   store.addLayer(layer, options.beforeLayerId);
   if (bounds && options.zoomTo !== false) app.fitBounds?.(bounds);
@@ -462,22 +466,25 @@ function prefixArcGISSourceIds(hostedLayer: ArcGISRuntimeLayer, layerId: string)
 }
 
 function prefixArcGISStyleLayerIds(hostedLayer: ArcGISRuntimeLayer, layerId: string): string[] {
-  const mutableLayers = hostedLayer.layers as maplibregl.LayerSpecification[];
-  return mutableLayers.map((styleLayer, index) => {
-    const nextLayerId = `${layerId}-layer-${index}-${sanitizeIdPart(styleLayer.id)}`;
-    styleLayer.id = nextLayerId;
-    return nextLayerId;
-  });
+  // The SDK getter returns copies, so return the IDs for the caller to apply.
+  return hostedLayer.layers.map(
+    (styleLayer, index) => `${layerId}-layer-${index}-${sanitizeIdPart(styleLayer.id)}`,
+  );
 }
 
-function addArcGISRuntimeLayerToMap(hostedLayer: ArcGISRuntimeLayer, map: maplibregl.Map): void {
+function addArcGISRuntimeLayerToMap(
+  hostedLayer: ArcGISRuntimeLayer,
+  map: maplibregl.Map,
+  nativeLayerIds: string[],
+): void {
   for (const [sourceId, source] of Object.entries(hostedLayer.sources)) {
     if (!map.getSource(sourceId)) {
       map.addSource(sourceId, source);
     }
   }
 
-  for (const layer of hostedLayer.layers) {
+  for (const [index, spec] of hostedLayer.layers.entries()) {
+    const layer = { ...spec, id: nativeLayerIds[index] };
     if (!map.getLayer(layer.id)) {
       map.addLayer(layer);
     }
