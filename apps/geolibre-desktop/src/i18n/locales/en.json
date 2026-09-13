@@ -7136,6 +7136,7 @@
     "allFieldsUsed": "Every field already has a filter",
     "removeAll": "Remove all",
     "clearAll": "Clear filters",
+    "clearAllWithExpression": "Clear filters and saved expression",
     "clearOne": "Clear this filter",
     "clearOneNamed": "Clear the filter on {{field}}",
     "remove": "Remove filter",

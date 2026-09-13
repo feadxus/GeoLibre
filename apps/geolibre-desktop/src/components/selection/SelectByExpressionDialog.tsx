@@ -62,6 +62,12 @@ export function SelectByExpressionDialog({
   const [source, setSource] = useState("");
   const [builderOpen, setBuilderOpen] = useState(false);
   const [summary, setSummary] = useState<ExpressionSummary | null>(null);
+  // "Filter layer" and "Select features" are enabled from `validation`, which
+  // is memoized against the variable snapshot taken when the panel opened. The
+  // panel is non-modal, so both re-check against the live camera before they
+  // run and can disagree with that snapshot. Without somewhere to say so, the
+  // click would look enabled and do nothing.
+  const [runError, setRunError] = useState<string | null>(null);
   // The layer whose saved filter currently fills the textarea, or null when the
   // text is the user's own. The two are retargeted differently — authored text
   // is never overwritten, a seed never follows to an unfiltered layer — so
@@ -86,6 +92,7 @@ export function SelectByExpressionDialog({
   useEffect(() => {
     if (!open) return;
     setSummary(null);
+    setRunError(null);
     const eligible = selectableVectorLayers(useAppStore.getState().layers);
     const candidates = [preselectedLayerId, targetLayerId, useAppStore.getState().selectedLayerId];
     const target =
@@ -144,6 +151,7 @@ export function SelectByExpressionDialog({
 
   const runSelection = () => {
     if (!targetLayer) return;
+    setRunError(null);
     // The panel is non-modal, so the camera may have moved since open:
     // evaluate ["zoom"] and the @map_* variables against the live view.
     const { zoom: liveZoom, center } = useAppStore.getState().mapView;
@@ -157,7 +165,10 @@ export function SelectByExpressionDialog({
         centerLat: center[1],
       }),
     });
-    if (!result.ok) return;
+    if (!result.ok) {
+      setRunError(result.errors[0] ?? t("selection.invalidExpression"));
+      return;
+    }
     const selected = applyMatchedSelection(targetLayer.id, result.ids, effectiveMode);
     setSummary({
       kind: "selection",
@@ -170,6 +181,7 @@ export function SelectByExpressionDialog({
 
   const applyLayerFilter = () => {
     if (!targetLayer || !canEditLayer(targetLayer.id)) return;
+    setRunError(null);
     const { zoom: liveZoom, center } = useAppStore.getState().mapView;
     const liveVariables = standardExpressionVariables({
       projectName,
@@ -182,7 +194,10 @@ export function SelectByExpressionDialog({
       variables: liveVariables,
       expectedType: "boolean",
     });
-    if (!checked.ok || !checked.parsed) return;
+    if (!checked.ok || !checked.parsed) {
+      setRunError(checked.errors[0] ?? t("selection.invalidExpression"));
+      return;
+    }
     // The project stores a plain MapLibre expression, which has no binding for
     // the builder's `@` variables, so they are resolved to literals here and
     // stop tracking the map. `["zoom"]` is the live alternative (docs/user-guide/styling.md).
@@ -194,7 +209,10 @@ export function SelectByExpressionDialog({
       zoom: liveZoom,
       variables: liveVariables,
     });
-    if (!result.ok) return;
+    if (!result.ok) {
+      setRunError(result.errors[0] ?? t("selection.invalidExpression"));
+      return;
+    }
     setSummary({
       kind: "filter",
       matched: result.ids.length,
@@ -209,6 +227,7 @@ export function SelectByExpressionDialog({
     setLayerFilterExpression(targetLayer.id, null);
     seededFilterLayerId.current = null;
     setSummary(null);
+    setRunError(null);
   };
 
   return (
@@ -237,6 +256,7 @@ export function SelectByExpressionDialog({
                     setTargetLayerId(nextId);
                     retargetExpression(eligibleLayers.find((layer) => layer.id === nextId));
                     setSummary(null);
+                    setRunError(null);
                   }}
                 >
                   {eligibleLayers.map((layer) => (
@@ -282,6 +302,11 @@ export function SelectByExpressionDialog({
                 onChange={setMode}
                 disableCombineModes={!targetHoldsSelection}
               />
+              {runError && (
+                <p className="text-sm text-destructive" role="alert">
+                  {runError}
+                </p>
+              )}
               {summary && (
                 <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
                   {summary.kind === "filter"

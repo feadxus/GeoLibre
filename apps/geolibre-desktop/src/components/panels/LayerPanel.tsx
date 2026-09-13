@@ -154,6 +154,7 @@ import {
   EyeOff,
   FilePlus2,
   Filter,
+  FilterX,
   Folder,
   FolderMinus,
   FolderOpen,
@@ -353,6 +354,18 @@ type LayerRefreshTimer = {
  * rather than letting the expression wording hide the controls doing half the
  * work.
  */
+/**
+ * Pick the label for the row's clear-filters action. Quick Filter controls
+ * survive with their values emptied, but a persistent expression has no
+ * separate value to reset and is deleted outright, so say so before a user
+ * discards an authored expression expecting a reset.
+ */
+function layerClearFiltersKey(layer: GeoLibreLayer): ParseKeys {
+  return activeLayerFilterExpression(layer) !== null
+    ? "quickFilters.clearAllWithExpression"
+    : "quickFilters.clearAll";
+}
+
 function layerFilteredHintKey(layer: GeoLibreLayer): ParseKeys {
   const hasExpression = activeLayerFilterExpression(layer) !== null;
   const hasQuickFilters = compileQuickFilters(layer.quickFilters) !== null;
@@ -3797,8 +3810,12 @@ export function LayerPanel({
                                 });
                               }}
                             >
-                              <Filter className="me-2 h-3.5 w-3.5" />
-                              {t("quickFilters.clearAll")}
+                              {activeLayerFilterExpression(layer) !== null ? (
+                                <FilterX className="me-2 h-3.5 w-3.5" />
+                              ) : (
+                                <Filter className="me-2 h-3.5 w-3.5" />
+                              )}
+                              {t(layerClearFiltersKey(layer))}
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem
