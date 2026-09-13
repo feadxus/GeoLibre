@@ -21,7 +21,9 @@ import {
   type PaletteLegendEntry,
   savedRasterSymbology,
   warmColormapColors,
+  readRasterPixel,
 } from "@geolibre/plugins";
+import type { MapEngine } from "@geolibre/map";
 import {
   Button,
   ColorField,
@@ -40,7 +42,7 @@ import {
   indexById,
   NORMALIZED_DIFFERENCE_INDICES,
 } from "maplibre-gl-raster";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { useColormapRamps } from "../../hooks/useColormapRamps";
 import { formatLegendNumber, setLegendCustomEntry } from "../../lib/auto-legend";
@@ -153,7 +155,13 @@ function rangeFromBreaks(breaks: number[]): [number, number][] {
  *
  * @param props.layer - The selected raster store layer.
  */
-export function RasterSymbologySection({ layer }: { layer: GeoLibreLayer }) {
+export function RasterSymbologySection({
+  layer,
+  mapControllerRef,
+}: {
+  layer: GeoLibreLayer;
+  mapControllerRef?: RefObject<MapEngine | null>;
+}) {
   const { t } = useTranslation();
   const updateLayer = useAppStore((s) => s.updateLayer);
   const state = readRasterState(layer);
@@ -793,6 +801,15 @@ export function RasterSymbologySection({ layer }: { layer: GeoLibreLayer }) {
       )}
 
       {!classified && (
+        <ViewportStretchControls
+          layerId={layer.id}
+          band={band}
+          mapControllerRef={mapControllerRef}
+          onChange={(rescale) => commit({ statePatch: { rescale } })}
+        />
+      )}
+
+      {!classified && (
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="rasterStretch">{t("rasterSymbology.stretch")}</Label>
@@ -1146,6 +1163,115 @@ function ClassOpacityInput({
       </span>
     </div>
   );
+}
+
+type ViewportStretchMethod = "minmax" | "percentile" | "stddev";
+
+function ViewportStretchControls({
+  layerId,
+  band,
+  mapControllerRef,
+  onChange,
+}: {
+  layerId: string;
+  band: number;
+  mapControllerRef?: RefObject<MapEngine | null>;
+  onChange: (rescale: [number, number][] | null) => void;
+}) {
+  const { t } = useTranslation();
+  const [method, setMethod] = useState<ViewportStretchMethod>("minmax");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const apply = async (): Promise<void> => {
+    const bounds = mapControllerRef?.current?.getViewBounds?.();
+    if (!bounds) {
+      setMessage(t("rasterSymbology.viewportStretchNoView"));
+      return;
+    }
+    setBusy(true);
+    setMessage("");
+    try {
+      const values = await readViewportValues(layerId, band, bounds);
+      if (values.length === 0) {
+        setMessage(t("rasterSymbology.viewportStretchNoValues"));
+        return;
+      }
+      const range = viewportRange(values, method);
+      if (range[0] >= range[1]) {
+        setMessage(t("rasterSymbology.viewportStretchNoRange"));
+        return;
+      }
+      onChange([range]);
+      setMessage(t("rasterSymbology.viewportStretchApplied"));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 space-y-2 border-t pt-3">
+      <Label htmlFor="rasterViewportStretch">{t("rasterSymbology.viewportStretch")}</Label>
+      <div className="grid grid-cols-[1fr_auto] gap-2">
+        <Select
+          id="rasterViewportStretch"
+          value={method}
+          onChange={(event) => setMethod(event.target.value as ViewportStretchMethod)}
+        >
+          <option value="minmax">{t("rasterSymbology.viewportMinMax")}</option>
+          <option value="percentile">{t("rasterSymbology.viewportPercentile")}</option>
+          <option value="stddev">{t("rasterSymbology.viewportStddev")}</option>
+        </Select>
+        <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => void apply()}>
+          {busy ? t("rasterSymbology.viewportStretching") : t("rasterSymbology.viewportApply")}
+        </Button>
+      </div>
+      {message && <p className="text-[10px] text-muted-foreground">{message}</p>}
+    </div>
+  );
+}
+
+async function readViewportValues(
+  layerId: string,
+  band: number,
+  bounds: [number, number, number, number],
+): Promise<number[]> {
+  const sampleCount = 12;
+  const points: [number, number][] = [];
+  for (let y = 0; y < sampleCount; y += 1) {
+    for (let x = 0; x < sampleCount; x += 1) {
+      points.push([
+        bounds[0] + ((x + 0.5) / sampleCount) * (bounds[2] - bounds[0]),
+        bounds[1] + ((y + 0.5) / sampleCount) * (bounds[3] - bounds[1]),
+      ]);
+    }
+  }
+  const readings = await Promise.all(points.map((point) => readRasterPixel(layerId, point)));
+  return readings.flatMap((reading) => {
+    const sample = reading?.bands.find((item) => item.index === band) ?? reading?.bands[0];
+    return sample && !sample.isNodata && Number.isFinite(sample.value) ? [sample.value] : [];
+  });
+}
+
+function viewportRange(values: number[], method: ViewportStretchMethod): [number, number] {
+  const sorted = [...values].sort((a, b) => a - b);
+  if (method === "minmax") return [sorted[0], sorted[sorted.length - 1]];
+  if (method === "percentile") return [percentile(sorted, 0.05), percentile(sorted, 0.95)];
+  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+  const variance = values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length;
+  const deviation = Math.sqrt(variance);
+  return [mean - 2 * deviation, mean + 2 * deviation];
+}
+
+function percentile(sorted: number[], fraction: number): number {
+  if (sorted.length === 1) return sorted[0];
+  const position = fraction * (sorted.length - 1);
+  const lower = Math.floor(position);
+  const upper = Math.ceil(position);
+  const weight = position - lower;
+  return sorted[lower] + (sorted[upper] - sorted[lower]) * weight;
 }
 
 function RescaleControls({
