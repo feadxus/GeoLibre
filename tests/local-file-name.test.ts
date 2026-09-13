@@ -9,7 +9,10 @@ describe("local import filenames", () => {
     for (const path of [
       `${prefix}primary%3ADocuments%2Fkml%2Fhydrobasin_Colorado_convex_hull.kml`,
       "primary%3ADocuments%2Fkml%2Fhydrobasin_Colorado_convex_hull.kml",
+      "primary%3Ahydrobasin_Colorado_convex_hull.kml",
+      "raw%3A%2Fstorage%2Femulated%2F0%2FDownload%2Fhydrobasin_Colorado_convex_hull.kml",
       `${prefix}primary%3Ahydrobasin_Colorado_convex_hull.kml?query=1#fragment`,
+      "file:///home/me/Documents/hydrobasin_Colorado_convex_hull.kml?query=1",
     ])
       assert.equal(localFileName(path), "hydrobasin_Colorado_convex_hull.kml");
   });
@@ -20,6 +23,8 @@ describe("local import filenames", () => {
       "水 style.qml",
     );
     assert.equal(localFileName(`${prefix}primary%3AStyles%2Fmap%2520style.sld`), "map%20style.sld");
+    assert.equal(localFileName("ABCD-1234%3A%E6%B0%B4%20style.qml"), "水 style.qml");
+    assert.equal(localFileName("file:///tmp/my%20file.geojson"), "my file.geojson");
   });
 
   it("preserves literal percent escapes in desktop filenames", () => {
@@ -55,7 +60,16 @@ it("imports duplicate local layers with distinct names and unchanged source URIs
     ["cities", "cities_2", "cities_3"],
   );
   assert.ok(useAppStore.getState().layers.every((layer) => layer.sourcePath === path));
-  useAppStore.getState().addGeoJsonLayer("Embedded document title", data, path);
-  assert.equal(useAppStore.getState().layers.at(-1)?.name, "Embedded document title");
+  // Explicit names (an embedded document title, a tool output label) are kept
+  // as supplied even when they collide; only filename-derived names get a suffix.
+  for (let i = 0; i < 2; i++)
+    useAppStore.getState().addGeoJsonLayer("Embedded document title", data, path);
+  assert.deepEqual(
+    useAppStore
+      .getState()
+      .layers.slice(-2)
+      .map((layer) => layer.name),
+    ["Embedded document title", "Embedded document title"],
+  );
   useAppStore.setState({ layers: [] });
 });
