@@ -102,7 +102,13 @@ describe("createLayerSync", () => {
           parcels: { type: "vector", tiles: ["https://example.com/{z}/{x}/{y}.pbf"] },
         },
         arcgisLayers: [
-          { id: "parcels-fill", type: "fill", source: "parcels", paint: { "fill-opacity": 0.8 } },
+          {
+            id: "parcels-fill",
+            type: "fill",
+            source: "parcels",
+            "source-layer": "parcels",
+            paint: { "fill-opacity": 0.8 },
+          },
         ],
       },
       metadata: {

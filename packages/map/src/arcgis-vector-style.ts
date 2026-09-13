@@ -47,6 +47,8 @@ export function arcgisVectorStyle(layer: GeoLibreLayer): {
         !nativeIds.includes(spec.id) ||
         typeof spec.source !== "string" ||
         !Object.hasOwn(sources, spec.source) ||
+        typeof spec["source-layer"] !== "string" ||
+        spec["source-layer"].length === 0 ||
         !["fill", "line", "circle", "symbol", "fill-extrusion", "heatmap"].includes(spec.type),
     )
   )

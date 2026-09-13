@@ -83,7 +83,9 @@ describe("isDrapedLayer", () => {
         arcgisSources: {
           parcels: { type: "vector", tiles: ["https://example.com/{z}/{x}/{y}.pbf"] },
         },
-        arcgisLayers: [{ id: "parcels-fill", type: "fill", source: "parcels" }],
+        arcgisLayers: [
+          { id: "parcels-fill", type: "fill", source: "parcels", "source-layer": "parcels" },
+        ],
       },
     });
     assert.equal(isDrapedLayer(layer), true);
@@ -95,7 +97,21 @@ describe("isDrapedLayer", () => {
     assert.equal(
       isDrapedLayer({
         ...layer,
-        source: { ...layer.source, arcgisLayers: [{ id: "bad", type: "fill", source: "missing" }] },
+        source: {
+          ...layer.source,
+          arcgisLayers: [{ id: "bad", type: "fill", source: "missing", "source-layer": "parcels" }],
+        },
+      }),
+      false,
+    );
+    // MapLibre requires `source-layer` on every vector-source layer.
+    assert.equal(
+      isDrapedLayer({
+        ...layer,
+        source: {
+          ...layer.source,
+          arcgisLayers: [{ id: "parcels-fill", type: "fill", source: "parcels" }],
+        },
       }),
       false,
     );
