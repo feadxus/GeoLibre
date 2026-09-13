@@ -2040,6 +2040,7 @@ export function LayerPanel({
   // is no save dialog: write-back targets the known source.
   const handleSaveEditsToSource = useCallback(
     async (layer: GeoLibreLayer) => {
+      if (!canEditLayer(layer.id)) return;
       clearRefreshStatusTimer(layer.id);
       const isPostgis = isPostgisEditableLayer(layer);
       const path = typeof layer.sourcePath === "string" ? layer.sourcePath.trim() : "";
@@ -2190,7 +2191,7 @@ export function LayerPanel({
         scheduleStatusClear(layer.id);
       }
     },
-    [clearRefreshStatusTimer, mapControllerRef, scheduleStatusClear, t, updateLayer],
+    [canEditLayer, clearRefreshStatusTimer, mapControllerRef, scheduleStatusClear, t, updateLayer],
   );
 
   // Close the bind dialog and invalidate any in-flight scan/confirm so a late
@@ -4374,7 +4375,7 @@ export function LayerPanel({
                           )}
                           {canWriteBack && (
                             <DropdownMenuItem
-                              disabled={geometryEditActive}
+                              disabled={geometryEditActive || !layerEditable}
                               onSelect={() => {
                                 void handleSaveEditsToSource(layer);
                               }}

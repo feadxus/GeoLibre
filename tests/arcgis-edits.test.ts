@@ -225,3 +225,128 @@ it("merges server-calculated fields into a concurrently edited feature", () => {
     calculated: 20,
   });
 });
+
+it("rejects copied object IDs on new features instead of updating a remote record", () => {
+  const baseline = fc(feature(1));
+  for (const localId of [undefined, "new-drawing"]) {
+    const copy = feature(1, "unrelated");
+    copy.id = localId;
+    assert.throws(() => planArcGISEdits(baseline, fc(copy), info), /object IDs cannot/);
+  }
+});
+
+it("a reorder is not a pending edit and no-op save does not pin the viewport", async () => {
+  const { id, posts } = await load(() => assert.fail("No writes for a reorder"));
+  useAppStore.getState().updateLayer(id, { geojson: fc(feature(2), feature(1)) });
+  assert.equal(arcGISLayerHasPendingEdits(id), false);
+  await saveArcGISLayerEdits(id);
+  assert.equal(posts(), 0);
+  assert.equal(arcGISLayerHasPendingEdits(id), false);
+});
+
+it("assigns an identity to server records missing GeoJSON ids", async () => {
+  const downloaded = feature(1);
+  delete downloaded.id;
+  const { id } = await load(
+    () => ({ updateResults: [{ success: true, objectId: 1 }] }),
+    fc(downloaded),
+  );
+  const edited = structuredClone(layer(id).geojson!);
+  assert.equal(edited.features[0].id, 1);
+  edited.features[0].properties!.name = "edited";
+  useAppStore.getState().updateLayer(id, { geojson: edited });
+  assert.equal((await saveArcGISLayerEdits(id)).updated, 1);
+});
+
+it("keeps inserted feature identity consistent with its refreshed baseline", async () => {
+  let writes = 0;
+  const { id } = await load(
+    () =>
+      ++writes === 1
+        ? { addResults: [{ success: true, objectId: 3 }] }
+        : { updateResults: [{ success: true, objectId: 3 }] },
+    fc(),
+  );
+  useAppStore.getState().updateLayer(id, { geojson: fc(feature()) });
+  await saveArcGISLayerEdits(id);
+  assert.equal(arcGISLayerHasPendingEdits(id), false);
+  const edited = structuredClone(layer(id).geojson!);
+  edited.features[0].properties!.name = "edited again";
+  useAppStore.getState().updateLayer(id, { geojson: edited });
+  assert.equal((await saveArcGISLayerEdits(id)).updated, 1);
+  assert.equal(arcGISLayerHasPendingEdits(id), false);
+});
+
+it("fills missing Z only from an explicitly enabled finite service default", () => {
+  const point = { type: "Point" as const, coordinates: [1, 2] };
+  const zInfo = { ...info, hasZ: true, enableZDefaults: true, zDefault: 12 };
+  assert.deepEqual(arcGISGeometry(point, zInfo), {
+    x: 1,
+    y: 2,
+    z: 12,
+    spatialReference: { wkid: 4326 },
+  });
+  assert.deepEqual(point.coordinates, [1, 2]);
+  assert.deepEqual(
+    arcGISGeometry(
+      {
+        type: "MultiLineString",
+        coordinates: [
+          [
+            [1, 2],
+            [3, 4, 9],
+          ],
+        ],
+      },
+      { ...zInfo, geometryType: "esriGeometryPolyline" },
+    ),
+    {
+      paths: [
+        [
+          [1, 2, 12],
+          [3, 4, 9],
+        ],
+      ],
+      hasZ: true,
+      spatialReference: { wkid: 4326 },
+    },
+  );
+  for (const settings of [
+    {},
+    { enableZDefaults: false, zDefault: 12 },
+    { enableZDefaults: true },
+    { enableZDefaults: true, zDefault: Infinity },
+  ]) {
+    assert.throws(
+      () => arcGISGeometry(point, { ...info, hasZ: true, ...settings }),
+      /requires a finite Z/,
+    );
+  }
+  assert.deepEqual(
+    arcGISGeometry({ type: "Point", coordinates: [1, 2, 7] }, { ...info, hasZ: true }),
+    { x: 1, y: 2, z: 7, spatialReference: { wkid: 4326 } },
+  );
+  assert.throws(
+    () => arcGISGeometry({ type: "Point", coordinates: [1, 2, NaN] }, zInfo),
+    /dimensions/,
+  );
+  assert.throws(
+    () => arcGISGeometry({ type: "Point", coordinates: [1, 2, 3, 4] }, zInfo),
+    /dimensions/,
+  );
+  const baseline = feature(1);
+  const edited = feature(1, "attribute only");
+  assert.deepEqual(
+    planArcGISEdits(fc(baseline), fc(edited), { ...info, hasZ: true }).updates[0].payload,
+    { attributes: { OBJECTID: 1, name: "attribute only" } },
+  );
+});
+
+it("reports malformed service URLs before attempting a save", async () => {
+  const { id, posts } = await load(() => assert.fail("Malformed URL must not write"));
+  useAppStore
+    .getState()
+    .updateLayer(id, { source: { ...layer(id).source, arcgisQueryUrl: "not a URL/query" } });
+  await assert.rejects(saveArcGISLayerEdits(id), /Invalid ArcGIS service URL/);
+  assert.equal(posts(), 0);
+});

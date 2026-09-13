@@ -8,6 +8,7 @@ import type { GeoLibreAppAPI } from "../types";
 import {
   arcGISEditCapabilities,
   arcGISObjectId,
+  identifyArcGISFeatures,
   planArcGISEdits,
   reconcileArcGISRefresh,
   sameArcGISFeatures,
@@ -531,7 +532,10 @@ async function addArcGISFeatureLayerAsGeoJson(
   // a complete download rather than a silently unfiltered viewport query.
   const initialData: FeatureCollection = map
     ? { type: "FeatureCollection", features: [] }
-    : await fetchArcGISFeaturePages(queryUrl, options, layerInfo);
+    : identifyArcGISFeatures(
+        await fetchArcGISFeaturePages(queryUrl, options, layerInfo),
+        layerInfo.objectIdField,
+      );
   // Add the layer before downloading features. Large services must not hold the
   // Add Data dialog open while hundreds of thousands of records are fetched.
   const id = store.addGeoJsonLayer(name, initialData, refreshUrl, options.beforeLayerId ?? null);
@@ -648,7 +652,7 @@ function startArcGISViewportLoader(
       ) {
         return;
       }
-      const data = collect();
+      const data = identifyArcGISFeatures(collect(), layerInfo.objectIdField);
       const current = useAppStore.getState().layers.find((l) => l.id === layerId)!;
       useAppStore.getState().updateLayer(layerId, {
         geojson: data,
@@ -1397,7 +1401,10 @@ export async function refreshArcGISFeatureLayer(params: {
   // Re-read the metadata rather than trusting a stored copy: `maxRecordCount`
   // and the paging capabilities are the service's to change between sessions.
   const layerInfo = await fetchArcGISJson<ArcGISFeatureLayerInfo>(queryUrl, options, undefined);
-  const data = await fetchArcGISFeaturePages(`${queryUrl}/query`, options, layerInfo);
+  const data = identifyArcGISFeatures(
+    await fetchArcGISFeaturePages(`${queryUrl}/query`, options, layerInfo),
+    layerInfo.objectIdField,
+  );
   if (params.layerId) {
     if (arcGISLayerHasPendingEdits(params.layerId))
       return currentArcGISLayerGeojson(params.layerId);
@@ -2393,7 +2400,15 @@ export function arcGISLayerHasPendingEdits(layerId: string): boolean {
   )
     return true;
   const baseline = arcGISBaseline(layer);
-  return Boolean(baseline && layer.geojson && !sameArcGISFeatures(baseline, layer.geojson));
+  return Boolean(
+    baseline &&
+    layer.geojson &&
+    !sameArcGISFeatures(
+      baseline,
+      layer.geojson,
+      (layer.metadata.arcgisEditInfo as ArcGISEditInfo | undefined)?.objectIdField,
+    ),
+  );
 }
 
 /** Save one snapshot, retaining failed and concurrently changed features for the next save. */
@@ -2415,7 +2430,15 @@ export async function saveArcGISLayerEdits(
   const queryUrl = layer.source.arcgisQueryUrl;
   if (typeof queryUrl !== "string") throw new Error("Missing ArcGIS service URL.");
   const layerUrl = trimTrailingSlash(queryUrl).replace(/\/query$/i, "");
-  if (new URL(layerUrl).protocol !== "https:") throw new Error("ArcGIS writes require HTTPS.");
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(layerUrl);
+  } catch {
+    throw new Error(
+      "Invalid ArcGIS service URL. Add the service again with a valid Feature Service URL.",
+    );
+  }
+  if (parsedUrl.protocol !== "https:") throw new Error("ArcGIS writes require HTTPS.");
   const options = arcgisEditOptions.get(layerId) ?? { layerType: "feature", sourceType: "url" };
   arcgisSavingLayers.add(layerId);
   // Abort a page walk started before the save; late pages also check the lock.
@@ -2576,7 +2599,13 @@ export async function saveArcGISLayerEdits(
         );
         const now = useAppStore.getState().layers.find((l) => l.id === layerId);
         if (now?.geojson) {
-          const refreshed = new Map(fresh.features.map((f) => [arcGISObjectId(f, field)!, f]));
+          const refreshed = new Map(
+            fresh.features.map((f) => {
+              const id = arcGISObjectId(f, field)!;
+              // A new feature keeps its local identity after ArcGIS assigns its object ID.
+              return [id, { ...f, id: saved.get(id)?.id ?? f.id }];
+            }),
+          );
           for (const [id, f] of refreshed) if (saved.has(id)) nextBaseline.set(id, f);
           const reconciled = now.geojson.features.map((f) => {
             const id = arcGISObjectId(f, field);

@@ -44,7 +44,8 @@ an existing token expires.
 ## Current scope
 
 Supported geometry families are points, multipoints, lines, multilines, polygons,
-and multipolygons. Z coordinates must match the service's declared dimensions.
+and multipolygons. For Z-enabled services, 2D edits use the service's finite default Z only when
+that default is explicitly enabled. Otherwise every vertex must supply a finite Z.
 Object IDs must remain unchanged. New fields and changes to server-managed fields
 cannot be written through feature editing. GeoLibre validates basic field types,
 nullability, string lengths, and field-level coded-value and range domains.

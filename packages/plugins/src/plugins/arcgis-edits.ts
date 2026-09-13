@@ -7,6 +7,8 @@ export interface ArcGISEditInfo {
   allowGeometryUpdates?: boolean;
   geometryType?: string;
   hasZ?: boolean;
+  enableZDefaults?: boolean;
+  zDefault?: number;
   hasM?: boolean;
   isDataVersioned?: boolean;
   datesInUnknownTimezone?: boolean;
@@ -81,11 +83,41 @@ export function reconcileArcGISRefresh(
   };
 }
 
-export function sameArcGISFeatures(a: FeatureCollection, b: FeatureCollection): boolean {
-  return (
-    a.features.length === b.features.length &&
-    a.features.every((f, i) => sameArcGISFeature(f, b.features[i]))
-  );
+/** Assign stable local identities only to features freshly read from the service. */
+export function identifyArcGISFeatures(data: FeatureCollection, field?: string): FeatureCollection {
+  if (!field) return data;
+  return {
+    ...data,
+    features: data.features.map((feature) => {
+      if (feature.id !== undefined) return feature;
+      const id = arcGISObjectId(feature, field);
+      return id === undefined ? feature : { ...feature, id };
+    }),
+  };
+}
+
+/** Match downloaded records by object ID so sorting never pins a viewport. */
+export function sameArcGISFeatures(
+  a: FeatureCollection,
+  b: FeatureCollection,
+  field?: string,
+): boolean {
+  if (a.features.length !== b.features.length) return false;
+  if (!field) return a.features.every((f, i) => sameArcGISFeature(f, b.features[i]));
+  try {
+    const byId = new Map(a.features.map((f) => [arcGISObjectId(f, field), f]));
+    if (byId.has(undefined) || byId.size !== a.features.length) return false;
+    for (const feature of b.features) {
+      const id = arcGISObjectId(feature, field);
+      const previous = byId.get(id);
+      if (!previous || previous.id !== feature.id || !sameArcGISFeature(previous, feature))
+        return false;
+      byId.delete(id);
+    }
+    return byId.size === 0;
+  } catch {
+    return false; // Invalid or edited IDs must keep replacement downloads paused.
+  }
 }
 
 function orient(ring: Position[], clockwise: boolean): Position[] {
@@ -111,9 +143,23 @@ export function arcGISGeometry(geometry: Geometry | null, info: ArcGISEditInfo):
   };
   if (!types[geometry.type] || types[geometry.type] !== info.geometryType)
     throw new Error("Geometry does not match the ArcGIS layer type.");
+  // Geoman draws in 2D. Supply a Z only when the service explicitly enables a finite default.
+  geometry = structuredClone(geometry);
   const check = (value: unknown): void => {
     if (!Array.isArray(value) || !value.length) throw new Error("Empty ArcGIS geometry.");
     if (typeof value[0] === "number") {
+      if (info.hasZ && value.length === 2) {
+        if (
+          info.enableZDefaults !== true ||
+          typeof info.zDefault !== "number" ||
+          !Number.isFinite(info.zDefault)
+        ) {
+          throw new Error(
+            "This Z-enabled ArcGIS layer requires a finite Z for every vertex or an enabled default Z value.",
+          );
+        }
+        value.push(info.zDefault);
+      }
       if (
         value.length !== (info.hasZ ? 3 : 2) ||
         !value.every((n) => typeof n === "number" && Number.isFinite(n))
@@ -266,7 +312,7 @@ export function planArcGISEdits(
       return;
     }
     const original = feature.id === undefined ? undefined : byFeatureId.get(feature.id);
-    if (original && arcGISObjectId(original, field) !== id)
+    if (!original || arcGISObjectId(original, field) !== id)
       throw new Error("ArcGIS object IDs cannot be changed.");
     if (seen.has(id) || !previous.has(id))
       throw new Error("ArcGIS object IDs cannot be changed or duplicated.");
