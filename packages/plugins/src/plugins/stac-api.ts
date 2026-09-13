@@ -278,6 +278,11 @@ export async function loadPortolanIndex(
     { signal },
     fetcher,
   );
+  return portolanIndexFromDocument(document);
+}
+
+/** Reuse a connected registry document for discovery without fetching it again. */
+export function portolanIndexFromDocument(document: Record<string, unknown>): StacIndexCatalog[] {
   if (!document || document.type !== "Catalog" || !Array.isArray(document.links)) {
     throw new Error("Portolan Registry returned an invalid catalog list");
   }

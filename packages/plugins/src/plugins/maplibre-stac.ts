@@ -23,6 +23,7 @@ import {
   itemBbox,
   loadStacIndex,
   loadPortolanIndex,
+  portolanIndexFromDocument,
   PORTOLAN_REGISTRY_URL,
   openCatalogNode,
   searchStacApi,
@@ -365,6 +366,7 @@ let panelContainer: HTMLElement | null = null;
 let initialCatalogUrl = "";
 interface CatalogBrowserOptions {
   loadIndex?: typeof loadStacIndex;
+  indexFromConnection?: (connection: StacConnection) => StacIndexCatalog[];
   catalogSearchLabel?: (app: GeoLibreAppAPI) => string;
   indexLabels?: (
     app: GeoLibreAppAPI,
@@ -1494,7 +1496,7 @@ function buildPanel(container: HTMLElement): () => void {
   urlField.input.addEventListener("input", () => {
     if (urlField.input.value !== initialCatalogUrl) presetSelectionPending = false;
   });
-  const connectCatalog = async (): Promise<void> => {
+  const connectCatalog = async (): Promise<StacConnection | undefined> => {
     const url = urlField.input.value.trim();
     setDisabled(connectButton, true);
     setStatus(labels.connecting);
@@ -1522,6 +1524,7 @@ function buildPanel(container: HTMLElement): () => void {
       renderSection.hidden = false;
       clearSearchResults(false);
       setStatus(connection.description || labels.connected);
+      return connection;
     } catch (error) {
       connection = null;
       searchSection.hidden = true;
@@ -1532,7 +1535,7 @@ function buildPanel(container: HTMLElement): () => void {
     }
   };
   connectButton.addEventListener("click", () => void connectCatalog());
-  if (initialCatalogUrl) void connectCatalog();
+  const presetConnection = initialCatalogUrl ? connectCatalog() : undefined;
   searchButton.addEventListener("click", () => void runSearch(false));
   clearResultsButton.addEventListener("click", () => clearSearchResults());
   loadMore.addEventListener("click", () => void runSearch(true));
@@ -1590,7 +1593,17 @@ function buildPanel(container: HTMLElement): () => void {
   map?.on("click", onMapClick);
   map?.on("mousemove", onMapMove);
 
-  void (browserOptions.loadIndex ?? loadStacIndex)(fetch, controller.signal).then(
+  const loadIndex = browserOptions.loadIndex ?? loadStacIndex;
+  const indexFromConnection = browserOptions.indexFromConnection;
+  // Portolan's preset and discovery list are the same document. Reuse the initial
+  // connection, retaining URL entry and a separate retry if that connection failed.
+  const indexRequest =
+    presetConnection && indexFromConnection
+      ? presetConnection.then((opened) =>
+          opened ? indexFromConnection(opened) : loadIndex(fetch, controller.signal),
+        )
+      : loadIndex(fetch, controller.signal);
+  void indexRequest.then(
     (catalogs) => {
       index = catalogs;
       renderCatalogs();
@@ -1712,6 +1725,7 @@ export const maplibrePortolanPlugin = createStacPlugin(
   PORTOLAN_REGISTRY_URL,
   {
     loadIndex: loadPortolanIndex,
+    indexFromConnection: (connection) => portolanIndexFromDocument(connection.root),
     indexLabels: (app) => ({
       indexLoading:
         app.translate?.("stacPlugin.portolanIndexLoading", "Loading Portolan Registry…") ??
