@@ -706,6 +706,79 @@ describe("MapController.syncLayers reconciliation", () => {
     assert.equal(fake.calls.length, settled, "listener detached with the filter");
   });
 
+  it("applies a restored layer filter once the vector control creates its layers", () => {
+    const { map, fake } = makeFakeMap();
+    const controller = controllerWith(map);
+    const filterExpression = ["==", ["get", "CONTINENT"], "Europe"];
+    const layer = controlVectorLayer("countries", { filterExpression });
+    const fillId = "countries-fill";
+
+    // Reopening a project: the store carries the saved layer, but the control
+    // has not replayed the file yet, so its native layers are not on the map.
+    controller.syncLayers([layer]);
+    assert.equal(fake.layers.has(fillId), false, "control has not added its layers yet");
+    assert.equal(
+      fake.calls.some((call) => call.method === "setFilter"),
+      false,
+      "nothing to filter yet",
+    );
+
+    // The control finishes loading and adds them. It reproduces the saved store
+    // layer exactly, so no store change follows to trigger another sync.
+    fake.layers.set(fillId, { id: fillId, type: "fill", paint: {} });
+    fake.layers.set("countries-outline", { id: "countries-outline", type: "line", paint: {} });
+    fake.emit("styledata");
+
+    const filterCalls = fake.calls.filter((call) => call.method === "setFilter");
+    assert.deepEqual(
+      filterCalls.map((call) => call.args),
+      [
+        [fillId, filterExpression],
+        ["countries-outline", filterExpression],
+      ],
+      "the persisted filter reaches every layer the control created",
+    );
+  });
+
+  it("waits for every native layer before resyncing pending filters", () => {
+    const { map, fake } = makeFakeMap();
+    const controller = controllerWith(map);
+    const layer = controlVectorLayer("countries", {
+      filterExpression: ["==", ["get", "CONTINENT"], "Europe"],
+    });
+
+    controller.syncLayers([layer]);
+    // Only half the control's layers have arrived: a sync now would filter one
+    // and leave the other unfiltered, so it must hold.
+    fake.layers.set("countries-fill", { id: "countries-fill", type: "fill", paint: {} });
+    fake.emit("styledata");
+    assert.equal(
+      fake.calls.some((call) => call.method === "setFilter"),
+      false,
+      "held until the layer set is complete",
+    );
+
+    fake.layers.set("countries-outline", { id: "countries-outline", type: "line", paint: {} });
+    fake.emit("styledata");
+    assert.equal(
+      fake.calls.filter((call) => call.method === "setFilter").length,
+      2,
+      "both native layers filtered",
+    );
+  });
+
+  it("attaches no pending-filter listener for an unfiltered control layer", () => {
+    const { map, fake } = makeFakeMap();
+    const controller = controllerWith(map);
+
+    controller.syncLayers([controlVectorLayer("countries")]);
+    const before = fake.calls.length;
+    fake.layers.set("countries-fill", { id: "countries-fill", type: "fill", paint: {} });
+    fake.emit("styledata");
+
+    assert.equal(fake.calls.length, before, "no resync without a filter to apply");
+  });
+
   it("applies a visibility toggle as a layout property", () => {
     const { map, fake } = makeFakeMap();
     const controller = controllerWith(map);

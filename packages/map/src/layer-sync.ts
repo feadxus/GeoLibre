@@ -289,6 +289,35 @@ function externalFeatureFilterExtras(layer: GeoLibreLayer): unknown[] {
 }
 
 /**
+ * Whether some control-owned layer still has filters waiting for its native
+ * MapLibre layers to exist.
+ *
+ * A control creates its layers asynchronously — the Add Vector Layer restore
+ * replays a saved layer well after the sync pass that followed the project
+ * load — so {@link syncLayer} finds nothing on the map and skips the filter.
+ * The store layer it restores into usually matches what was saved, so no
+ * further store change arrives to trigger another sync, and a persisted layer
+ * filter would stay unapplied with the whole dataset on screen. Callers watch
+ * for the layers appearing and sync again.
+ *
+ * @param map - The map the control adds its native layers to.
+ * @param layers - The layers just synced.
+ * @returns True while some layer's filters have nowhere to be applied yet.
+ */
+export function hasPendingExternalNativeFilters(
+  map: maplibregl.Map,
+  layers: GeoLibreLayer[],
+): boolean {
+  return layers.some((layer) => {
+    if (layer.metadata?.externalNativeLayer !== true) return false;
+    const nativeLayerIds = layer.metadata?.nativeLayerIds;
+    if (!Array.isArray(nativeLayerIds) || nativeLayerIds.length === 0) return false;
+    if (externalFeatureFilterExtras(layer).length === 0) return false;
+    return nativeLayerIds.some((id) => typeof id === "string" && !map.getLayer(id));
+  });
+}
+
+/**
  * Combine a base filter (an external layer's own filter, possibly null) with
  * the active per-feature extras into one MapLibre filter. Returns the base
  * unchanged (null stays null) when no extras apply.

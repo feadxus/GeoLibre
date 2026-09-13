@@ -53,6 +53,7 @@ import {
 import {
   mbtilesStyleLayerIds,
   externalSourceIdsFor,
+  hasPendingExternalNativeFilters,
   hasZoomDependentClusterFilter,
   removeLayerFromMap,
   styleValuesEqual,
@@ -558,6 +559,7 @@ export class MapController implements MapEngine {
   /** This pane's last blend-mode fingerprint; see `blendModeSignature`. */
   private blendSignature = "";
   private clusterZoomHandler: (() => void) | null = null;
+  private pendingNativeFilterHandler: (() => void) | null = null;
   private styleReady = false;
   private controlVisibility: Record<BuiltInMapControl, boolean> = {
     ...DEFAULT_BUILT_IN_CONTROL_VISIBILITY,
@@ -1102,6 +1104,7 @@ export class MapController implements MapEngine {
     }
     this.abortPendingMapboxStyle();
     this.removeClusterZoomListener();
+    this.removePendingNativeFilterListener();
     this.map?.remove();
     this.map = null;
     this.styleReady = false;
@@ -1380,6 +1383,44 @@ export class MapController implements MapEngine {
     this.refreshLayerControl(layers);
     this.syncLayerControlState();
     this.syncClusterZoomListener(layers);
+    this.syncPendingNativeFilterListener(layers);
+  }
+
+  /**
+   * Sync again once a control's native layers reach the map.
+   *
+   * See {@link hasPendingExternalNativeFilters}: a control-owned layer's
+   * MapLibre layers can arrive after the sync pass that should have filtered
+   * them, and a restore that reproduces the saved store layer exactly leaves no
+   * store change to trigger another pass. Without this, reopening a project
+   * whose vector layer carries a persisted filter renders the full dataset.
+   *
+   * @param layers The layers just synced.
+   */
+  private syncPendingNativeFilterListener(layers: GeoLibreLayer[]): void {
+    const map = this.map;
+    const wanted = map !== null && hasPendingExternalNativeFilters(map, layers);
+    if (wanted === (this.pendingNativeFilterHandler !== null)) return;
+    if (!wanted || !map) {
+      this.removePendingNativeFilterListener();
+      return;
+    }
+    const handler = () => {
+      if (this.pendingNativeFilterHandler !== handler || !this.map) return;
+      // Style events also fire for the control's own intermediate work, so wait
+      // until every pending layer is actually there before spending a sync.
+      if (hasPendingExternalNativeFilters(this.map, this.syncedLayers)) return;
+      this.removePendingNativeFilterListener();
+      this.syncLayers(this.syncedLayers);
+    };
+    this.pendingNativeFilterHandler = handler;
+    map.on("styledata", handler);
+  }
+
+  private removePendingNativeFilterListener(): void {
+    if (!this.pendingNativeFilterHandler) return;
+    this.map?.off("styledata", this.pendingNativeFilterHandler);
+    this.pendingNativeFilterHandler = null;
   }
 
   /**
