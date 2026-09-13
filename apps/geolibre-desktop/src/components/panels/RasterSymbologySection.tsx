@@ -1268,7 +1268,7 @@ async function readViewportValues(
   bounds: [number, number, number, number],
   signal?: AbortSignal,
 ): Promise<number[]> {
-  const sampleCount = 8;
+  const sampleCount = 4;
   const points: [number, number][] = [];
   for (let y = 0; y < sampleCount; y += 1) {
     for (let x = 0; x < sampleCount; x += 1) {
