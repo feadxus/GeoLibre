@@ -1192,6 +1192,15 @@ function ViewportStretchControls({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const abortRef = useRef<AbortController | null>(null);
+  // The parent rebuilds its onChange on every render and applying a range
+  // updates the layer, which re-renders the parent. Reading the callback from a
+  // ref keeps `apply` stable, so the auto-update effect isn't torn down and
+  // re-fired by its own write -- a loop that would keep reading the raster
+  // without the camera ever moving.
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   useEffect(() => {
     setAutoUpdate(autoUpdateInitial);
@@ -1221,27 +1230,35 @@ function ViewportStretchControls({
           if (!silent) setMessage(t("rasterSymbology.viewportStretchNoRange"));
           return;
         }
-        onChange([range]);
+        onChangeRef.current([range]);
         if (!silent) setMessage(t("rasterSymbology.viewportStretchApplied"));
       } catch (error) {
         if (!controller.signal.aborted && !silent) {
           setMessage(error instanceof Error ? error.message : String(error));
         }
       } finally {
+        // Ownership, not the abort flag, decides who clears busy: a superseded
+        // read must leave it set for the read that replaced it, while an
+        // aborted read that nothing replaced must clear it or the Apply button
+        // stays disabled for good.
         if (abortRef.current === controller) {
           abortRef.current = null;
           setBusy(false);
         }
       }
     },
-    [band, layerId, mapControllerRef, method, onChange, t],
+    [band, layerId, mapControllerRef, method, t],
   );
 
+  // A read is only meaningful for the layer, band, and method it started under,
+  // so drop it when any of those change. The auto-update effect below aborts
+  // too, but only while auto-update is on -- without this a manual read could
+  // land after a band switch and apply the previous band's range.
   useEffect(
     () => () => {
       abortRef.current?.abort();
     },
-    [layerId, band, method],
+    [band, layerId, method],
   );
 
   useEffect(() => {
