@@ -7443,6 +7443,7 @@
     "viewportApply": "Apply to viewport",
     "viewportStretching": "Reading viewport…",
     "viewportStretchApplied": "Viewport stretch applied",
+    "viewportAuto": "Update automatically when the map moves",
     "viewportStretchNoView": "The map view is not available.",
     "viewportStretchNoValues": "No raster values found in the viewport.",
     "viewportStretchNoRange": "The viewport values do not define a range.",

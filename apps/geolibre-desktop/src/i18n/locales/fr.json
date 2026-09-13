@@ -7326,6 +7326,7 @@
     "viewportApply": "Appliquer à la vue",
     "viewportStretching": "Lecture de la vue…",
     "viewportStretchApplied": "Étirement de la vue appliqué",
+    "viewportAuto": "Mettre à jour automatiquement lors des déplacements",
     "viewportStretchNoView": "La vue de la carte n’est pas disponible.",
     "viewportStretchNoValues": "Aucune valeur raster dans la vue.",
     "viewportStretchNoRange": "Les valeurs de la vue ne définissent pas une plage.",

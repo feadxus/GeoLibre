@@ -42,7 +42,7 @@ import {
   indexById,
   NORMALIZED_DIFFERENCE_INDICES,
 } from "maplibre-gl-raster";
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { useColormapRamps } from "../../hooks/useColormapRamps";
 import { formatLegendNumber, setLegendCustomEntry } from "../../lib/auto-legend";
@@ -1180,36 +1180,56 @@ function ViewportStretchControls({
 }) {
   const { t } = useTranslation();
   const [method, setMethod] = useState<ViewportStretchMethod>("minmax");
+  const [autoUpdate, setAutoUpdate] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const abortRef = useRef<AbortController | null>(null);
 
-  const apply = async (): Promise<void> => {
+  const apply = useCallback(async (silent = false): Promise<void> => {
     const bounds = mapControllerRef?.current?.getViewBounds?.();
     if (!bounds) {
-      setMessage(t("rasterSymbology.viewportStretchNoView"));
+      if (!silent) setMessage(t("rasterSymbology.viewportStretchNoView"));
       return;
     }
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setBusy(true);
-    setMessage("");
+    if (!silent) setMessage("");
     try {
-      const values = await readViewportValues(layerId, band, bounds);
+      const values = await readViewportValues(layerId, band, bounds, controller.signal);
+      if (controller.signal.aborted) return;
       if (values.length === 0) {
-        setMessage(t("rasterSymbology.viewportStretchNoValues"));
+        if (!silent) setMessage(t("rasterSymbology.viewportStretchNoValues"));
         return;
       }
       const range = viewportRange(values, method);
       if (range[0] >= range[1]) {
-        setMessage(t("rasterSymbology.viewportStretchNoRange"));
+        if (!silent) setMessage(t("rasterSymbology.viewportStretchNoRange"));
         return;
       }
       onChange([range]);
-      setMessage(t("rasterSymbology.viewportStretchApplied"));
+      if (!silent) setMessage(t("rasterSymbology.viewportStretchApplied"));
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error));
+      if (!controller.signal.aborted && !silent) {
+        setMessage(error instanceof Error ? error.message : String(error));
+      }
     } finally {
-      setBusy(false);
+      if (!controller.signal.aborted) setBusy(false);
     }
-  };
+  }, [band, layerId, mapControllerRef, method, onChange, t]);
+
+  useEffect(() => {
+    if (!autoUpdate || !mapControllerRef?.current) return;
+    const stop = mapControllerRef.current.onCameraIdle(() => {
+      void apply(true);
+    });
+    void apply(true);
+    return () => {
+      stop();
+      abortRef.current?.abort();
+    };
+  }, [apply, autoUpdate, mapControllerRef]);
 
   return (
     <div className="mt-3 space-y-2 border-t pt-3">
@@ -1228,6 +1248,15 @@ function ViewportStretchControls({
           {busy ? t("rasterSymbology.viewportStretching") : t("rasterSymbology.viewportApply")}
         </Button>
       </div>
+      <label className="flex items-center gap-2 text-xs">
+        <Input
+          type="checkbox"
+          className="h-4 w-4"
+          checked={autoUpdate}
+          onChange={(event) => setAutoUpdate(event.target.checked)}
+        />
+        {t("rasterSymbology.viewportAuto")}
+      </label>
       {message && <p className="text-[10px] text-muted-foreground">{message}</p>}
     </div>
   );
@@ -1237,8 +1266,9 @@ async function readViewportValues(
   layerId: string,
   band: number,
   bounds: [number, number, number, number],
+  signal?: AbortSignal,
 ): Promise<number[]> {
-  const sampleCount = 12;
+  const sampleCount = 8;
   const points: [number, number][] = [];
   for (let y = 0; y < sampleCount; y += 1) {
     for (let x = 0; x < sampleCount; x += 1) {
@@ -1248,7 +1278,7 @@ async function readViewportValues(
       ]);
     }
   }
-  const readings = await Promise.all(points.map((point) => readRasterPixel(layerId, point)));
+  const readings = await Promise.all(points.map((point) => readRasterPixel(layerId, point, { signal })));
   return readings.flatMap((reading) => {
     const sample = reading?.bands.find((item) => item.index === band) ?? reading?.bands[0];
     return sample && !sample.isNodata && Number.isFinite(sample.value) ? [sample.value] : [];
