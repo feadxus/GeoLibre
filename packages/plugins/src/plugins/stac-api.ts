@@ -1,6 +1,8 @@
 import type { BBox, Feature, Geometry } from "geojson";
 
 export const STAC_INDEX_CATALOGS_URL = "https://stacindex.org/api/catalogs";
+export const PORTOLAN_REGISTRY_URL =
+  "https://raw.githubusercontent.com/portolan-sdi/portolan-registry/refs/heads/main/exports/catalogs.json";
 const USGS_ASTROGEOLOGY_API_URL = "https://stac.astrogeology.usgs.gov/api";
 // No item-search endpoint to ask, so a page is however much of the tree the walk covers.
 const STATIC_SEARCH_READS_PER_PAGE = 300;
@@ -263,6 +265,33 @@ export async function loadStacIndex(
         typeof (entry as StacIndexCatalog).title === "string" &&
         (entry as StacIndexCatalog).access === "public",
     )
+    .sort((a, b) => a.title.localeCompare(b.title));
+}
+
+/** The Portolan registry publishes its catalog list as a static STAC catalog. */
+export async function loadPortolanIndex(
+  fetcher: FetchLike = fetch,
+  signal?: AbortSignal,
+): Promise<StacIndexCatalog[]> {
+  const document = await fetchJson<Record<string, unknown>>(
+    PORTOLAN_REGISTRY_URL,
+    { signal },
+    fetcher,
+  );
+  if (!document || document.type !== "Catalog" || !Array.isArray(document.links)) {
+    throw new Error("Portolan Registry returned an invalid catalog list");
+  }
+  return linksOf(document.links, PORTOLAN_REGISTRY_URL)
+    .filter((link) => link.rel === "child" && httpUrl(link.href))
+    .map((link, id) => ({
+      id,
+      url: link.href,
+      slug: link.href,
+      title: link.title || link.href,
+      summary: "",
+      access: "public" as const,
+      isApi: false,
+    }))
     .sort((a, b) => a.title.localeCompare(b.title));
 }
 
