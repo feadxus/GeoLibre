@@ -403,7 +403,13 @@ const clusteredFilterInputs = new WeakMap<
 /** Whether an expression reads `["zoom"]`, and so cannot be evaluated once. */
 function expressionUsesZoom(node: unknown): boolean {
   if (!Array.isArray(node)) return false;
-  if (node[0] === "zoom") return true;
+  // `["literal", …]` wraps data, not operators, and a categorical Quick Filter
+  // compiles its selected values into one. A field value that happens to be
+  // the string "zoom" is not the zoom operator, so do not walk inside.
+  if (node[0] === "literal") return false;
+  // The operator takes no arguments; a longer array starting with "zoom" is a
+  // value list, not a call.
+  if (node[0] === "zoom" && node.length === 1) return true;
   return node.some((entry) => expressionUsesZoom(entry));
 }
 
@@ -417,10 +423,14 @@ function expressionUsesZoom(node: unknown): boolean {
 export function hasZoomDependentClusterFilter(layers: GeoLibreLayer[]): boolean {
   return layers.some((layer) => {
     if (!layer.geojson) return false;
-    const { wantCluster } = resolveVectorRenderMode(layer, detectGeometryProfile(layer.geojson));
-    if (!wantCluster) return false;
+    // Ask the cheap question first. `detectGeometryProfile` walks every feature
+    // and this runs on every sync pass, including ones with no filter in sight
+    // (a drag, an opacity nudge), so the scan is paid only by a layer that
+    // already carries a zoom-dependent authored filter.
     const filter = compileLayerFilters(layer);
-    return filter !== null && expressionUsesZoom(filter);
+    if (filter === null || !expressionUsesZoom(filter)) return false;
+    const { wantCluster } = resolveVectorRenderMode(layer, detectGeometryProfile(layer.geojson));
+    return wantCluster;
   });
 }
 
