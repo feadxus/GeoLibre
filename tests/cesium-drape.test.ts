@@ -104,6 +104,21 @@ describe("isDrapedLayer", () => {
       }),
       false,
     );
+    // A style's base fill is a `background` layer with no source at all.
+    assert.equal(
+      isDrapedLayer({
+        ...layer,
+        metadata: { nativeLayerIds: ["bg", "parcels-fill"] },
+        source: {
+          ...layer.source,
+          arcgisLayers: [
+            { id: "bg", type: "background", paint: { "background-color": "#eee" } },
+            ...(layer.source.arcgisLayers as object[]),
+          ],
+        },
+      }),
+      true,
+    );
     // MapLibre requires `source-layer` on every vector-source layer.
     assert.equal(
       isDrapedLayer({

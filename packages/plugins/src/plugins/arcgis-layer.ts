@@ -324,10 +324,14 @@ export async function addArcGISLayer(
   const hostedLayer = await createArcGISHostedLayer(arcgis, options, input);
   const id = createArcGISLayerId();
   const sourceIds = prefixArcGISSourceIds(hostedLayer, id);
-  const nativeLayerIds = prefixArcGISStyleLayerIds(hostedLayer, id);
+  // Snapshot the SDK style once it carries the prefixed source ids: the getters
+  // return fresh frozen copies on every read, so one snapshot feeds both the
+  // map and the store without assuming a stable order between reads.
+  const { sources, layers: styleLayers } = snapshotArcGISStyle(hostedLayer, id);
+  const nativeLayerIds = styleLayers.map((spec) => spec.id);
   const bounds = await resolveArcGISLayerBounds(input, options, hostedLayer);
 
-  if (map) addArcGISRuntimeLayerToMap(hostedLayer, map, nativeLayerIds);
+  if (map) addArcGISRuntimeLayerToMap(sources, styleLayers, map);
   ensureArcGISStoreCleanup();
   arcgisLayerInstances.set(id, hostedLayer);
 
@@ -341,11 +345,8 @@ export async function addArcGISLayer(
   });
   // Keep the resolved sources and style layers with the data so a second
   // renderer (including the Cesium drape) can rebuild them without a control.
-  layer.source.arcgisSources = structuredClone(hostedLayer.sources);
-  layer.source.arcgisLayers = hostedLayer.layers.map((spec, index) => ({
-    ...structuredClone(spec),
-    id: nativeLayerIds[index],
-  }));
+  layer.source.arcgisSources = sources;
+  layer.source.arcgisLayers = styleLayers;
   const store = useAppStore.getState();
   store.addLayer(layer, options.beforeLayerId);
   if (bounds && options.zoomTo !== false) app.fitBounds?.(bounds);
@@ -465,28 +466,39 @@ function prefixArcGISSourceIds(hostedLayer: ArcGISRuntimeLayer, layerId: string)
   });
 }
 
-function prefixArcGISStyleLayerIds(hostedLayer: ArcGISRuntimeLayer, layerId: string): string[] {
-  // The SDK getter returns copies, so return the IDs for the caller to apply.
-  return hostedLayer.layers.map(
-    (styleLayer, index) => `${layerId}-layer-${index}-${sanitizeIdPart(styleLayer.id)}`,
-  );
+function snapshotArcGISStyle(
+  hostedLayer: ArcGISRuntimeLayer,
+  layerId: string,
+): {
+  sources: Record<string, maplibregl.SourceSpecification>;
+  layers: maplibregl.LayerSpecification[];
+} {
+  // The SDK getters return frozen copies, so the prefixed ids go on our own
+  // mutable clone rather than back onto the runtime layer.
+  return {
+    sources: structuredClone(hostedLayer.sources),
+    layers: hostedLayer.layers.map((styleLayer, index) => ({
+      ...structuredClone(styleLayer),
+      id: `${layerId}-layer-${index}-${sanitizeIdPart(styleLayer.id)}`,
+    })),
+  };
 }
 
 function addArcGISRuntimeLayerToMap(
-  hostedLayer: ArcGISRuntimeLayer,
+  sources: Record<string, maplibregl.SourceSpecification>,
+  layers: maplibregl.LayerSpecification[],
   map: maplibregl.Map,
-  nativeLayerIds: string[],
 ): void {
-  for (const [sourceId, source] of Object.entries(hostedLayer.sources)) {
+  // The map gets its own copies so it cannot mutate what the store persists.
+  for (const [sourceId, source] of Object.entries(sources)) {
     if (!map.getSource(sourceId)) {
-      map.addSource(sourceId, source);
+      map.addSource(sourceId, structuredClone(source));
     }
   }
 
-  for (const [index, spec] of hostedLayer.layers.entries()) {
-    const layer = { ...spec, id: nativeLayerIds[index] };
-    if (!map.getLayer(layer.id)) {
-      map.addLayer(layer);
+  for (const spec of layers) {
+    if (!map.getLayer(spec.id)) {
+      map.addLayer(structuredClone(spec));
     }
   }
 }

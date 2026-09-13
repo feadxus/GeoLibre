@@ -54,17 +54,19 @@ export function arcgisVectorStyle(layer: GeoLibreLayer): {
   if (
     entries.length === 0 ||
     entries.some(([, source]) => !source || source.type !== "vector") ||
-    layers.some(
-      (spec) =>
-        !spec ||
-        typeof spec.id !== "string" ||
-        !nativeIds.includes(spec.id) ||
+    layers.some((spec) => {
+      if (!spec || typeof spec.id !== "string" || !nativeIds.includes(spec.id)) return true;
+      // A style's base fill has no source; every other kind must name one of
+      // the resolved vector sources and the tile layer inside it.
+      if (spec.type === "background") return false;
+      return (
         typeof spec.source !== "string" ||
         !Object.hasOwn(sources, spec.source) ||
         typeof spec["source-layer"] !== "string" ||
         spec["source-layer"].length === 0 ||
-        !["fill", "line", "circle", "symbol", "fill-extrusion", "heatmap"].includes(spec.type),
-    )
+        !["fill", "line", "circle", "symbol", "fill-extrusion", "heatmap"].includes(spec.type)
+      );
+    })
   )
     return null;
   return {
