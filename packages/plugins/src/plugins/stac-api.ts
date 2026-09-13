@@ -281,12 +281,20 @@ export async function loadPortolanIndex(
   return portolanIndexFromDocument(document);
 }
 
-/** Reuse a connected registry document for discovery without fetching it again. */
-export function portolanIndexFromDocument(document: Record<string, unknown>): StacIndexCatalog[] {
+/**
+ * Reuse a connected registry document for discovery without fetching it again.
+ *
+ * @param document - The registry's root catalog document.
+ * @param base - The URL the document was fetched from, for resolving relative links.
+ */
+export function portolanIndexFromDocument(
+  document: Record<string, unknown>,
+  base: string = PORTOLAN_REGISTRY_URL,
+): StacIndexCatalog[] {
   if (!document || document.type !== "Catalog" || !Array.isArray(document.links)) {
     throw new Error("Portolan Registry returned an invalid catalog list");
   }
-  return linksOf(document.links, PORTOLAN_REGISTRY_URL)
+  return linksOf(document.links, base)
     .filter((link) => link.rel === "child" && httpUrl(link.href))
     .map((link, id) => ({
       id,
