@@ -1,3 +1,4 @@
+import { uniqueImportedLayerName } from "./file-name";
 import type { FeatureCollection } from "geojson";
 import { v4 as uuidv4 } from "uuid";
 import { create } from "zustand";
@@ -1824,6 +1825,20 @@ export const useAppStore = create<AppState>()(
       addLayer: (layer, beforeLayerId = null) =>
         set((s) => {
           const layers = [...s.layers];
+          // Plugin source identifiers (for example pmtiles://) are not local files.
+          const localSource =
+            layer.sourcePath &&
+            (!/^[a-z][a-z0-9+.-]*:\/\//i.test(layer.sourcePath) ||
+              /^(content|file):\/\//i.test(layer.sourcePath));
+          if (localSource) {
+            layer = {
+              ...layer,
+              name: uniqueImportedLayerName(
+                layer.name,
+                layers.map((item) => item.name),
+              ),
+            };
+          }
           const beforeIndex = beforeLayerId ? layers.findIndex((l) => l.id === beforeLayerId) : -1;
           const layerWithBeforeId =
             beforeLayerId && beforeIndex < 0
