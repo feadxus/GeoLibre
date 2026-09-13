@@ -1185,39 +1185,42 @@ function ViewportStretchControls({
   const [message, setMessage] = useState("");
   const abortRef = useRef<AbortController | null>(null);
 
-  const apply = useCallback(async (silent = false): Promise<void> => {
-    const bounds = mapControllerRef?.current?.getViewBounds?.();
-    if (!bounds) {
-      if (!silent) setMessage(t("rasterSymbology.viewportStretchNoView"));
-      return;
-    }
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    setBusy(true);
-    if (!silent) setMessage("");
-    try {
-      const values = await readViewportValues(layerId, band, bounds, controller.signal);
-      if (controller.signal.aborted) return;
-      if (values.length === 0) {
-        if (!silent) setMessage(t("rasterSymbology.viewportStretchNoValues"));
+  const apply = useCallback(
+    async (silent = false): Promise<void> => {
+      const bounds = mapControllerRef?.current?.getViewBounds?.();
+      if (!bounds) {
+        if (!silent) setMessage(t("rasterSymbology.viewportStretchNoView"));
         return;
       }
-      const range = viewportRange(values, method);
-      if (range[0] >= range[1]) {
-        if (!silent) setMessage(t("rasterSymbology.viewportStretchNoRange"));
-        return;
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      setBusy(true);
+      if (!silent) setMessage("");
+      try {
+        const values = await readViewportValues(layerId, band, bounds, controller.signal);
+        if (controller.signal.aborted) return;
+        if (values.length === 0) {
+          if (!silent) setMessage(t("rasterSymbology.viewportStretchNoValues"));
+          return;
+        }
+        const range = viewportRange(values, method);
+        if (range[0] >= range[1]) {
+          if (!silent) setMessage(t("rasterSymbology.viewportStretchNoRange"));
+          return;
+        }
+        onChange([range]);
+        if (!silent) setMessage(t("rasterSymbology.viewportStretchApplied"));
+      } catch (error) {
+        if (!controller.signal.aborted && !silent) {
+          setMessage(error instanceof Error ? error.message : String(error));
+        }
+      } finally {
+        if (!controller.signal.aborted) setBusy(false);
       }
-      onChange([range]);
-      if (!silent) setMessage(t("rasterSymbology.viewportStretchApplied"));
-    } catch (error) {
-      if (!controller.signal.aborted && !silent) {
-        setMessage(error instanceof Error ? error.message : String(error));
-      }
-    } finally {
-      if (!controller.signal.aborted) setBusy(false);
-    }
-  }, [band, layerId, mapControllerRef, method, onChange, t]);
+    },
+    [band, layerId, mapControllerRef, method, onChange, t],
+  );
 
   useEffect(() => {
     if (!autoUpdate || !mapControllerRef?.current) return;
@@ -1244,7 +1247,13 @@ function ViewportStretchControls({
           <option value="percentile">{t("rasterSymbology.viewportPercentile")}</option>
           <option value="stddev">{t("rasterSymbology.viewportStddev")}</option>
         </Select>
-        <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => void apply()}>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          onClick={() => void apply()}
+        >
           {busy ? t("rasterSymbology.viewportStretching") : t("rasterSymbology.viewportApply")}
         </Button>
       </div>
