@@ -211,7 +211,12 @@ describe("Mapbox-specific basemap preference", () => {
     const project = createEmptyProject();
     assert.equal(project.preferences.map.mapboxStyleUrl, "mapbox://styles/mapbox/streets-v12");
     assert.notEqual(project.basemapStyleUrl, project.preferences.map.mapboxStyleUrl);
-    project.preferences.map.mapboxStyleUrl = undefined;
+    // createEmptyProject hands back the shared default preferences object, so
+    // copy before clearing rather than mutating the global default.
+    project.preferences = {
+      ...project.preferences,
+      map: { ...project.preferences.map, mapboxStyleUrl: undefined },
+    };
     project.basemapStyleUrl = BLANK_BASEMAP;
     const reopened = parseProject(serializeProject(project));
     assert.equal(reopened.preferences.map.mapboxStyleUrl, undefined);
@@ -221,7 +226,10 @@ describe("Mapbox-specific basemap preference", () => {
     const project = createEmptyProject();
     const shared = project.basemapStyleUrl;
     project.primaryRenderer = "mapbox";
-    project.preferences.map.mapboxStyleUrl = "mapbox://styles/mapbox/standard";
+    project.preferences = {
+      ...project.preferences,
+      map: { ...project.preferences.map, mapboxStyleUrl: "mapbox://styles/mapbox/standard" },
+    };
     const reopened = parseProject(serializeProject(project));
     assert.equal(reopened.basemapStyleUrl, shared);
     assert.equal(reopened.preferences.map.mapboxStyleUrl, "mapbox://styles/mapbox/standard");

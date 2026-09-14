@@ -2,6 +2,7 @@ import {
   clearExternalNativePaintBridge,
   setExternalNativePaintBridge,
   useAppStore,
+  type AppState,
 } from "@geolibre/core";
 import { buildProjectEgressSnapshot } from "../lib/build-project-snapshot";
 import { nativeWmsTileUrl } from "../lib/native-wms-url";
@@ -855,6 +856,22 @@ export function useTimeSliderAutoClose(mapControllerRef: RefObject<MapEngine | n
   }, [mapControllerRef]);
 }
 
+/**
+ * The basemap a plugin sees as active: the Mapbox-only style while Mapbox is
+ * the primary renderer, otherwise the shared MapLibre/Cesium basemap.
+ *
+ * `setBasemap` writes the same two fields, so `getActiveBasemap` and
+ * `onBasemapChange` must read them through this one helper or a Mapbox style
+ * change is written but never reported to `onBasemapChange` subscribers.
+ */
+function effectiveBasemapUrl(
+  state: Pick<AppState, "primaryRenderer" | "preferences" | "basemapStyleUrl">,
+): string {
+  return state.primaryRenderer === "mapbox"
+    ? (state.preferences.map.mapboxStyleUrl ?? state.basemapStyleUrl)
+    : state.basemapStyleUrl;
+}
+
 export function createAppAPI(mapControllerRef?: RefObject<MapEngine | null>) {
   const store = useAppStore.getState();
   // Captured so methods that delegate to plugin helpers taking the AppAPI
@@ -1029,16 +1046,12 @@ export function createAppAPI(mapControllerRef?: RefObject<MapEngine | null>) {
       return detach;
     },
     unregisterTemporalLayer: (layerId: string) => unregisterTemporalLayer(layerId),
-    getActiveBasemap: () => {
-      const state = useAppStore.getState();
-      return state.primaryRenderer === "mapbox"
-        ? (state.preferences.map.mapboxStyleUrl ?? state.basemapStyleUrl)
-        : state.basemapStyleUrl;
-    },
+    getActiveBasemap: () => effectiveBasemapUrl(useAppStore.getState()),
     onBasemapChange: (callback: (styleUrl: string) => void) =>
       useAppStore.subscribe((state, prev) => {
-        if (state.basemapStyleUrl !== prev.basemapStyleUrl) {
-          callback(state.basemapStyleUrl);
+        const current = effectiveBasemapUrl(state);
+        if (current !== effectiveBasemapUrl(prev)) {
+          callback(current);
         }
       }),
     getLayers: () => useAppStore.getState().layers.map((layer) => layer.id),
