@@ -972,12 +972,12 @@ export function SettingsDialog({
     setError(null);
   };
 
-  const addEnvironmentVariable = () => {
+  const addEnvironmentVariable = (key = "") => {
     setDraftPreferences((current) => ({
       ...current,
       environmentVariables: [
         ...current.environmentVariables,
-        { id: createDraftId(), key: "", value: "", enabled: true },
+        { id: createDraftId(), key, value: "", enabled: true },
       ],
     }));
     setSection("environment");
@@ -2826,15 +2826,29 @@ export function SettingsDialog({
                         })}
                       </p>
                     </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={addEnvironmentVariable}
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      {t("common.add")}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={draftPreferences.environmentVariables.some(
+                          (variable) => variable.key.trim() === "VITE_MAPBOX_ACCESS_TOKEN",
+                        )}
+                        onClick={() => addEnvironmentVariable("VITE_MAPBOX_ACCESS_TOKEN")}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        {t("toolbar.item.rendererMapbox")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => addEnvironmentVariable()}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        {t("common.add")}
+                      </Button>
+                    </div>
                   </div>
                   <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
                     <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
