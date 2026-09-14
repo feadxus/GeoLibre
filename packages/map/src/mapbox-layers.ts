@@ -33,6 +33,20 @@ function supportedUrl(value: string): boolean {
 }
 
 /**
+ * Whether an inline style's sources all use URLs Mapbox can fetch. GeoLibre's
+ * offline basemap builds a `pmtiles://` source, and that protocol is only ever
+ * registered with maplibre-gl, so such a style would silently fail to load in
+ * a Mapbox pane.
+ */
+export function styleUsesUnsupportedSource(style: { sources?: object }): boolean {
+  return Object.values(style.sources ?? {}).some((source: unknown) => {
+    const { url, tiles } = (source ?? {}) as { url?: unknown; tiles?: unknown };
+    const urls = [url, ...(Array.isArray(tiles) ? tiles : [])];
+    return urls.some((value) => typeof value === "string" && !supportedUrl(value));
+  });
+}
+
+/**
  * Whether {@link compileMapboxLayer} can produce a native Mapbox plan for a
  * layer. The layer panels use it to badge a layer the Mapbox renderer cannot
  * draw (a MapLibre custom protocol, deck.gl, COG, ...) before the engine's

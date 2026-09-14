@@ -10,7 +10,7 @@ import {
   serializeProject,
   useAppStore,
 } from "@geolibre/core";
-import { compileMapboxLayer } from "../packages/map/src/mapbox-layers";
+import { compileMapboxLayer, styleUsesUnsupportedSource } from "../packages/map/src/mapbox-layers";
 import { MAPBOX_CAPABILITIES, redactMapboxError } from "../packages/map/src/mapbox-engine";
 import { isPluginEngineSupported } from "../packages/plugins/src/types";
 import { geojsonLayer } from "./helpers/layer-fixtures";
@@ -95,6 +95,24 @@ describe("Mapbox native layer compilation", () => {
       ["coalesce", ["get", "name"], ""],
     ]);
     assert.equal(plan.layers.length, 4);
+  });
+  it("flags inline styles whose sources need a MapLibre-only protocol", () => {
+    assert.equal(
+      styleUsesUnsupportedSource({
+        sources: { protomaps: { url: "pmtiles://offline-basemap" } },
+      }),
+      true,
+    );
+    assert.equal(
+      styleUsesUnsupportedSource({
+        sources: {
+          osm: { tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"] },
+          inline: { url: "data:application/json,{}" },
+        },
+      }),
+      false,
+    );
+    assert.equal(styleUsesUnsupportedSource({}), false);
   });
   it("uses Mapbox's native GeoJSON path even for plugin-owned in-memory vector data", () => {
     const layer = geojsonLayer({ id: "external" });

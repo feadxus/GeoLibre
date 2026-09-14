@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { applyGroupEffects, useAppStore } from "@geolibre/core";
+import { applyGroupEffects, DEFAULT_BASEMAP, useAppStore } from "@geolibre/core";
 import type { StyleSpecification, Popup } from "mapbox-gl";
 import type { MapEngine } from "./map-engine";
 import { MapboxEngine, redactMapboxError } from "./mapbox-engine";
+import { styleUsesUnsupportedSource } from "./mapbox-layers";
 import { resolveMapStyle } from "./map-controller";
 
 export interface MapboxCanvasProps {
@@ -34,6 +35,15 @@ export function MapboxCanvas({ accessToken, viewId, engineRef, onEngineReady }: 
         const resolvedStyle = (url: string): string | StyleSpecification => {
           const style = resolveMapStyle(url);
           if (typeof style === "string") return style;
+          // The offline PMTiles basemap resolves to a style whose source uses
+          // the `pmtiles://` protocol, registered with maplibre-gl only. Mapbox
+          // has no handler for it, so fall back rather than load a blank map.
+          if (styleUsesUnsupportedSource(style)) {
+            console.warn(
+              `Basemap "${url}" uses a MapLibre-only source protocol; the Mapbox renderer falls back to the default basemap.`,
+            );
+            return DEFAULT_BASEMAP;
+          }
           const { projection, ...rest } = style;
           return {
             ...rest,
