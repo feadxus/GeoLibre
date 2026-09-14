@@ -1882,6 +1882,7 @@
     "show2d": "แสดงแผนที่ {{number}} เป็นแผนที่ 2 มิติ",
     "only2d": "2 มิติเท่านั้น",
     "only3d": "3 มิติเท่านั้น",
+    "noMapbox": "ไม่รองรับ Mapbox",
     "cesiumTokenHint": "เพิ่มโทเค็น Cesium Ion ในการตั้งค่าเพื่อใช้ข้อมูลภูมิประเทศและภาพถ่ายจาก Ion"
   },
   "renderer": {
@@ -1890,6 +1891,7 @@
     "projectBasemap": "แผนที่ฐานของโครงการ",
     "layerUnsupported": "ไม่แสดงผลบนลูกโลก 3 มิติ",
     "layerCesiumOnly": "แสดงผลบนลูกโลก 3 มิติเท่านั้น",
+    "layerMapboxUnsupported": "ไม่แสดงผลบนเอนจิน Mapbox",
     "resetView": "รีเซ็ตมุมมอง",
     "scene3D": "ลูกโลก 3 มิติ",
     "scene2D": "แผนที่ 2 มิติ",

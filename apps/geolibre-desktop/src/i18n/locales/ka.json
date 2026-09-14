@@ -1928,6 +1928,7 @@
     "show2d": "აჩვენე რუკა {{number}} 2D რუკად",
     "only2d": "მხოლოდ 2D",
     "only3d": "მხოლოდ 3D",
+    "noMapbox": "Mapbox-ის გარეშე",
     "cesiumTokenHint": "რელიეფისა და Ion-ის სურათებისთვის დაამატეთ Cesium Ion-ის token პარამეტრებში"
   },
   "renderer": {
@@ -1936,6 +1937,7 @@
     "projectBasemap": "პროექტის საბაზისო რუკა",
     "layerUnsupported": "3D გლობუსზე არ ისახება",
     "layerCesiumOnly": "ისახება მხოლოდ 3D გლობუსზე",
+    "layerMapboxUnsupported": "Mapbox-ის ძრავით არ ისახება",
     "resetView": "ხედის საწყისზე დაბრუნება",
     "scene3D": "3D გლობუსი",
     "scene2D": "2D რუკა",

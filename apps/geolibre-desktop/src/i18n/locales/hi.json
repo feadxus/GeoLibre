@@ -1928,6 +1928,7 @@
     "show2d": "मानचित्र {{number}} को 2D मानचित्र के रूप में दिखाएँ",
     "only2d": "केवल 2D",
     "only3d": "केवल 3D",
+    "noMapbox": "Mapbox नहीं",
     "cesiumTokenHint": "टेरेन और Ion इमेजरी के लिए सेटिंग्स में Cesium Ion टोकन जोड़ें"
   },
   "renderer": {
@@ -1936,6 +1937,7 @@
     "projectBasemap": "प्रोजेक्ट बेसमैप",
     "layerUnsupported": "3D ग्लोब द्वारा रेंडर नहीं किया गया",
     "layerCesiumOnly": "केवल 3D ग्लोब द्वारा रेंडर किया गया",
+    "layerMapboxUnsupported": "Mapbox इंजन द्वारा रेंडर नहीं किया गया",
     "resetView": "दृश्य रीसेट करें",
     "scene3D": "3D ग्लोब",
     "scene2D": "2D मानचित्र",

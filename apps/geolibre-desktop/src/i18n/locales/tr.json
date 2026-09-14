@@ -1928,6 +1928,7 @@
     "show2d": "{{number}} numaralı haritayı 2B harita olarak göster",
     "only2d": "Yalnızca 2B",
     "only3d": "Yalnızca 3B",
+    "noMapbox": "Mapbox yok",
     "cesiumTokenHint": "Arazi ve Ion görüntüleri için Ayarlar'dan bir Cesium Ion belirteci ekleyin"
   },
   "renderer": {
@@ -1936,6 +1937,7 @@
     "projectBasemap": "Proje altlık haritası",
     "layerUnsupported": "3D küre tarafından çizilmiyor",
     "layerCesiumOnly": "Yalnızca 3B küre tarafından çiziliyor",
+    "layerMapboxUnsupported": "Mapbox motoru tarafından çizilmiyor",
     "resetView": "Görünümü Sıfırla",
     "scene3D": "3B küre",
     "scene2D": "2B harita",
@@ -1943,7 +1945,7 @@
     "fullscreenEnter": "Tam ekran",
     "fullscreenExit": "Tam ekrandan çık",
     "fullscreenUnavailable": "Tam ekran kullanılamıyor",
-    "mapboxTokenHint": "Bu işleyiciyi kullanmak için Ayarlar → Ortam değişkenleri bölümüne Mapbox erişim belirtecinizi ekleyin.",
+    "mapboxTokenHint": "Bu çizim motorunu kullanmak için Ayarlar → Ortam değişkenleri bölümüne Mapbox erişim belirtecinizi ekleyin.",
     "pluginUnsupported": "Bu eklenti seçilen işleme motorunu desteklemiyor."
   },
   "mapContextMenu": {

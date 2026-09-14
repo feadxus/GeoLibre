@@ -1882,6 +1882,7 @@
     "show2d": "Hiển thị bản đồ {{number}} dưới dạng bản đồ 2D",
     "only2d": "chỉ 2D",
     "only3d": "chỉ 3D",
+    "noMapbox": "không Mapbox",
     "cesiumTokenHint": "Thêm mã thông báo Cesium Ion trong Cài đặt để dùng địa hình và ảnh vệ tinh Ion"
   },
   "renderer": {
@@ -1890,6 +1891,7 @@
     "projectBasemap": "Sơ đồ cơ sở của dự án",
     "layerUnsupported": "Không được kết xuất trên quả địa cầu 3D",
     "layerCesiumOnly": "Chỉ được kết xuất trên quả địa cầu 3D",
+    "layerMapboxUnsupported": "Không được kết xuất bởi công cụ Mapbox",
     "resetView": "Đặt lại chế độ xem",
     "scene3D": "Quả địa cầu 3D",
     "scene2D": "Bản đồ 2D",

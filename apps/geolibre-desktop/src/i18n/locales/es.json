@@ -1928,6 +1928,7 @@
     "show2d": "Mostrar el mapa {{number}} como mapa 2D",
     "only2d": "Solo 2D",
     "only3d": "Solo 3D",
+    "noMapbox": "Sin Mapbox",
     "cesiumTokenHint": "Añada un token de Cesium Ion en Configuración para el terreno y las imágenes de Ion"
   },
   "renderer": {
@@ -1936,6 +1937,7 @@
     "projectBasemap": "Mapa base del proyecto",
     "layerUnsupported": "No se representa en el globo 3D",
     "layerCesiumOnly": "Se representa solo en el globo 3D",
+    "layerMapboxUnsupported": "No se representa en el motor Mapbox",
     "resetView": "Restablecer vista",
     "scene3D": "Globo 3D",
     "scene2D": "Mapa 2D",

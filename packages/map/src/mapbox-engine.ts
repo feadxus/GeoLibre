@@ -87,6 +87,7 @@ export class MapboxEngine implements MapEngine {
     };
     map.on("style.load", this.styleLoaded);
     map.on("error", this.onError);
+    map.on("sourcedata", this.onSourceData);
     map.on("idle", this.flushLayers);
     this.addNativeControl("navigation", new gl.NavigationControl());
     this.addNativeControl("fullscreen", new gl.FullscreenControl());
@@ -103,6 +104,19 @@ export class MapboxEngine implements MapEngine {
   }
   private onError = (event: { error: Error; sourceId?: string }) => {
     this.errors.set(event.sourceId ?? "map", redactMapboxError(event.error.message));
+  };
+  /**
+   * A source error is stored under the source id and must not outlive the
+   * failure: Mapbox emits `sourcedata` for metadata, visibility and error
+   * changes too, so only a completed `content` load clears the entry.
+   */
+  private onSourceData = (event: {
+    sourceId?: string;
+    sourceDataType?: "metadata" | "content" | "visibility" | "error";
+    isSourceLoaded?: boolean;
+  }) => {
+    if (event.sourceId && event.sourceDataType === "content" && event.isSourceLoaded)
+      this.errors.delete(event.sourceId);
   };
   private styleLoaded = () => {
     const map = this.map;
@@ -124,6 +138,7 @@ export class MapboxEngine implements MapEngine {
     this.disposers.clear();
     this.map.off("style.load", this.styleLoaded);
     this.map.off("error", this.onError);
+    this.map.off("sourcedata", this.onSourceData);
     this.map.off("idle", this.flushLayers);
     this.map.remove();
     this.pluginControls.clear();
@@ -317,6 +332,7 @@ export class MapboxEngine implements MapEngine {
     this.plans.delete(id);
     this.previous.delete(id);
     this.errors.delete(`layer:${id}`);
+    if (plan) this.errors.delete(plan.sourceId);
   }
   waitAndSyncLayers(layers: GeoLibreLayer[]): void {
     this.syncLayers(layers);
@@ -425,18 +441,34 @@ export class MapboxEngine implements MapEngine {
     const seen = new Set<string>();
     return map.queryRenderedFeatures(map.project(lngLat), { layers: queryIds }).flatMap((f) => {
       const id = byId.get(f.layer?.id ?? "")!;
-      const key = `${id}:${f.id ?? JSON.stringify(f.properties)}`;
+      const featureId = this.featureIdForLayer(id, f.id);
+      const key = `${id}:${featureId ?? JSON.stringify(f.properties)}`;
       if (seen.has(key)) return [];
       seen.add(key);
       return [
         {
           layerId: id,
-          featureId: f.id == null ? null : String(f.id),
+          featureId,
           properties: f.properties ?? {},
           geometry: f.geometry,
         },
       ];
     });
+  }
+  /**
+   * Resolve a queried feature's id to the app's `String(feature.id ?? index)`
+   * identity. GeoJSON sources are compiled with `generateId`, so Mapbox reports
+   * the feature's index in the source data and overwrites any authored id; map
+   * it back through the layer's own GeoJSON so selection and highlighting key
+   * on the same value as the attribute table.
+   */
+  private featureIdForLayer(layerId: string, queried: string | number | undefined): string | null {
+    if (queried == null) return null;
+    const features = this.layers.find((l) => l.id === layerId)?.geojson?.features;
+    if (!features) return String(queried);
+    const index = Number(queried);
+    const feature = Number.isInteger(index) ? features[index] : undefined;
+    return feature ? String(feature.id ?? index) : String(queried);
   }
   highlightFeature(
     layer: GeoLibreLayer | undefined,

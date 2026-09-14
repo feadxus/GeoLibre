@@ -1882,6 +1882,7 @@
     "show2d": "Tampilkan peta {{number}} sebagai peta 2D",
     "only2d": "Hanya 2D",
     "only3d": "Hanya 3D",
+    "noMapbox": "Tanpa Mapbox",
     "cesiumTokenHint": "Tambahkan token Cesium Ion di Pengaturan untuk medan dan citra Ion"
   },
   "renderer": {
@@ -1890,6 +1891,7 @@
     "projectBasemap": "Peta dasar proyek",
     "layerUnsupported": "Tidak dirender oleh bola dunia 3D",
     "layerCesiumOnly": "Hanya dirender oleh bola dunia 3D",
+    "layerMapboxUnsupported": "Tidak dirender oleh mesin Mapbox",
     "resetView": "Atur Ulang Tampilan",
     "scene3D": "Bola dunia 3D",
     "scene2D": "Peta 2D",

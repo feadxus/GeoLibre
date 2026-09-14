@@ -1,5 +1,6 @@
 export { MapboxCanvas, type MapboxCanvasProps } from "./MapboxCanvas";
 export { MapboxEngine, MAPBOX_CAPABILITIES } from "./mapbox-engine";
+export { isMapboxSupportedLayer } from "./mapbox-layers";
 export {
   MapCanvas,
   type MapCanvasIdentifyAllLabels,

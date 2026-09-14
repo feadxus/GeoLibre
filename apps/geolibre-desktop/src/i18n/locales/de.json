@@ -1928,6 +1928,7 @@
     "show2d": "Karte {{number}} als 2D-Karte anzeigen",
     "only2d": "Nur 2D",
     "only3d": "Nur 3D",
+    "noMapbox": "Kein Mapbox",
     "cesiumTokenHint": "Fügen Sie in den Einstellungen ein Cesium-Ion-Token für Gelände und Ion-Bilder hinzu"
   },
   "renderer": {
@@ -1936,6 +1937,7 @@
     "projectBasemap": "Hintergrundkarte des Projekts",
     "layerUnsupported": "Wird vom 3D-Globus nicht dargestellt",
     "layerCesiumOnly": "Wird nur vom 3D-Globus dargestellt",
+    "layerMapboxUnsupported": "Wird vom Mapbox-Renderer nicht dargestellt",
     "resetView": "Ansicht zurücksetzen",
     "scene3D": "3D-Globus",
     "scene2D": "2D-Karte",

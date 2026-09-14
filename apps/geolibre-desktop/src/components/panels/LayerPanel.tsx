@@ -82,6 +82,7 @@ import {
   buildQml,
   buildSld,
   isCesiumSupportedLayerType,
+  isMapboxSupportedLayer,
   isPlaceholderLayer,
   mapboxStyleToJson,
   geoLibreStyleSourceName,
@@ -668,6 +669,10 @@ export function LayerPanel({
   // The 3D globe draws a subset of the layer kinds MapLibre does, so rows it
   // cannot render are flagged while it owns the primary map area (#2217).
   const cesiumPrimary = useAppStore((s) => s.primaryRenderer === "cesium");
+  // Likewise the Mapbox engine only compiles native Mapbox sources, so a layer
+  // it rejects (a MapLibre custom protocol, deck.gl, COG, ...) is flagged here
+  // rather than only reported by the map's error banner once it is visible.
+  const mapboxPrimary = useAppStore((s) => s.primaryRenderer === "mapbox");
   // The subset panel draws its extract box on the map surface, so it needs an
   // engine the user can draw on — not merely "not the globe".
   const capabilities = useMapCapabilities(mapControllerRef);
@@ -3529,6 +3534,16 @@ export function LayerPanel({
                           {t("mapGrid.only3d")}
                         </span>
                       )}
+                      {mapboxPrimary &&
+                        !isCesiumOnlyLayer(layer) &&
+                        !isMapboxSupportedLayer(layer) && (
+                          <span
+                            title={t("renderer.layerMapboxUnsupported")}
+                            className="shrink-0 rounded-sm bg-muted px-1 text-[10px] uppercase text-muted-foreground"
+                          >
+                            {t("mapGrid.noMapbox")}
+                          </span>
+                        )}
                       <span className="shrink-0 text-[10px] uppercase text-muted-foreground">
                         {layerTypeLabel(layer, t)}
                       </span>

@@ -1,5 +1,10 @@
-import { isCesiumOnlyLayer, useAppStore } from "@geolibre/core";
-import { CesiumCanvas, isCesiumSupportedLayerType, SecondaryMapCanvas } from "@geolibre/map";
+import { isCesiumOnlyLayer, useAppStore, type MapRendererKind } from "@geolibre/core";
+import {
+  CesiumCanvas,
+  isCesiumSupportedLayerType,
+  isMapboxSupportedLayer,
+  SecondaryMapCanvas,
+} from "@geolibre/map";
 import {
   Button,
   DropdownMenu,
@@ -153,9 +158,9 @@ function SecondaryMapPane({ viewId, index, cesiumToken }: SecondaryMapPaneProps)
         ariaLabel={t("mapGrid.labelLabel", { number: index + 2 })}
       />
       <div className="absolute left-2 top-2 z-10 flex items-center gap-1.5">
-        {/* Both the 2D map and the 3D globe render the shared layers, so the
-            per-pane layer-visibility toggle applies to either. */}
-        <PaneLayerToggle viewId={viewId} index={index} is3d={is3d} />
+        {/* Every renderer draws the shared layers, so the per-pane
+            layer-visibility toggle applies to each of them. */}
+        <PaneLayerToggle viewId={viewId} index={index} renderer={renderer} />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -204,18 +209,20 @@ function SecondaryMapPane({ viewId, index, cesiumToken }: SecondaryMapPaneProps)
 interface PaneLayerToggleProps {
   viewId: string;
   index: number;
-  /** When true this is a 3D-globe pane, so layers it can't render are flagged. */
-  is3d: boolean;
+  /** The pane's renderer, so layers it can't render are flagged. */
+  renderer: MapRendererKind;
 }
 
 /**
  * A dropdown of the shared layers with a checkbox each, controlling which layers
  * are visible in this pane. A layer's checkbox reflects its effective visibility
  * (the pane's override, or the primary map's visibility when not overridden). On
- * a 3D-globe pane, layer kinds the globe cannot render are tagged "2D only".
+ * a 3D-globe pane, layer kinds the globe cannot render are tagged "2D only"; on
+ * a Mapbox pane, layers its native adapter cannot compile are tagged too.
  */
-function PaneLayerToggle({ viewId, index, is3d }: PaneLayerToggleProps) {
+function PaneLayerToggle({ viewId, index, renderer }: PaneLayerToggleProps) {
   const { t } = useTranslation();
+  const is3d = renderer === "cesium";
   const layers = useAppStore((s) => s.layers);
   const layerVisibility = useAppStore(
     (s) => s.secondaryMapViews.find((p) => p.id === viewId)?.layerVisibility,
@@ -253,6 +260,7 @@ function PaneLayerToggle({ viewId, index, is3d }: PaneLayerToggleProps) {
             const visible = override === undefined ? layer.visible : override;
             const only2d = is3d && !isCesiumSupportedLayerType(layer);
             const only3d = !is3d && isCesiumOnlyLayer(layer);
+            const noMapbox = renderer === "mapbox" && !isMapboxSupportedLayer(layer);
             return (
               <DropdownMenuCheckboxItem
                 key={layer.id}
@@ -265,9 +273,9 @@ function PaneLayerToggle({ viewId, index, is3d }: PaneLayerToggleProps) {
                 onSelect={(event: Event) => event.preventDefault()}
               >
                 <span className="truncate">{layer.name}</span>
-                {only2d || only3d ? (
+                {only2d || only3d || noMapbox ? (
                   <span className="ms-auto shrink-0 ps-2 text-xs text-muted-foreground">
-                    {t(only2d ? "mapGrid.only2d" : "mapGrid.only3d")}
+                    {t(only2d ? "mapGrid.only2d" : only3d ? "mapGrid.only3d" : "mapGrid.noMapbox")}
                   </span>
                 ) : null}
               </DropdownMenuCheckboxItem>

@@ -2020,6 +2020,7 @@
     "show2d": "Показать карту {{number}} как 2D-карту",
     "only2d": "Только 2D",
     "only3d": "Только 3D",
+    "noMapbox": "Без Mapbox",
     "cesiumTokenHint": "Добавьте токен Cesium Ion в настройках, чтобы получить рельеф и снимки Ion"
   },
   "renderer": {
@@ -2028,6 +2029,7 @@
     "projectBasemap": "Базовая карта проекта",
     "layerUnsupported": "Не отображается на 3D-глобусе",
     "layerCesiumOnly": "Отображается только на 3D-глобусе",
+    "layerMapboxUnsupported": "Не отображается движком Mapbox",
     "resetView": "Сбросить вид",
     "scene3D": "3D-глобус",
     "scene2D": "2D-карта",

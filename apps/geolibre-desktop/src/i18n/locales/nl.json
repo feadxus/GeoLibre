@@ -1928,6 +1928,7 @@
     "show2d": "Kaart {{number}} weergeven als 2D-kaart",
     "only2d": "Alleen 2D",
     "only3d": "Alleen 3D",
+    "noMapbox": "Geen Mapbox",
     "cesiumTokenHint": "Voeg in Instellingen een Cesium Ion-token toe voor terrein en Ion-beelden"
   },
   "renderer": {
@@ -1936,6 +1937,7 @@
     "projectBasemap": "Achtergrondkaart van het project",
     "layerUnsupported": "Niet weergegeven door de 3D-globe",
     "layerCesiumOnly": "Alleen weergegeven door de 3D-globe",
+    "layerMapboxUnsupported": "Niet weergegeven door de Mapbox-engine",
     "resetView": "Weergave herstellen",
     "scene3D": "3D-globe",
     "scene2D": "2D-kaart",

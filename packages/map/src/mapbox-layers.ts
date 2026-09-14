@@ -5,7 +5,12 @@ import {
   DEFAULT_LAYER_STYLE,
   type GeoLibreLayer,
 } from "@geolibre/core";
-import type { LayerSpecification, SourceSpecification, FilterSpecification } from "mapbox-gl";
+import type {
+  DataDrivenPropertyValueSpecification,
+  LayerSpecification,
+  SourceSpecification,
+  FilterSpecification,
+} from "mapbox-gl";
 import { circlePaint, fillPaint, fillExtrusionPaint, linePaint, rasterPaint } from "./style-mapper";
 
 export interface MapboxLayerPlan {
@@ -25,6 +30,21 @@ export function mapboxPaint(paint: Record<string, unknown>): Record<string, unkn
 
 function supportedUrl(value: string): boolean {
   return !/^[\w+-]+:/.test(value) || /^(https?:|mapbox:|data:|blob:)/.test(value);
+}
+
+/**
+ * Whether {@link compileMapboxLayer} can produce a native Mapbox plan for a
+ * layer. The layer panels use it to badge a layer the Mapbox renderer cannot
+ * draw (a MapLibre custom protocol, deck.gl, COG, ...) before the engine's
+ * error banner would report it.
+ */
+export function isMapboxSupportedLayer(layer: GeoLibreLayer): boolean {
+  try {
+    compileMapboxLayer(layer);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Compile only native Mapbox sources. Never hand MapLibre protocol URLs to its workers. */
@@ -85,9 +105,17 @@ export function compileMapboxLayer(layer: GeoLibreLayer): MapboxLayerPlan {
     ] as LayerSpecification[];
     const labels = style.labels;
     if (labels.enabled && (labels.field || labels.expression)) {
-      const text = labels.expression.trim()
-        ? JSON.parse(labels.expression)
-        : labelFieldTextField(labels);
+      let text: DataDrivenPropertyValueSpecification<string> = labelFieldTextField(
+        labels,
+      ) as DataDrivenPropertyValueSpecification<string>;
+      if (labels.expression.trim()) {
+        try {
+          text = JSON.parse(labels.expression) as DataDrivenPropertyValueSpecification<string>;
+        } catch {
+          // An unparseable label expression must not take the geometry with
+          // it; keep the field-based text.
+        }
+      }
       result.push({
         ...base,
         id: `${id}-labels`,

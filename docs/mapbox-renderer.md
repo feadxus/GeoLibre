@@ -47,6 +47,25 @@ renderer. Mapbox Standard's imported basemap layers do not expose the same
 per-layer opacity controls as classic styles; use a classic style for background
 opacity editing.
 
+## License and terms
+
+GeoLibre itself is MIT licensed, but the Mapbox renderer depends on
+[Mapbox GL JS](https://github.com/mapbox/mapbox-gl-js) v3 (`mapbox-gl`
+3.30.0 at the time of writing), which is **not** open source. Mapbox GL JS v3
+is distributed under the
+[Mapbox Terms of Service](https://www.mapbox.com/legal/tos) and its
+[license](https://github.com/mapbox/mapbox-gl-js/blob/main/LICENSE.txt);
+it requires an active Mapbox account, may only be used with an access token
+from that account and with the relevant Mapbox products, and its terms restrict
+altering the SDK's billing, accounting and data-collection code. Usage-based
+billing and Mapbox's attribution requirements depend on how the Mapbox services
+are used under your account and the applicable terms; consult those terms before
+enabling the renderer in a product. The SDK is a runtime dependency of
+`@geolibre/map`, so npm consumers of that package and the desktop and web
+distributions receive it even when MapLibre stays the active renderer, but no
+Mapbox code runs (and no Mapbox service is contacted) until a Mapbox pane is
+opened.
+
 ## Loading and size
 
 Mapbox's JavaScript and CSS are imported only when a Mapbox pane mounts. The

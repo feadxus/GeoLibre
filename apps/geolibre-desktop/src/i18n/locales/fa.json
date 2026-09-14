@@ -1928,6 +1928,7 @@
     "show2d": "نمایش نقشهٔ {{number}} به‌صورت نقشهٔ دوبعدی",
     "only2d": "تنها دوبعدی",
     "only3d": "تنها سه‌بعدی",
+    "noMapbox": "بدون Mapbox",
     "cesiumTokenHint": "برای زمین و تصاویر Ion، یک توکن Cesium Ion در تنظیمات بیفزایید"
   },
   "renderer": {
@@ -1936,6 +1937,7 @@
     "projectBasemap": "نقشهٔ پایهٔ پروژه",
     "layerUnsupported": "روی کرهٔ سه‌بعدی ترسیم نمی‌شود",
     "layerCesiumOnly": "تنها روی کرهٔ سه‌بعدی ترسیم می‌شود",
+    "layerMapboxUnsupported": "با موتور Mapbox ترسیم نمی‌شود",
     "resetView": "بازنشانی نما",
     "scene3D": "کرهٔ سه‌بعدی",
     "scene2D": "نقشهٔ دوبعدی",

@@ -1882,6 +1882,7 @@
     "show2d": "地図 {{number}} を2D地図として表示",
     "only2d": "2Dのみ",
     "only3d": "3Dのみ",
+    "noMapbox": "Mapbox非対応",
     "cesiumTokenHint": "地形とIon衛星画像を使うには、設定でCesium Ionトークンを追加してください"
   },
   "renderer": {
@@ -1890,6 +1891,7 @@
     "projectBasemap": "プロジェクトのベースマップ",
     "layerUnsupported": "3D地球儀では描画されません",
     "layerCesiumOnly": "3D地球儀でのみ描画されます",
+    "layerMapboxUnsupported": "Mapboxエンジンでは描画されません",
     "resetView": "表示をリセット",
     "scene3D": "3D地球儀",
     "scene2D": "2D地図",
