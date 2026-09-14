@@ -40,8 +40,13 @@ function supportedUrl(value: string): boolean {
  */
 export function styleUsesUnsupportedSource(style: { sources?: object }): boolean {
   return Object.values(style.sources ?? {}).some((source: unknown) => {
-    const { url, tiles } = (source ?? {}) as { url?: unknown; tiles?: unknown };
-    const urls = [url, ...(Array.isArray(tiles) ? tiles : [])];
+    // `data` is a GeoJSON source's external URL when it is a string.
+    const { url, tiles, data } = (source ?? {}) as {
+      url?: unknown;
+      tiles?: unknown;
+      data?: unknown;
+    };
+    const urls = [url, data, ...(Array.isArray(tiles) ? tiles : [])];
     return urls.some((value) => typeof value === "string" && !supportedUrl(value));
   });
 }

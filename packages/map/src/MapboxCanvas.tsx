@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { applyGroupEffects, DEFAULT_BASEMAP, useAppStore } from "@geolibre/core";
+import {
+  applyGroupEffects,
+  DEFAULT_BASEMAP,
+  redactUrlCredentials,
+  useAppStore,
+} from "@geolibre/core";
 import type { StyleSpecification, Popup } from "mapbox-gl";
 import type { MapEngine } from "./map-engine";
 import { MapboxEngine, redactMapboxError } from "./mapbox-engine";
@@ -40,7 +45,7 @@ export function MapboxCanvas({ accessToken, viewId, engineRef, onEngineReady }: 
           // has no handler for it, so fall back rather than load a blank map.
           if (styleUsesUnsupportedSource(style)) {
             console.warn(
-              `Basemap "${url}" uses a MapLibre-only source protocol; the Mapbox renderer falls back to the default basemap.`,
+              `Basemap "${redactUrlCredentials(url)}" uses a MapLibre-only source protocol; the Mapbox renderer falls back to the default basemap.`,
             );
             return DEFAULT_BASEMAP;
           }

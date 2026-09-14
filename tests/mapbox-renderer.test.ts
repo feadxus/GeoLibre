@@ -112,6 +112,12 @@ describe("Mapbox native layer compilation", () => {
       }),
       false,
     );
+    assert.equal(
+      styleUsesUnsupportedSource({
+        sources: { g: { type: "geojson", data: "custom://a.geojson" } },
+      }),
+      true,
+    );
     assert.equal(styleUsesUnsupportedSource({}), false);
   });
   it("uses Mapbox's native GeoJSON path even for plugin-owned in-memory vector data", () => {
