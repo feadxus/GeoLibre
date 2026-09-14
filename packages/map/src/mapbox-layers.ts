@@ -60,10 +60,13 @@ export function compileMapboxLayer(layer: GeoLibreLayer): MapboxLayerPlan {
     ruleBasedVisibilityFilter(layer.style),
   ].filter(Boolean);
   const filter = filters.length ? ["all", ...filters] : null;
-  const geometryFilter = (geometry: string): FilterSpecification =>
-    (filter
-      ? ["all", ["==", ["geometry-type"], geometry], filter]
-      : ["==", ["geometry-type"], geometry]) as FilterSpecification;
+  // `["geometry-type"]` evaluates to the Multi* variant for multi-geometries,
+  // so match both (as layer-sync.ts does) or a MultiPolygon never gets a fill.
+  const geometryFilter = (geometry: string): FilterSpecification => {
+    const isGeometry = ["match", ["geometry-type"], [geometry, `Multi${geometry}`], true, false];
+    return (filter ? ["all", isGeometry, filter] : isGeometry) as FilterSpecification;
+  };
+  const notPoint = ["match", ["geometry-type"], ["Point", "MultiPoint"], false, true];
   const vectorLayers = (sourceLayer?: string): LayerSpecification[] => {
     const base = {
       source: sourceId,
@@ -90,9 +93,7 @@ export function compileMapboxLayer(layer: GeoLibreLayer): MapboxLayerPlan {
         ...base,
         id: `${id}-line`,
         type: "line",
-        filter: (filter
-          ? ["all", ["!=", ["geometry-type"], "Point"], filter]
-          : ["!=", ["geometry-type"], "Point"]) as FilterSpecification,
+        filter: (filter ? ["all", notPoint, filter] : notPoint) as FilterSpecification,
         paint: mapboxPaint(linePaint(style, layer.opacity)),
       },
       {

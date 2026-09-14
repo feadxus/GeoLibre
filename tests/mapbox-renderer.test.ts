@@ -69,6 +69,31 @@ describe("Mapbox native layer compilation", () => {
     assert.ok(fill);
     assert.equal(fill.paint?.["fill-opacity"], layer.style.fillOpacity * 0.5);
   });
+  it("routes Multi* geometries to the same layers as their singular kinds", () => {
+    const plan = compileMapboxLayer(geojsonLayer({ id: "multi" }));
+    const filterOf = (type: string) =>
+      JSON.stringify(plan.layers.find((s) => s.type === type)?.filter);
+    assert.match(filterOf("fill"), /"Polygon","MultiPolygon"/);
+    assert.match(filterOf("circle"), /"Point","MultiPoint"/);
+    // The line layer draws everything except points, so it must exclude
+    // MultiPoint too, or a MultiPoint renders as a line instead of circles.
+    assert.match(filterOf("line"), /"Point","MultiPoint"\],false,true/);
+  });
+  it("keeps the geometry when a label expression is not valid JSON", () => {
+    const layer = geojsonLayer({ id: "labels" });
+    layer.style = {
+      ...layer.style,
+      labels: { ...layer.style.labels, enabled: true, field: "name", expression: "{not json" },
+    };
+    const plan = compileMapboxLayer(layer);
+    const labels = plan.layers.find((s) => s.type === "symbol");
+    assert.ok(labels);
+    assert.deepEqual(labels.layout?.["text-field"], [
+      "to-string",
+      ["coalesce", ["get", "name"], ""],
+    ]);
+    assert.equal(plan.layers.length, 4);
+  });
   it("uses Mapbox's native GeoJSON path even for plugin-owned in-memory vector data", () => {
     const layer = geojsonLayer({ id: "external" });
     layer.metadata = { sourceKind: "maplibre-gl-vector", nativeLayerIds: ["old-native-id"] };

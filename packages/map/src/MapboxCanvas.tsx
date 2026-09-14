@@ -126,8 +126,11 @@ export function MapboxCanvas({ accessToken, viewId, engineRef, onEngineReady }: 
           if (applying || cancelled) return;
           const next = useAppStore.getState(),
             camera = current.readView();
-          if (viewId) next.setSecondaryMapView(viewId, camera, true);
+          // Shared view first (as SecondaryMapCanvas does): each setter notifies
+          // subscribers separately, and a synchronized pane reading the changed
+          // pane against a stale `mapView` would jump to the old camera first.
           if (!viewId || next.mapLayout.syncView) next.setMapView(camera, true);
+          if (viewId) next.setSecondaryMapView(viewId, camera, true);
         });
         map.on("mousemove", (e) => {
           if (!viewId) useAppStore.getState().setPointerCoords(e.lngLat.toArray());

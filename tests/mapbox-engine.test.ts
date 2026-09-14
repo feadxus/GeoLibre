@@ -383,6 +383,30 @@ describe("MapboxEngine camera and preferences", () => {
     assert.equal(engine.readView().bearing, 30);
   });
 
+  it("clamps a saved camera to the project preferences before moving", () => {
+    const { engine, map } = makeEngine();
+    engine.applyMapPreferences({
+      minZoom: 3,
+      maxZoom: 12,
+      maxPitch: 60,
+      bounds: [-180, -90, 180, 90],
+      restrictBounds: false,
+      renderWorldCopies: false,
+      projection: "mercator",
+      terrainEnabled: false,
+    } as unknown as MapPreferences);
+    map.calls.length = 0;
+    engine.applyView({ center: [200, 89], zoom: 18, bearing: 10, pitch: 80 });
+    assert.deepEqual(map.calls, ["jumpTo"]);
+    const view = engine.readView();
+    assert.deepEqual(view.center, [180, 85]);
+    assert.equal(view.zoom, 12);
+    assert.equal(view.pitch, 60);
+    assert.equal(view.bearing, 10);
+    engine.applyView({ center: [0, 0], zoom: 1, bearing: 0, pitch: 0 });
+    assert.equal(engine.readView().zoom, 3);
+  });
+
   it("applies zoom, pitch, bounds, projection and terrain preferences", () => {
     const { engine, map } = makeEngine();
     map.calls.length = 0;

@@ -169,11 +169,36 @@ export class MapboxEngine implements MapEngine {
       old.pitch === view.pitch
     )
       return;
-    const { center, zoom, bearing, pitch } = view;
-    this.map?.jumpTo({ center, zoom, bearing, pitch });
+    this.map?.jumpTo(this.constrainView(view));
   }
   easeToView(view: MapViewState): void {
-    this.map?.easeTo(view);
+    this.map?.easeTo(this.constrainView(view));
+  }
+  /**
+   * Clamp a view to the project's zoom, pitch and world-copy preferences ahead
+   * of the camera move, as the MapLibre engine does: the native constraints
+   * still enforce the limits, but correcting an out-of-range saved camera
+   * after the jump shows as a one-frame snap.
+   */
+  private constrainView(view: MapViewState): {
+    center: [number, number];
+    zoom: number;
+    bearing: number;
+    pitch: number;
+  } {
+    const p = this.preferences;
+    const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+    const minZoom = p ? clamp(p.minZoom, 0, 24) : 0;
+    const maxZoom = p ? Math.max(minZoom, clamp(p.maxZoom, 0, 24)) : 24;
+    return {
+      center: [
+        !p || p.renderWorldCopies ? view.center[0] : clamp(view.center[0], -180, 180),
+        clamp(view.center[1], -85, 85),
+      ],
+      zoom: clamp(view.zoom, minZoom, maxZoom),
+      bearing: view.bearing,
+      pitch: clamp(view.pitch, 0, p ? clamp(p.maxPitch, 0, 85) : 85),
+    };
   }
   readCameraAltitude(): number | null {
     const p = this.map?.getFreeCameraOptions().position;

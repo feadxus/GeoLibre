@@ -1000,12 +1000,12 @@ export function SettingsDialog({
     setError(null);
   };
 
-  const addEnvironmentVariable = (key = "") => {
+  const addEnvironmentVariable = () => {
     setDraftPreferences((current) => ({
       ...current,
       environmentVariables: [
         ...current.environmentVariables,
-        { id: createDraftId(), key, value: "", enabled: true },
+        { id: createDraftId(), key: "", value: "", enabled: true },
       ],
     }));
     setSection("environment");
@@ -2884,7 +2884,7 @@ export function SettingsDialog({
                       type="button"
                       size="sm"
                       variant="outline"
-                      onClick={() => addEnvironmentVariable()}
+                      onClick={addEnvironmentVariable}
                     >
                       <Plus className="h-3.5 w-3.5" />
                       {t("common.add")}
