@@ -1943,7 +1943,7 @@
     "fullscreenEnter": "Plein écran",
     "fullscreenExit": "Quitter le plein écran",
     "fullscreenUnavailable": "Plein écran indisponible",
-    "mapboxTokenHint": "Ajoutez votre jeton d’accès Mapbox dans Paramètres → Variables d’environnement (VITE_MAPBOX_ACCESS_TOKEN) pour utiliser ce moteur de rendu.",
+    "mapboxTokenHint": "Ajoutez votre jeton d’accès Mapbox dans Paramètres → Variables d’environnement pour utiliser ce moteur de rendu.",
     "pluginUnsupported": "Ce plugin ne prend pas en charge le moteur de rendu sélectionné."
   },
   "mapContextMenu": {
@@ -2207,6 +2207,9 @@
       "cesiumTokenDescription": "Le globe 3D (un volet en vue partagée) fonctionne sans jeton : il affiche le fond de carte du projet. Un jeton d'accès ajoute Cesium World Terrain et l'imagerie mondiale Ion. Créez un compte gratuit sur <tokenLink>ion.cesium.com/tokens</tokenLink>, copiez votre jeton d'accès par défaut, puis collez-le ci-dessous.",
       "cesiumTokenStorageNote": "Stocké localement sur cet appareil (pas dans le fichier de projet, il n'est donc jamais partagé) et envoyé uniquement à Cesium Ion. Dans la version web, il partage le même stockage de navigateur que les autres données du site.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
+      "mapboxTokenTitle": "Jeton Mapbox",
+      "mapboxTokenDescription": "Pour utiliser Mapbox, collez ci-dessous un jeton d’accès de <tokenLink>votre compte Mapbox</tokenLink>.",
+      "mapboxTokenStorageNote": "Stocké localement sur cet appareil (pas dans le fichier de projet, il n'est donc jamais partagé) et envoyé uniquement à Mapbox. Dans la version web, il partage le même stockage de navigateur que les autres données du site.",
       "variablesTitle": "Variables d'environnement",
       "variablesCount_one": "{{count}} variable d'exécution activée.",
       "variablesCount_other": "{{count}} variables d'exécution activées.",

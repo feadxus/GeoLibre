@@ -1943,7 +1943,7 @@
     "fullscreenEnter": "სრულ ეკრანზე",
     "fullscreenExit": "სრული ეკრანიდან გასვლა",
     "fullscreenUnavailable": "სრული ეკრანი მიუწვდომელია",
-    "mapboxTokenHint": "ამ რენდერერის გამოსაყენებლად დაამატეთ Mapbox-ის წვდომის token პარამეტრები → გარემოს ცვლადები (VITE_MAPBOX_ACCESS_TOKEN) განყოფილებაში.",
+    "mapboxTokenHint": "ამ რენდერერის გამოსაყენებლად დაამატეთ Mapbox-ის წვდომის token პარამეტრები → გარემოს ცვლადები განყოფილებაში.",
     "pluginUnsupported": "ეს დანამატი არ უჭერს მხარს არჩეულ რენდერის ძრავას."
   },
   "mapContextMenu": {
@@ -2207,6 +2207,9 @@
       "cesiumTokenDescription": "3D გლობუსი (გაყოფილი ხედის პანელი) მუშაობს token-ის გარეშეც: ის ასახავს პროექტის საბაზისო რუკას. წვდომის token ამატებს Cesium World Terrain-სა და Ion-ის მსოფლიო სურათებს. შექმენით უფასო ანგარიში მისამართზე <tokenLink>ion.cesium.com/tokens</tokenLink>, დააკოპირეთ თქვენი ნაგულისხმევი წვდომის token და ჩასვით ქვემოთ.",
       "cesiumTokenStorageNote": "ინახება ლოკალურად ამ მოწყობილობაზე (არა პროექტის ფაილში, ამიტომ არასდროს ზიარდება) და იგზავნება მხოლოდ Cesium Ion-ზე. ვებ-ვერსიაში ის იზიარებს იმავე ბრაუზერის საცავს, რასაც საიტის სხვა მონაცემები.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
+      "mapboxTokenTitle": "Mapbox-ის token",
+      "mapboxTokenDescription": "Mapbox-ის გამოსაყენებლად ქვემოთ ჩასვით წვდომის ტოკენი <tokenLink>თქვენი Mapbox ანგარიშიდან</tokenLink>.",
+      "mapboxTokenStorageNote": "ინახება ლოკალურად ამ მოწყობილობაზე (არა პროექტის ფაილში, ამიტომ არასდროს ზიარდება) და იგზავნება მხოლოდ Mapbox-ზე. ვებ-ვერსიაში ის იზიარებს იმავე ბრაუზერის საცავს, რასაც საიტის სხვა მონაცემები.",
       "variablesTitle": "გარემოს ცვლადები",
       "variablesCount_one": "{{count}} ჩართული გაშვების ცვლადი.",
       "variablesCount_other": "{{count}} ჩართული გაშვების ცვლადი.",

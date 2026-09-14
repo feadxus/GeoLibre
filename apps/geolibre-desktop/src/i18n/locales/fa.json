@@ -1943,7 +1943,7 @@
     "fullscreenEnter": "تمام‌صفحه",
     "fullscreenExit": "خروج از تمام‌صفحه",
     "fullscreenUnavailable": "تمام‌صفحه در دسترس نیست",
-    "mapboxTokenHint": "برای استفاده از این موتور، توکن دسترسی Mapbox خود را در تنظیمات ← متغیرهای محیطی (VITE_MAPBOX_ACCESS_TOKEN) اضافه کنید.",
+    "mapboxTokenHint": "برای استفاده از این موتور، توکن دسترسی Mapbox خود را در تنظیمات ← متغیرهای محیطی اضافه کنید.",
     "pluginUnsupported": "این افزونه از موتور رندر انتخاب‌شده پشتیبانی نمی‌کند."
   },
   "mapContextMenu": {
@@ -2207,6 +2207,9 @@
       "cesiumTokenDescription": "کرهٔ سه‌بعدی (یکی از قاب‌های نمای تقسیم‌شده) بدون توکن هم کار می‌کند: نقشهٔ پایهٔ پروژه را نمایش می‌دهد. یک توکن دسترسی، Cesium World Terrain و تصاویر جهانی Ion را می‌افزاید. در <tokenLink>ion.cesium.com/tokens</tokenLink> یک حساب رایگان بسازید، توکن دسترسی پیش‌فرض خود را رونوشت کنید و در پایین جای‌گذاری کنید.",
       "cesiumTokenStorageNote": "به‌صورت محلی روی این دستگاه نگهداری می‌شود (نه در فایل پروژه، پس هرگز هم‌رسانی نمی‌شود) و تنها به Cesium Ion فرستاده می‌شود. در ساخت وب، همان فضای ذخیره‌سازی مرورگر را با دیگر داده‌های سایت به اشتراک می‌گذارد.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
+      "mapboxTokenTitle": "توکن Mapbox",
+      "mapboxTokenDescription": "برای استفاده از Mapbox، توکن دسترسی <tokenLink>حساب Mapbox خود</tokenLink> را در زیر جای‌گذاری کنید.",
+      "mapboxTokenStorageNote": "به‌صورت محلی روی این دستگاه نگهداری می‌شود (نه در فایل پروژه، پس هرگز هم‌رسانی نمی‌شود) و تنها به Mapbox فرستاده می‌شود. در ساخت وب، همان فضای ذخیره‌سازی مرورگر را با دیگر داده‌های سایت به اشتراک می‌گذارد.",
       "variablesTitle": "متغیرهای محیطی",
       "variablesCount_one": "{{count}} متغیر زمان اجرای فعال.",
       "variablesCount_other": "{{count}} متغیر زمان اجرای فعال.",

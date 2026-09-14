@@ -1943,7 +1943,7 @@
     "fullscreenEnter": "Enter fullscreen",
     "fullscreenExit": "Exit fullscreen",
     "fullscreenUnavailable": "Fullscreen unavailable",
-    "mapboxTokenHint": "Add your Mapbox access token in Settings → Environment variables (VITE_MAPBOX_ACCESS_TOKEN) to use this renderer.",
+    "mapboxTokenHint": "Add your Mapbox access token in Settings → Environment variables to use this renderer.",
     "pluginUnsupported": "This plugin does not support the selected rendering engine."
   },
   "mapContextMenu": {
@@ -2207,6 +2207,9 @@
       "cesiumTokenDescription": "The 3D globe (a split-view pane) works without a token: it renders the project basemap. An access token adds Cesium World Terrain and Ion world imagery. Create a free account at <tokenLink>ion.cesium.com/tokens</tokenLink>, copy your default access token, and paste it below.",
       "cesiumTokenStorageNote": "Stored locally on this device (not in the project file, so it is never shared) and sent only to Cesium Ion. On the web build it shares the same browser storage as other site data.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
+      "mapboxTokenTitle": "Mapbox token",
+      "mapboxTokenDescription": "To use Mapbox, paste an access token from <tokenLink>your Mapbox account</tokenLink> below.",
+      "mapboxTokenStorageNote": "Stored locally on this device (not in the project file, so it is never shared) and sent only to Mapbox. On the web build it shares the same browser storage as other site data.",
       "variablesTitle": "Environment variables",
       "variablesCount_one": "{{count}} enabled runtime variable.",
       "variablesCount_other": "{{count}} enabled runtime variables.",

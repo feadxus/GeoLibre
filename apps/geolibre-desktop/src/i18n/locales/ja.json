@@ -1897,7 +1897,7 @@
     "fullscreenEnter": "全画面表示",
     "fullscreenExit": "全画面表示を終了",
     "fullscreenUnavailable": "全画面表示は利用できません",
-    "mapboxTokenHint": "このレンダラーを使用するには、設定 → 環境変数（VITE_MAPBOX_ACCESS_TOKEN）にMapboxアクセストークンを追加してください。",
+    "mapboxTokenHint": "このレンダラーを使用するには、設定 → 環境変数にMapboxアクセストークンを追加してください。",
     "pluginUnsupported": "このプラグインは選択したレンダリングエンジンに対応していません。"
   },
   "mapContextMenu": {
@@ -2161,6 +2161,9 @@
       "cesiumTokenDescription": "3Dグローブ(分割表示ペイン)はトークンなしでも動作し、プロジェクトのベースマップを描画します。アクセストークンを設定すると、Cesium World TerrainとIonの世界衛星画像が追加されます。<tokenLink>ion.cesium.com/tokens</tokenLink> で無料アカウントを作成し、デフォルトのアクセストークンをコピーして下に貼り付けてください。",
       "cesiumTokenStorageNote": "このデバイスにローカルで保存され(プロジェクトファイルには保存されないため、共有されることはありません)、Cesium Ionにのみ送信されます。Webビルドでは他のサイトデータと同じブラウザストレージを共有します。",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
+      "mapboxTokenTitle": "Mapboxトークン",
+      "mapboxTokenDescription": "Mapbox を使用するには、<tokenLink>Mapbox アカウント</tokenLink>のアクセストークンを下に貼り付けてください。",
+      "mapboxTokenStorageNote": "このデバイスにローカルで保存され(プロジェクトファイルには保存されないため、共有されることはありません)、Mapboxにのみ送信されます。Webビルドでは他のサイトデータと同じブラウザストレージを共有します。",
       "variablesTitle": "環境変数",
       "variablesCount_other": "有効なランタイム変数が {{count}} 件あります。",
       "secretsWarning": "値はプロジェクトファイルにプレーンテキストで保存され、プロジェクトを共有すると露出する可能性があります。プロジェクトファイルを非公開に保てない限り、ここに機密情報を入力しないでください。",

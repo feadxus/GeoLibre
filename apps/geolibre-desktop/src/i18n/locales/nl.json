@@ -1943,7 +1943,7 @@
     "fullscreenEnter": "Volledig scherm",
     "fullscreenExit": "Volledig scherm verlaten",
     "fullscreenUnavailable": "Volledig scherm niet beschikbaar",
-    "mapboxTokenHint": "Voeg uw Mapbox-toegangstoken toe via Instellingen → Omgevingsvariabelen (VITE_MAPBOX_ACCESS_TOKEN) om deze renderer te gebruiken.",
+    "mapboxTokenHint": "Voeg uw Mapbox-toegangstoken toe via Instellingen → Omgevingsvariabelen om deze renderer te gebruiken.",
     "pluginUnsupported": "Deze plugin ondersteunt de geselecteerde renderer niet."
   },
   "mapContextMenu": {
@@ -2207,6 +2207,9 @@
       "cesiumTokenDescription": "De 3D-globe (een gesplitst weergavepaneel) werkt zonder token: hij toont de achtergrondkaart van het project. Een toegangstoken voegt Cesium World Terrain en Ion-wereldbeelden toe. Maak een gratis account aan op <tokenLink>ion.cesium.com/tokens</tokenLink>, kopieer uw standaard toegangstoken en plak het hieronder.",
       "cesiumTokenStorageNote": "Lokaal opgeslagen op dit apparaat (niet in het projectbestand, dus nooit gedeeld) en alleen verzonden naar Cesium Ion. In de webversie wordt dezelfde browseropslag gebruikt als voor andere sitegegevens.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
+      "mapboxTokenTitle": "Mapbox-token",
+      "mapboxTokenDescription": "Plak hieronder een toegangstoken van <tokenLink>uw Mapbox-account</tokenLink> om Mapbox te gebruiken.",
+      "mapboxTokenStorageNote": "Lokaal opgeslagen op dit apparaat (niet in het projectbestand, dus nooit gedeeld) en alleen verzonden naar Mapbox. In de webversie wordt dezelfde browseropslag gebruikt als voor andere sitegegevens.",
       "variablesTitle": "Omgevingsvariabelen",
       "variablesCount_one": "{{count}} ingeschakelde runtimevariabele.",
       "variablesCount_other": "{{count}} ingeschakelde runtimevariabelen.",

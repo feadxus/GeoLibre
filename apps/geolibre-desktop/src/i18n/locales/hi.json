@@ -1943,7 +1943,7 @@
     "fullscreenEnter": "पूर्ण स्क्रीन",
     "fullscreenExit": "पूर्ण स्क्रीन से बाहर निकलें",
     "fullscreenUnavailable": "पूर्ण स्क्रीन उपलब्ध नहीं",
-    "mapboxTokenHint": "इस रेंडरर का उपयोग करने के लिए सेटिंग्स → एनवायरनमेंट वेरिएबल (VITE_MAPBOX_ACCESS_TOKEN) में अपना Mapbox एक्सेस टोकन जोड़ें।",
+    "mapboxTokenHint": "इस रेंडरर का उपयोग करने के लिए सेटिंग्स → एनवायरनमेंट वेरिएबल में अपना Mapbox एक्सेस टोकन जोड़ें।",
     "pluginUnsupported": "यह प्लगइन चयनित रेंडरिंग इंजन का समर्थन नहीं करता है।"
   },
   "mapContextMenu": {
@@ -2207,6 +2207,9 @@
       "cesiumTokenDescription": "3D ग्लोब (एक स्प्लिट-व्यू पैनल) टोकन के बिना भी काम करता है: यह प्रोजेक्ट का बेसमैप दिखाता है। एक एक्सेस टोकन Cesium World Terrain और Ion वर्ल्ड इमेजरी जोड़ता है। <tokenLink>ion.cesium.com/tokens</tokenLink> पर एक मुफ़्त खाता बनाएँ, अपना डिफ़ॉल्ट एक्सेस टोकन कॉपी करें, और उसे नीचे पेस्ट करें।",
       "cesiumTokenStorageNote": "इस डिवाइस पर स्थानीय रूप से संग्रहीत (प्रोजेक्ट फ़ाइल में नहीं, इसलिए यह कभी साझा नहीं होता) और केवल Cesium Ion को भेजा जाता है। वेब बिल्ड पर यह अन्य साइट डेटा के समान ब्राउज़र स्टोरेज साझा करता है।",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
+      "mapboxTokenTitle": "Mapbox टोकन",
+      "mapboxTokenDescription": "Mapbox का उपयोग करने के लिए, <tokenLink>अपने Mapbox खाते</tokenLink> से एक्सेस टोकन नीचे पेस्ट करें।",
+      "mapboxTokenStorageNote": "इस डिवाइस पर स्थानीय रूप से संग्रहीत (प्रोजेक्ट फ़ाइल में नहीं, इसलिए यह कभी साझा नहीं होता) और केवल Mapbox को भेजा जाता है। वेब बिल्ड पर यह अन्य साइट डेटा के समान ब्राउज़र स्टोरेज साझा करता है।",
       "variablesTitle": "एनवायरनमेंट वेरिएबल",
       "variablesCount_one": "{{count}} सक्षम रनटाइम वेरिएबल।",
       "variablesCount_other": "{{count}} सक्षम रनटाइम वेरिएबल।",

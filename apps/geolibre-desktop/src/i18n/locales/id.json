@@ -1897,7 +1897,7 @@
     "fullscreenEnter": "Layar penuh",
     "fullscreenExit": "Keluar dari layar penuh",
     "fullscreenUnavailable": "Layar penuh tidak tersedia",
-    "mapboxTokenHint": "Tambahkan token akses Mapbox Anda di Pengaturan → Variabel lingkungan (VITE_MAPBOX_ACCESS_TOKEN) untuk menggunakan perender ini.",
+    "mapboxTokenHint": "Tambahkan token akses Mapbox Anda di Pengaturan → Variabel lingkungan untuk menggunakan perender ini.",
     "pluginUnsupported": "Plugin ini tidak mendukung mesin perender yang dipilih."
   },
   "mapContextMenu": {
@@ -2161,6 +2161,9 @@
       "cesiumTokenDescription": "Bola dunia 3D (panel tampilan terpisah) berfungsi tanpa token: bola dunia menampilkan peta dasar proyek. Token akses menambahkan Cesium World Terrain dan citra dunia Ion. Buat akun gratis di <tokenLink>ion.cesium.com/tokens</tokenLink>, salin token akses default Anda, dan tempelkan di bawah.",
       "cesiumTokenStorageNote": "Disimpan secara lokal di perangkat ini (bukan dalam file proyek, sehingga tidak pernah dibagikan) dan hanya dikirim ke Cesium Ion. Pada build web, token ini berbagi penyimpanan browser yang sama dengan data situs lainnya.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
+      "mapboxTokenTitle": "Token Mapbox",
+      "mapboxTokenDescription": "Untuk menggunakan Mapbox, tempel token akses dari <tokenLink>akun Mapbox Anda</tokenLink> di bawah.",
+      "mapboxTokenStorageNote": "Disimpan secara lokal di perangkat ini (bukan dalam file proyek, sehingga tidak pernah dibagikan) dan hanya dikirim ke Mapbox. Pada build web, token ini berbagi penyimpanan browser yang sama dengan data situs lainnya.",
       "variablesTitle": "Variabel lingkungan",
       "variablesCount_other": "{{count}} variabel runtime diaktifkan.",
       "secretsWarning": "Nilai disimpan dalam teks biasa pada file proyek dan dapat terekspos saat proyek dibagikan. Hindari menaruh rahasia di sini kecuali file proyek tetap privat.",

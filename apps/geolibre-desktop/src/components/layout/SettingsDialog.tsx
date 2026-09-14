@@ -1,3 +1,4 @@
+import { migrateMapboxTokenSettings } from "../../lib/mapbox-token-settings";
 import {
   DEFAULT_PROJECT_PREFERENCES,
   ELLIPSOIDS,
@@ -211,7 +212,10 @@ interface SettingsDialogProps {
 type TransComponents = Record<string, ReactElement>;
 
 type SettingsTransProps = {
-  i18nKey: "settings.env.tokenDescription" | "settings.env.cesiumTokenDescription";
+  i18nKey:
+    | "settings.env.tokenDescription"
+    | "settings.env.cesiumTokenDescription"
+    | "settings.env.mapboxTokenDescription";
   values?: { shareHost: string };
   components?: TransComponents;
 };
@@ -219,6 +223,17 @@ type SettingsTransProps = {
 // TS 7 exhausts its instantiation depth when it expands Trans's catalog-wide
 // generics from this large generated locale type. Keep the key union explicit.
 const SettingsTrans = Trans as ComponentType<SettingsTransProps>;
+
+const mapboxTokenComponents: TransComponents = {
+  tokenLink: (
+    <a
+      className="underline"
+      href="https://account.mapbox.com/access-tokens/"
+      target="_blank"
+      rel="noreferrer noopener"
+    />
+  ),
+};
 
 const cesiumTokenComponents: TransComponents = {
   tokenLink: (
@@ -292,6 +307,7 @@ interface DraftDesktopSettings {
   layout: DesktopLayoutSettings;
   shareToken: string;
   cesiumIonToken: string;
+  mapboxAccessToken: string;
   aiProfiles: AssistantProfile[];
   defaultAiProfileId: string | null;
   uiProfile: UiProfileSettings;
@@ -349,7 +365,9 @@ function createDraftId(): string {
 function clonePreferences(preferences: ProjectPreferences): DraftPreferences {
   return {
     map: { ...preferences.map },
-    environmentVariables: preferences.environmentVariables.map((variable) => ({
+    environmentVariables: migrateMapboxTokenSettings(
+      preferences.environmentVariables,
+    ).variables.map((variable) => ({
       ...variable,
       id: createDraftId(),
     })),
@@ -360,11 +378,18 @@ function clonePreferences(preferences: ProjectPreferences): DraftPreferences {
   };
 }
 
-function cloneDesktopSettings(settings: DesktopSettings): DraftDesktopSettings {
+function cloneDesktopSettings(
+  settings: DesktopSettings,
+  preferences: ProjectPreferences,
+): DraftDesktopSettings {
   return {
     layout: { ...settings.layout },
     shareToken: settings.shareToken,
     cesiumIonToken: settings.cesiumIonToken,
+    mapboxAccessToken: migrateMapboxTokenSettings(
+      preferences.environmentVariables,
+      settings.mapboxAccessToken,
+    ).token,
     aiProfiles: settings.aiProfiles.map((p) => ({
       ...p,
       fieldValues: { ...p.fieldValues },
@@ -586,7 +611,7 @@ export function SettingsDialog({
     clonePreferences(preferences),
   );
   const [draftDesktopSettings, setDraftDesktopSettings] = useState<DraftDesktopSettings>(() =>
-    cloneDesktopSettings(desktopSettings),
+    cloneDesktopSettings(desktopSettings, preferences),
   );
   const [error, setError] = useState<string | null>(null);
   // Live map projection, captured when the dialog opens. The Globe projection
@@ -705,7 +730,10 @@ export function SettingsDialog({
     const seededPreferences = clonePreferences(useAppStore.getState().preferences);
     setDraftPreferences(seededPreferences);
     setDraftDesktopSettings(
-      cloneDesktopSettings(useDesktopSettingsStore.getState().desktopSettings),
+      cloneDesktopSettings(
+        useDesktopSettingsStore.getState().desktopSettings,
+        useAppStore.getState().preferences,
+      ),
     );
     // Land the AI section on the first profile's provider, or the first
     // available provider if no profiles exist, so the user sees something
@@ -1348,6 +1376,7 @@ export function SettingsDialog({
       layout: draftDesktopSettings.layout,
       shareToken: draftDesktopSettings.shareToken,
       cesiumIonToken: draftDesktopSettings.cesiumIonToken,
+      mapboxAccessToken: draftDesktopSettings.mapboxAccessToken,
       aiProfiles: draftDesktopSettings.aiProfiles,
       defaultAiProfileId: draftDesktopSettings.defaultAiProfileId,
       uiProfile: committedUiProfile,
@@ -2817,6 +2846,31 @@ export function SettingsDialog({
                       {t("settings.env.cesiumTokenStorageNote")}
                     </p>
                   </div>
+                  <div className="space-y-2 border-t pt-5">
+                    <h3 className="text-sm font-semibold">{t("settings.env.mapboxTokenTitle")}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      <SettingsTrans
+                        i18nKey="settings.env.mapboxTokenDescription"
+                        components={mapboxTokenComponents}
+                      />
+                    </p>
+                    <Input
+                      aria-label={t("settings.env.mapboxTokenTitle")}
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder="pk.…"
+                      value={draftDesktopSettings.mapboxAccessToken}
+                      onChange={(event) =>
+                        setDraftDesktopSettings((current) => ({
+                          ...current,
+                          mapboxAccessToken: event.target.value,
+                        }))
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {t("settings.env.mapboxTokenStorageNote")}
+                    </p>
+                  </div>
                   <div className="flex items-center justify-between gap-3 border-t pt-5">
                     <div>
                       <h3 className="text-sm font-semibold">{t("settings.env.variablesTitle")}</h3>
@@ -2826,29 +2880,15 @@ export function SettingsDialog({
                         })}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={draftPreferences.environmentVariables.some(
-                          (variable) => variable.key.trim() === "VITE_MAPBOX_ACCESS_TOKEN",
-                        )}
-                        onClick={() => addEnvironmentVariable("VITE_MAPBOX_ACCESS_TOKEN")}
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                        {t("toolbar.item.rendererMapbox")}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => addEnvironmentVariable()}
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                        {t("common.add")}
-                      </Button>
-                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addEnvironmentVariable()}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      {t("common.add")}
+                    </Button>
                   </div>
                   <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
                     <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />

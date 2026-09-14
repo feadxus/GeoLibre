@@ -5,8 +5,11 @@ The engine is also available from the rendering-engine menu in each split pane.
 MapLibre remains the default. Projects save the primary and secondary renderer
 choices, and the Python and iframe APIs accept `mapbox` as a renderer name.
 
-Set `VITE_MAPBOX_ACCESS_TOKEN` in **Settings → Environment variables**, or launch
-the development server with `MAPBOX_TOKEN` in its environment. Token changes
+Paste your token into **Settings → Environment Variables → Mapbox token** and
+click **Save Settings**. Like the Cesium token, it is stored on this device,
+outside the project file. Existing enabled Mapbox environment-variable rows
+move into this field when settings are saved; Cancel leaves them unchanged.
+Alternatively, launch the development server with `MAPBOX_TOKEN` in its environment. Token changes
 recreate Mapbox maps. A missing token displays setup instructions; map loading
 errors redact access tokens. Use a public Mapbox token appropriate for your
 application. Mapbox use is associated with that token's account and is subject

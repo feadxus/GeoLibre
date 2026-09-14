@@ -1943,7 +1943,7 @@
     "fullscreenEnter": "Pantalla completa",
     "fullscreenExit": "Salir de pantalla completa",
     "fullscreenUnavailable": "Pantalla completa no disponible",
-    "mapboxTokenHint": "Añada su token de acceso de Mapbox en Configuración → Variables de entorno (VITE_MAPBOX_ACCESS_TOKEN) para usar este motor.",
+    "mapboxTokenHint": "Añada su token de acceso de Mapbox en Configuración → Variables de entorno para usar este motor.",
     "pluginUnsupported": "Este complemento no admite el motor de renderizado seleccionado."
   },
   "mapContextMenu": {
@@ -2207,6 +2207,9 @@
       "cesiumTokenDescription": "El globo 3D (un panel de vista dividida) funciona sin token: representa el mapa base del proyecto. Un token de acceso añade Cesium World Terrain y las imágenes mundiales de Ion. Cree una cuenta gratuita en <tokenLink>ion.cesium.com/tokens</tokenLink>, copie su token de acceso predeterminado y péguelo a continuación.",
       "cesiumTokenStorageNote": "Se almacena localmente en este dispositivo (no en el archivo del proyecto, así que nunca se comparte) y solo se envía a Cesium Ion. En la compilación web, comparte el mismo almacenamiento del navegador que otros datos del sitio.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
+      "mapboxTokenTitle": "Token de Mapbox",
+      "mapboxTokenDescription": "Para usar Mapbox, pegue abajo un token de acceso de <tokenLink>su cuenta de Mapbox</tokenLink>.",
+      "mapboxTokenStorageNote": "Se almacena localmente en este dispositivo (no en el archivo del proyecto, así que nunca se comparte) y solo se envía a Mapbox. En la compilación web, comparte el mismo almacenamiento del navegador que otros datos del sitio.",
       "variablesTitle": "Variables de entorno",
       "variablesCount_one": "{{count}} variable de tiempo de ejecución activada.",
       "variablesCount_other": "{{count}} variables de tiempo de ejecución activadas.",

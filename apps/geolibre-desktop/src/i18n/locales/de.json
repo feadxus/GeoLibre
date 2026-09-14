@@ -1943,7 +1943,7 @@
     "fullscreenEnter": "Vollbild",
     "fullscreenExit": "Vollbild beenden",
     "fullscreenUnavailable": "Vollbild nicht verfügbar",
-    "mapboxTokenHint": "Fügen Sie Ihr Mapbox-Zugriffstoken unter Einstellungen → Umgebungsvariablen (VITE_MAPBOX_ACCESS_TOKEN) hinzu, um diesen Renderer zu verwenden.",
+    "mapboxTokenHint": "Fügen Sie Ihr Mapbox-Zugriffstoken unter Einstellungen → Umgebungsvariablen hinzu, um diesen Renderer zu verwenden.",
     "pluginUnsupported": "Dieses Plugin unterstützt den ausgewählten Renderer nicht."
   },
   "mapContextMenu": {
@@ -2207,6 +2207,9 @@
       "cesiumTokenDescription": "Der 3D-Globus (ein geteiltes Ansichtsfenster) funktioniert ohne Token: Er stellt die Projekt-Hintergrundkarte dar. Ein Zugriffstoken ergänzt Cesium World Terrain und Ion-Weltbilder. Erstellen Sie ein kostenloses Konto unter <tokenLink>ion.cesium.com/tokens</tokenLink>, kopieren Sie Ihr Standard-Zugriffstoken und fügen Sie es unten ein.",
       "cesiumTokenStorageNote": "Wird lokal auf diesem Gerät gespeichert (nicht in der Projektdatei, sodass es nie geteilt wird) und nur an Cesium Ion gesendet. Im Web-Build nutzt es denselben Browser-Speicher wie andere Website-Daten.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
+      "mapboxTokenTitle": "Cesium-Ion-Token",
+      "mapboxTokenDescription": "Fügen Sie unten ein Zugriffstoken aus <tokenLink>Ihrem Mapbox-Konto</tokenLink> ein, um Mapbox zu verwenden.",
+      "mapboxTokenStorageNote": "Wird lokal auf diesem Gerät gespeichert (nicht in der Projektdatei, sodass es nie geteilt wird) und nur an Mapbox gesendet. Im Web-Build nutzt es denselben Browser-Speicher wie andere Website-Daten.",
       "variablesTitle": "Umgebungsvariablen",
       "variablesCount_one": "{{count}} aktivierte Laufzeitvariable.",
       "variablesCount_other": "{{count}} aktivierte Laufzeitvariablen.",
