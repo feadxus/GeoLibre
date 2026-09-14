@@ -1877,6 +1877,7 @@
     "noLayers": "아직 레이어가 없습니다",
     "labelPlaceholder": "라벨",
     "labelLabel": "지도 {{number}}의 라벨",
+    "renderingEngineLabel": "지도 {{number}}의 렌더링 엔진",
     "removePane": "지도 {{number}} 제거",
     "show3d": "지도 {{number}}을(를) 3D 지구본으로 표시",
     "show2d": "지도 {{number}}을(를) 2D 지도로 표시",
@@ -1899,7 +1900,7 @@
     "fullscreenEnter": "전체 화면",
     "fullscreenExit": "전체 화면 종료",
     "fullscreenUnavailable": "전체 화면을 사용할 수 없음",
-    "mapboxTokenHint": "이 렌더러를 사용하려면 설정 → 환경 변수에 Mapbox 액세스 토큰을 추가하세요.",
+    "mapboxTokenHint": "이 렌더러를 사용하려면 <settingsLink>설정 → 환경 변수</settingsLink>에 Mapbox 액세스 토큰을 추가하세요.",
     "pluginUnsupported": "이 플러그인은 선택한 렌더링 엔진을 지원하지 않습니다."
   },
   "mapContextMenu": {
@@ -2164,6 +2165,7 @@
       "cesiumTokenStorageNote": "이 기기에 로컬로 저장되며(프로젝트 파일에는 저장되지 않으므로 공유되지 않음) Cesium Ion에만 전송됩니다. 웹 빌드에서는 다른 사이트 데이터와 동일한 브라우저 저장소를 공유합니다.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
       "mapboxTokenTitle": "Mapbox 토큰",
+      "mapboxTokenPlaceholder": "pk.…",
       "mapboxTokenDescription": "Mapbox를 사용하려면 <tokenLink>Mapbox 계정</tokenLink>의 액세스 토큰을 아래에 붙여넣으세요.",
       "mapboxTokenStorageNote": "이 기기에 로컬로 저장되며(프로젝트 파일에는 저장되지 않으므로 공유되지 않음) Mapbox에만 전송됩니다. 웹 빌드에서는 다른 사이트 데이터와 동일한 브라우저 저장소를 공유합니다.",
       "variablesTitle": "환경 변수",

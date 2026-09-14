@@ -1923,6 +1923,7 @@
     "noLayers": "Pas encore de couches",
     "labelPlaceholder": "Étiquette",
     "labelLabel": "Étiquette pour la carte {{number}}",
+    "renderingEngineLabel": "Moteur de rendu pour la carte {{number}}",
     "removePane": "Supprimer la carte {{number}}",
     "show3d": "Afficher la carte {{number}} en globe 3D",
     "show2d": "Afficher la carte {{number}} en carte 2D",
@@ -1945,7 +1946,7 @@
     "fullscreenEnter": "Plein écran",
     "fullscreenExit": "Quitter le plein écran",
     "fullscreenUnavailable": "Plein écran indisponible",
-    "mapboxTokenHint": "Ajoutez votre jeton d’accès Mapbox dans Paramètres → Variables d’environnement pour utiliser ce moteur de rendu.",
+    "mapboxTokenHint": "Ajoutez votre jeton d’accès Mapbox dans <settingsLink>Paramètres → Variables d’environnement</settingsLink> pour utiliser ce moteur de rendu.",
     "pluginUnsupported": "Ce plugin ne prend pas en charge le moteur de rendu sélectionné."
   },
   "mapContextMenu": {
@@ -2210,6 +2211,7 @@
       "cesiumTokenStorageNote": "Stocké localement sur cet appareil (pas dans le fichier de projet, il n'est donc jamais partagé) et envoyé uniquement à Cesium Ion. Dans la version web, il partage le même stockage de navigateur que les autres données du site.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
       "mapboxTokenTitle": "Jeton Mapbox",
+      "mapboxTokenPlaceholder": "pk.…",
       "mapboxTokenDescription": "Pour utiliser Mapbox, collez ci-dessous un jeton d’accès de <tokenLink>votre compte Mapbox</tokenLink>.",
       "mapboxTokenStorageNote": "Stocké localement sur cet appareil (pas dans le fichier de projet, il n'est donc jamais partagé) et envoyé uniquement à Mapbox. Dans la version web, il partage le même stockage de navigateur que les autres données du site.",
       "variablesTitle": "Variables d'environnement",

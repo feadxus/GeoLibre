@@ -1923,6 +1923,7 @@
     "noLayers": "No layers yet",
     "labelPlaceholder": "Label",
     "labelLabel": "Label for map {{number}}",
+    "renderingEngineLabel": "Rendering engine for map {{number}}",
     "removePane": "Remove map {{number}}",
     "show3d": "Show map {{number}} as a 3D globe",
     "show2d": "Show map {{number}} as a 2D map",
@@ -1945,7 +1946,7 @@
     "fullscreenEnter": "Enter fullscreen",
     "fullscreenExit": "Exit fullscreen",
     "fullscreenUnavailable": "Fullscreen unavailable",
-    "mapboxTokenHint": "Add your Mapbox access token in Settings → Environment variables to use this renderer.",
+    "mapboxTokenHint": "Add your Mapbox access token in <settingsLink>Settings → Environment variables</settingsLink> to use this renderer.",
     "pluginUnsupported": "This plugin does not support the selected rendering engine."
   },
   "mapContextMenu": {
@@ -2210,6 +2211,7 @@
       "cesiumTokenStorageNote": "Stored locally on this device (not in the project file, so it is never shared) and sent only to Cesium Ion. On the web build it shares the same browser storage as other site data.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
       "mapboxTokenTitle": "Mapbox token",
+      "mapboxTokenPlaceholder": "pk.…",
       "mapboxTokenDescription": "To use Mapbox, paste an access token from <tokenLink>your Mapbox account</tokenLink> below.",
       "mapboxTokenStorageNote": "Stored locally on this device (not in the project file, so it is never shared) and sent only to Mapbox. On the web build it shares the same browser storage as other site data.",
       "variablesTitle": "Environment variables",

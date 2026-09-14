@@ -166,7 +166,7 @@ export type SettingsSection =
   | "startup";
 
 /** A field a deep-link can ask Settings to focus once the section renders. */
-export type SettingsFocusTarget = "shareToken" | "accentColor";
+export type SettingsFocusTarget = "shareToken" | "mapboxToken" | "accentColor";
 
 /** Window event letting any panel open Settings at a given section (no prop-drilling). */
 export const OPEN_SETTINGS_EVENT = "geolibre:open-settings";
@@ -575,6 +575,7 @@ export function SettingsDialog({
   // after the focus lands so a later open without a focus request stays put.
   const [pendingFocus, setPendingFocus] = useState<SettingsFocusTarget | null>(null);
   const shareTokenInputRef = useRef<HTMLInputElement>(null);
+  const mapboxTokenInputRef = useRef<HTMLInputElement>(null);
   const languagePackFileRef = useRef<HTMLInputElement>(null);
   // The native color input in the Appearance pane. The accent-color dropdown's
   // "Custom" entry deep-links here so picking a custom color is reachable
@@ -831,11 +832,17 @@ export function SettingsDialog({
   // only mounts when the Environment section is active, so this waits for the
   // section to settle rather than focusing on open.
   useEffect(() => {
-    if (!open || pendingFocus !== "shareToken") return;
+    const input =
+      pendingFocus === "shareToken"
+        ? shareTokenInputRef
+        : pendingFocus === "mapboxToken"
+          ? mapboxTokenInputRef
+          : null;
+    if (!open || !input) return;
     if (effectiveSection !== "environment") return;
     const id = window.requestAnimationFrame(() => {
-      shareTokenInputRef.current?.focus();
-      shareTokenInputRef.current?.select();
+      input.current?.focus();
+      input.current?.select();
       // Set the guard BEFORE clearing pendingFocus: the clear re-runs the
       // nav-focus effect, and because this write is synchronous and lexically
       // first, the ref is already true when that run reads it, so it skips and
@@ -2855,10 +2862,11 @@ export function SettingsDialog({
                       />
                     </p>
                     <Input
+                      ref={mapboxTokenInputRef}
                       aria-label={t("settings.env.mapboxTokenTitle")}
                       type="password"
                       autoComplete="new-password"
-                      placeholder="pk.…"
+                      placeholder={t("settings.env.mapboxTokenPlaceholder")}
                       value={draftDesktopSettings.mapboxAccessToken}
                       onChange={(event) =>
                         setDraftDesktopSettings((current) => ({

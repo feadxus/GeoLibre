@@ -2015,6 +2015,7 @@
     "noLayers": "Пока нет слоёв",
     "labelPlaceholder": "Подпись",
     "labelLabel": "Подпись для карты {{number}}",
+    "renderingEngineLabel": "Механизм отрисовки для карты {{number}}",
     "removePane": "Удалить карту {{number}}",
     "show3d": "Показать карту {{number}} как 3D-глобус",
     "show2d": "Показать карту {{number}} как 2D-карту",
@@ -2037,7 +2038,7 @@
     "fullscreenEnter": "Полный экран",
     "fullscreenExit": "Выйти из полного экрана",
     "fullscreenUnavailable": "Полный экран недоступен",
-    "mapboxTokenHint": "Чтобы использовать этот движок, добавьте токен доступа Mapbox в Настройки → Переменные среды.",
+    "mapboxTokenHint": "Чтобы использовать этот движок, добавьте токен доступа Mapbox в <settingsLink>Настройки → Переменные среды</settingsLink>.",
     "pluginUnsupported": "Этот плагин не поддерживает выбранный движок рендеринга."
   },
   "mapContextMenu": {
@@ -2302,6 +2303,7 @@
       "cesiumTokenStorageNote": "Хранится локально на этом устройстве (не в файле проекта, поэтому никогда не передаётся) и отправляется только в Cesium Ion. В веб-сборке используется то же хранилище браузера, что и для других данных сайта.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
       "mapboxTokenTitle": "Токен Mapbox",
+      "mapboxTokenPlaceholder": "pk.…",
       "mapboxTokenDescription": "Чтобы использовать Mapbox, вставьте ниже токен доступа из <tokenLink>своего аккаунта Mapbox</tokenLink>.",
       "mapboxTokenStorageNote": "Хранится локально на этом устройстве (не в файле проекта, поэтому никогда не передаётся) и отправляется только в Mapbox. В веб-сборке используется то же хранилище браузера, что и для других данных сайта.",
       "variablesTitle": "Переменные среды",

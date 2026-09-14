@@ -1923,6 +1923,7 @@
     "noLayers": "Nog geen lagen",
     "labelPlaceholder": "Label",
     "labelLabel": "Label voor kaart {{number}}",
+    "renderingEngineLabel": "Renderengine voor kaart {{number}}",
     "removePane": "Kaart {{number}} verwijderen",
     "show3d": "Kaart {{number}} weergeven als 3D-globe",
     "show2d": "Kaart {{number}} weergeven als 2D-kaart",
@@ -1945,7 +1946,7 @@
     "fullscreenEnter": "Volledig scherm",
     "fullscreenExit": "Volledig scherm verlaten",
     "fullscreenUnavailable": "Volledig scherm niet beschikbaar",
-    "mapboxTokenHint": "Voeg uw Mapbox-toegangstoken toe via Instellingen → Omgevingsvariabelen om deze renderer te gebruiken.",
+    "mapboxTokenHint": "Voeg uw Mapbox-toegangstoken toe via <settingsLink>Instellingen → Omgevingsvariabelen</settingsLink> om deze renderer te gebruiken.",
     "pluginUnsupported": "Deze plugin ondersteunt de geselecteerde renderer niet."
   },
   "mapContextMenu": {
@@ -2210,6 +2211,7 @@
       "cesiumTokenStorageNote": "Lokaal opgeslagen op dit apparaat (niet in het projectbestand, dus nooit gedeeld) en alleen verzonden naar Cesium Ion. In de webversie wordt dezelfde browseropslag gebruikt als voor andere sitegegevens.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
       "mapboxTokenTitle": "Mapbox-token",
+      "mapboxTokenPlaceholder": "pk.…",
       "mapboxTokenDescription": "Plak hieronder een toegangstoken van <tokenLink>uw Mapbox-account</tokenLink> om Mapbox te gebruiken.",
       "mapboxTokenStorageNote": "Lokaal opgeslagen op dit apparaat (niet in het projectbestand, dus nooit gedeeld) en alleen verzonden naar Mapbox. In de webversie wordt dezelfde browseropslag gebruikt als voor andere sitegegevens.",
       "variablesTitle": "Omgevingsvariabelen",

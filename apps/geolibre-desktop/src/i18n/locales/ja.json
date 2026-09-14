@@ -1877,6 +1877,7 @@
     "noLayers": "レイヤーがまだありません",
     "labelPlaceholder": "ラベル",
     "labelLabel": "地図 {{number}} のラベル",
+    "renderingEngineLabel": "地図 {{number}} のレンダリングエンジン",
     "removePane": "地図 {{number}} を削除",
     "show3d": "地図 {{number}} を3Dグローブとして表示",
     "show2d": "地図 {{number}} を2D地図として表示",
@@ -1899,7 +1900,7 @@
     "fullscreenEnter": "全画面表示",
     "fullscreenExit": "全画面表示を終了",
     "fullscreenUnavailable": "全画面表示は利用できません",
-    "mapboxTokenHint": "このレンダラーを使用するには、設定 → 環境変数にMapboxアクセストークンを追加してください。",
+    "mapboxTokenHint": "このレンダラーを使用するには、<settingsLink>設定 → 環境変数</settingsLink>にMapboxアクセストークンを追加してください。",
     "pluginUnsupported": "このプラグインは選択したレンダリングエンジンに対応していません。"
   },
   "mapContextMenu": {
@@ -2164,6 +2165,7 @@
       "cesiumTokenStorageNote": "このデバイスにローカルで保存され(プロジェクトファイルには保存されないため、共有されることはありません)、Cesium Ionにのみ送信されます。Webビルドでは他のサイトデータと同じブラウザストレージを共有します。",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
       "mapboxTokenTitle": "Mapboxトークン",
+      "mapboxTokenPlaceholder": "pk.…",
       "mapboxTokenDescription": "Mapbox を使用するには、<tokenLink>Mapbox アカウント</tokenLink>のアクセストークンを下に貼り付けてください。",
       "mapboxTokenStorageNote": "このデバイスにローカルで保存され(プロジェクトファイルには保存されないため、共有されることはありません)、Mapboxにのみ送信されます。Webビルドでは他のサイトデータと同じブラウザストレージを共有します。",
       "variablesTitle": "環境変数",

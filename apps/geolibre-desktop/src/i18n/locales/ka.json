@@ -1923,6 +1923,7 @@
     "noLayers": "ჯერ არ არის შრეები",
     "labelPlaceholder": "წარწერა",
     "labelLabel": "წარწერა რუკა {{number}}-ისთვის",
+    "renderingEngineLabel": "რენდერინგის ძრავა რუკა {{number}}-ისთვის",
     "removePane": "რუკა {{number}}-ის მოშორება",
     "show3d": "აჩვენე რუკა {{number}} 3D გლობუსად",
     "show2d": "აჩვენე რუკა {{number}} 2D რუკად",
@@ -1945,7 +1946,7 @@
     "fullscreenEnter": "სრულ ეკრანზე",
     "fullscreenExit": "სრული ეკრანიდან გასვლა",
     "fullscreenUnavailable": "სრული ეკრანი მიუწვდომელია",
-    "mapboxTokenHint": "ამ რენდერერის გამოსაყენებლად დაამატეთ Mapbox-ის წვდომის token პარამეტრები → გარემოს ცვლადები განყოფილებაში.",
+    "mapboxTokenHint": "ამ რენდერერის გამოსაყენებლად დაამატეთ Mapbox-ის წვდომის token <settingsLink>პარამეტრები → გარემოს ცვლადები</settingsLink> განყოფილებაში.",
     "pluginUnsupported": "ეს დანამატი არ უჭერს მხარს არჩეულ რენდერის ძრავას."
   },
   "mapContextMenu": {
@@ -2210,6 +2211,7 @@
       "cesiumTokenStorageNote": "ინახება ლოკალურად ამ მოწყობილობაზე (არა პროექტის ფაილში, ამიტომ არასდროს ზიარდება) და იგზავნება მხოლოდ Cesium Ion-ზე. ვებ-ვერსიაში ის იზიარებს იმავე ბრაუზერის საცავს, რასაც საიტის სხვა მონაცემები.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
       "mapboxTokenTitle": "Mapbox-ის token",
+      "mapboxTokenPlaceholder": "pk.…",
       "mapboxTokenDescription": "Mapbox-ის გამოსაყენებლად ქვემოთ ჩასვით წვდომის ტოკენი <tokenLink>თქვენი Mapbox ანგარიშიდან</tokenLink>.",
       "mapboxTokenStorageNote": "ინახება ლოკალურად ამ მოწყობილობაზე (არა პროექტის ფაილში, ამიტომ არასდროს ზიარდება) და იგზავნება მხოლოდ Mapbox-ზე. ვებ-ვერსიაში ის იზიარებს იმავე ბრაუზერის საცავს, რასაც საიტის სხვა მონაცემები.",
       "variablesTitle": "გარემოს ცვლადები",

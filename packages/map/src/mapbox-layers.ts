@@ -58,13 +58,22 @@ export function styleUsesUnsupportedSource(style: { sources?: object }): boolean
  * error banner would report it.
  */
 export function isMapboxSupportedLayer(layer: GeoLibreLayer): boolean {
+  const cached = supportedLayerCache.get(layer);
+  if (cached !== undefined) return cached;
+  let supported = true;
   try {
     compileMapboxLayer(layer);
-    return true;
   } catch {
-    return false;
+    supported = false;
   }
+  supportedLayerCache.set(layer, supported);
+  return supported;
 }
+
+// Store layers are immutable records (every edit creates a new object), so the
+// answer is memoized per object: the layer panels ask on every render, and a
+// full compile per layer per render would be wasted work.
+const supportedLayerCache = new WeakMap<GeoLibreLayer, boolean>();
 
 /** Compile only native Mapbox sources. Never hand MapLibre protocol URLs to its workers. */
 export function compileMapboxLayer(layer: GeoLibreLayer): MapboxLayerPlan {

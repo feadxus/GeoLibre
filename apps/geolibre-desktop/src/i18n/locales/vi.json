@@ -1877,6 +1877,7 @@
     "noLayers": "Chưa có lớp nào",
     "labelPlaceholder": "Nhãn",
     "labelLabel": "Nhãn cho bản đồ {{number}}",
+    "renderingEngineLabel": "Bộ kết xuất cho bản đồ {{number}}",
     "removePane": "Xóa ô số {{number}}?",
     "show3d": "Hiển thị bản đồ {{number}} dưới dạng quả địa cầu 3D",
     "show2d": "Hiển thị bản đồ {{number}} dưới dạng bản đồ 2D",
@@ -1899,7 +1900,7 @@
     "fullscreenEnter": "Toàn màn hình",
     "fullscreenExit": "Thoát toàn màn hình",
     "fullscreenUnavailable": "Không hỗ trợ toàn màn hình",
-    "mapboxTokenHint": "Thêm mã truy cập Mapbox trong Cài đặt → Biến môi trường để sử dụng trình kết xuất này.",
+    "mapboxTokenHint": "Thêm mã truy cập Mapbox trong <settingsLink>Cài đặt → Biến môi trường</settingsLink> để sử dụng trình kết xuất này.",
     "pluginUnsupported": "Plugin này không hỗ trợ công cụ kết xuất đã chọn."
   },
   "mapContextMenu": {
@@ -2174,6 +2175,7 @@
       "cesiumTokenStorageNote": "Được lưu trữ cục bộ trên thiết bị này (không có trong tệp dự án, vì vậy nó không bao giờ được chia sẻ) và chỉ được gửi tới Cesium Ion. Trên bản dựng web, nó chia sẻ cùng bộ lưu trữ trình duyệt với dữ liệu trang web khác.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
       "mapboxTokenTitle": "Mã thông báo Mapbox",
+      "mapboxTokenPlaceholder": "pk.…",
       "mapboxTokenDescription": "Để sử dụng Mapbox, hãy dán mã truy cập từ <tokenLink>tài khoản Mapbox của bạn</tokenLink> bên dưới.",
       "mapboxTokenStorageNote": "Được lưu trữ cục bộ trên thiết bị này (không có trong tệp dự án, vì vậy nó không bao giờ được chia sẻ) và chỉ được gửi tới Mapbox. Trên bản dựng web, nó chia sẻ cùng bộ lưu trữ trình duyệt với dữ liệu trang web khác.",
       "variablesTitle": "Biến môi trường",

@@ -1923,6 +1923,7 @@
     "noLayers": "Noch keine Ebenen",
     "labelPlaceholder": "Beschriftung",
     "labelLabel": "Beschriftung für Karte {{number}}",
+    "renderingEngineLabel": "Rendering-Engine für Karte {{number}}",
     "removePane": "Karte {{number}} entfernen",
     "show3d": "Karte {{number}} als 3D-Globus anzeigen",
     "show2d": "Karte {{number}} als 2D-Karte anzeigen",
@@ -1945,7 +1946,7 @@
     "fullscreenEnter": "Vollbild",
     "fullscreenExit": "Vollbild beenden",
     "fullscreenUnavailable": "Vollbild nicht verfügbar",
-    "mapboxTokenHint": "Fügen Sie Ihr Mapbox-Zugriffstoken unter Einstellungen → Umgebungsvariablen hinzu, um diesen Renderer zu verwenden.",
+    "mapboxTokenHint": "Fügen Sie Ihr Mapbox-Zugriffstoken unter <settingsLink>Einstellungen → Umgebungsvariablen</settingsLink> hinzu, um diesen Renderer zu verwenden.",
     "pluginUnsupported": "Dieses Plugin unterstützt den ausgewählten Renderer nicht."
   },
   "mapContextMenu": {
@@ -2210,6 +2211,7 @@
       "cesiumTokenStorageNote": "Wird lokal auf diesem Gerät gespeichert (nicht in der Projektdatei, sodass es nie geteilt wird) und nur an Cesium Ion gesendet. Im Web-Build nutzt es denselben Browser-Speicher wie andere Website-Daten.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
       "mapboxTokenTitle": "Mapbox-Token",
+      "mapboxTokenPlaceholder": "pk.…",
       "mapboxTokenDescription": "Fügen Sie unten ein Zugriffstoken aus <tokenLink>Ihrem Mapbox-Konto</tokenLink> ein, um Mapbox zu verwenden.",
       "mapboxTokenStorageNote": "Wird lokal auf diesem Gerät gespeichert (nicht in der Projektdatei, sodass es nie geteilt wird) und nur an Mapbox gesendet. Im Web-Build nutzt es denselben Browser-Speicher wie andere Website-Daten.",
       "variablesTitle": "Umgebungsvariablen",

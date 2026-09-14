@@ -2106,6 +2106,7 @@
     "noLayers": "لا توجد طبقات بعد",
     "labelPlaceholder": "التسمية",
     "labelLabel": "تسمية الخريطة {{number}}",
+    "renderingEngineLabel": "محرك العرض للخريطة {{number}}",
     "removePane": "إزالة الخريطة {{number}}",
     "show3d": "عرض الخريطة {{number}} ككرة أرضية ثلاثية الأبعاد",
     "show2d": "عرض الخريطة {{number}} كخريطة ثنائية الأبعاد",
@@ -2128,7 +2129,7 @@
     "fullscreenEnter": "ملء الشاشة",
     "fullscreenExit": "إنهاء ملء الشاشة",
     "fullscreenUnavailable": "ملء الشاشة غير متاح",
-    "mapboxTokenHint": "أضف رمز وصول Mapbox في الإعدادات ← متغيرات البيئة لاستخدام هذا المحرك.",
+    "mapboxTokenHint": "أضف رمز وصول Mapbox في <settingsLink>الإعدادات ← متغيرات البيئة</settingsLink> لاستخدام هذا المحرك.",
     "pluginUnsupported": "لا تدعم هذه الإضافة محرك العرض المحدد."
   },
   "mapContextMenu": {
@@ -2393,6 +2394,7 @@
       "cesiumTokenStorageNote": "يُخزن محليًا على هذا الجهاز (وليس في ملف المشروع، لذا لا تتم مشاركته أبدًا) ويُرسل فقط إلى Cesium Ion. في نسخة الويب يتشارك مساحة تخزين المتصفح نفسها مع بيانات الموقع الأخرى.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
       "mapboxTokenTitle": "رمز Mapbox",
+      "mapboxTokenPlaceholder": "pk.…",
       "mapboxTokenDescription": "لاستخدام Mapbox، الصق أدناه رمز وصول من <tokenLink>حسابك على Mapbox</tokenLink>.",
       "mapboxTokenStorageNote": "يُخزن محليًا على هذا الجهاز (وليس في ملف المشروع، لذا لا تتم مشاركته أبدًا) ويُرسل فقط إلى Mapbox. في نسخة الويب يتشارك مساحة تخزين المتصفح نفسها مع بيانات الموقع الأخرى.",
       "variablesTitle": "متغيرات البيئة",

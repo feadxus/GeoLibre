@@ -1877,6 +1877,7 @@
     "noLayers": "ยังไม่มีเลเยอร์",
     "labelPlaceholder": "ป้ายกำกับ",
     "labelLabel": "ป้ายกำกับสำหรับแผนที่ {{number}}",
+    "renderingEngineLabel": "เอนจินการแสดงผลสำหรับแผนที่ {{number}}",
     "removePane": "นำแผนที่ {{number}} ออก",
     "show3d": "แสดงแผนที่ {{number}} เป็นลูกโลก 3 มิติ",
     "show2d": "แสดงแผนที่ {{number}} เป็นแผนที่ 2 มิติ",
@@ -1899,7 +1900,7 @@
     "fullscreenEnter": "เต็มหน้าจอ",
     "fullscreenExit": "ออกจากเต็มหน้าจอ",
     "fullscreenUnavailable": "ไม่รองรับเต็มหน้าจอ",
-    "mapboxTokenHint": "เพิ่มโทเค็นการเข้าถึง Mapbox ในการตั้งค่า → ตัวแปรสภาพแวดล้อม เพื่อใช้เอนจินนี้",
+    "mapboxTokenHint": "เพิ่มโทเค็นการเข้าถึง Mapbox ใน<settingsLink>การตั้งค่า → ตัวแปรสภาพแวดล้อม</settingsLink> เพื่อใช้เอนจินนี้",
     "pluginUnsupported": "ปลั๊กอินนี้ไม่รองรับเอนจินการเรนเดอร์ที่เลือก"
   },
   "mapContextMenu": {
@@ -2164,6 +2165,7 @@
       "cesiumTokenStorageNote": "จัดเก็บไว้ในเครื่องบนอุปกรณ์นี้ (ไม่ได้อยู่ในไฟล์โปรเจกต์ จึงไม่ถูกแชร์ออกไป) และส่งไปยัง Cesium Ion เท่านั้น บนบิลด์เว็บ โทเค็นจะใช้พื้นที่จัดเก็บของเบราว์เซอร์ร่วมกับข้อมูลอื่นของเว็บไซต์",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
       "mapboxTokenTitle": "โทเค็น Mapbox",
+      "mapboxTokenPlaceholder": "pk.…",
       "mapboxTokenDescription": "หากต้องการใช้ Mapbox ให้วางโทเค็นการเข้าถึงจาก<tokenLink>บัญชี Mapbox ของคุณ</tokenLink>ด้านล่าง",
       "mapboxTokenStorageNote": "จัดเก็บไว้ในเครื่องบนอุปกรณ์นี้ (ไม่ได้อยู่ในไฟล์โปรเจกต์ จึงไม่ถูกแชร์ออกไป) และส่งไปยัง Mapbox เท่านั้น บนบิลด์เว็บ โทเค็นจะใช้พื้นที่จัดเก็บของเบราว์เซอร์ร่วมกับข้อมูลอื่นของเว็บไซต์",
       "variablesTitle": "ตัวแปรสภาพแวดล้อม",

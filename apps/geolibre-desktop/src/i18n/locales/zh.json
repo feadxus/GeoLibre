@@ -1877,6 +1877,7 @@
     "noLayers": "尚无图层",
     "labelPlaceholder": "标签",
     "labelLabel": "地图 {{number}} 的标签",
+    "renderingEngineLabel": "地图 {{number}} 的渲染引擎",
     "removePane": "移除地图 {{number}}",
     "show3d": "将地图 {{number}} 显示为 3D 地球",
     "show2d": "将地图 {{number}} 显示为 2D 地图",
@@ -1899,7 +1900,7 @@
     "fullscreenEnter": "全屏",
     "fullscreenExit": "退出全屏",
     "fullscreenUnavailable": "全屏不可用",
-    "mapboxTokenHint": "请在设置 → 环境变量中添加 Mapbox 访问令牌，以使用此渲染引擎。",
+    "mapboxTokenHint": "请在<settingsLink>设置 → 环境变量</settingsLink>中添加 Mapbox 访问令牌，以使用此渲染引擎。",
     "pluginUnsupported": "此插件不支持所选的渲染引擎。"
   },
   "mapContextMenu": {
@@ -2164,6 +2165,7 @@
       "cesiumTokenStorageNote": "仅存储在本设备上（不存储在项目文件中，因此永远不会被共享），并且仅发送到 Cesium Ion。在 Web 版本中，它与其他站点数据共用同一浏览器存储。",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
       "mapboxTokenTitle": "Mapbox 令牌",
+      "mapboxTokenPlaceholder": "pk.…",
       "mapboxTokenDescription": "要使用 Mapbox，请在下方粘贴来自<tokenLink>您的 Mapbox 账户</tokenLink>的访问令牌。",
       "mapboxTokenStorageNote": "仅存储在本设备上（不存储在项目文件中，因此永远不会被共享），并且仅发送到 Mapbox。在 Web 版本中，它与其他站点数据共用同一浏览器存储。",
       "variablesTitle": "环境变量",

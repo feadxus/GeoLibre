@@ -1923,6 +1923,7 @@
     "noLayers": "هنوز لایه‌ای نیست",
     "labelPlaceholder": "برچسب",
     "labelLabel": "برچسب نقشهٔ {{number}}",
+    "renderingEngineLabel": "موتور ترسیم نقشهٔ {{number}}",
     "removePane": "حذف نقشهٔ {{number}}",
     "show3d": "نمایش نقشهٔ {{number}} به‌صورت کرهٔ سه‌بعدی",
     "show2d": "نمایش نقشهٔ {{number}} به‌صورت نقشهٔ دوبعدی",
@@ -1945,7 +1946,7 @@
     "fullscreenEnter": "تمام‌صفحه",
     "fullscreenExit": "خروج از تمام‌صفحه",
     "fullscreenUnavailable": "تمام‌صفحه در دسترس نیست",
-    "mapboxTokenHint": "برای استفاده از این موتور، توکن دسترسی Mapbox خود را در تنظیمات ← متغیرهای محیطی اضافه کنید.",
+    "mapboxTokenHint": "برای استفاده از این موتور، توکن دسترسی Mapbox خود را در <settingsLink>تنظیمات ← متغیرهای محیطی</settingsLink> اضافه کنید.",
     "pluginUnsupported": "این افزونه از موتور رندر انتخاب‌شده پشتیبانی نمی‌کند."
   },
   "mapContextMenu": {
@@ -2210,6 +2211,7 @@
       "cesiumTokenStorageNote": "به‌صورت محلی روی این دستگاه نگهداری می‌شود (نه در فایل پروژه، پس هرگز هم‌رسانی نمی‌شود) و تنها به Cesium Ion فرستاده می‌شود. در ساخت وب، همان فضای ذخیره‌سازی مرورگر را با دیگر داده‌های سایت به اشتراک می‌گذارد.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
       "mapboxTokenTitle": "توکن Mapbox",
+      "mapboxTokenPlaceholder": "pk.…",
       "mapboxTokenDescription": "برای استفاده از Mapbox، توکن دسترسی <tokenLink>حساب Mapbox خود</tokenLink> را در زیر جای‌گذاری کنید.",
       "mapboxTokenStorageNote": "به‌صورت محلی روی این دستگاه نگهداری می‌شود (نه در فایل پروژه، پس هرگز هم‌رسانی نمی‌شود) و تنها به Mapbox فرستاده می‌شود. در ساخت وب، همان فضای ذخیره‌سازی مرورگر را با دیگر داده‌های سایت به اشتراک می‌گذارد.",
       "variablesTitle": "متغیرهای محیطی",

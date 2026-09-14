@@ -166,7 +166,7 @@ function SecondaryMapPane({ viewId, index, cesiumToken }: SecondaryMapPaneProps)
             <button
               type="button"
               className="flex h-7 w-7 items-center justify-center rounded-md border border-input map-glass text-muted-foreground shadow-sm hover:bg-accent"
-              aria-label={t("toolbar.item.renderingEngine")}
+              aria-label={t("mapGrid.renderingEngineLabel", { number: index + 2 })}
             >
               {is3d ? <Globe className="h-4 w-4" /> : <MapIcon className="h-4 w-4" />}
             </button>

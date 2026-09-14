@@ -1877,6 +1877,7 @@
     "noLayers": "Belum ada layer",
     "labelPlaceholder": "Label",
     "labelLabel": "Label untuk peta {{number}}",
+    "renderingEngineLabel": "Mesin render untuk peta {{number}}",
     "removePane": "Hapus peta {{number}}",
     "show3d": "Tampilkan peta {{number}} sebagai bola dunia 3D",
     "show2d": "Tampilkan peta {{number}} sebagai peta 2D",
@@ -1899,7 +1900,7 @@
     "fullscreenEnter": "Layar penuh",
     "fullscreenExit": "Keluar dari layar penuh",
     "fullscreenUnavailable": "Layar penuh tidak tersedia",
-    "mapboxTokenHint": "Tambahkan token akses Mapbox Anda di Pengaturan → Variabel lingkungan untuk menggunakan perender ini.",
+    "mapboxTokenHint": "Tambahkan token akses Mapbox Anda di <settingsLink>Pengaturan → Variabel lingkungan</settingsLink> untuk menggunakan perender ini.",
     "pluginUnsupported": "Plugin ini tidak mendukung mesin perender yang dipilih."
   },
   "mapContextMenu": {
@@ -2164,6 +2165,7 @@
       "cesiumTokenStorageNote": "Disimpan secara lokal di perangkat ini (bukan dalam file proyek, sehingga tidak pernah dibagikan) dan hanya dikirim ke Cesium Ion. Pada build web, token ini berbagi penyimpanan browser yang sama dengan data situs lainnya.",
       "cesiumTokenPlaceholder": "eyJhbGciOi…",
       "mapboxTokenTitle": "Token Mapbox",
+      "mapboxTokenPlaceholder": "pk.…",
       "mapboxTokenDescription": "Untuk menggunakan Mapbox, tempel token akses dari <tokenLink>akun Mapbox Anda</tokenLink> di bawah.",
       "mapboxTokenStorageNote": "Disimpan secara lokal di perangkat ini (bukan dalam file proyek, sehingga tidak pernah dibagikan) dan hanya dikirim ke Mapbox. Pada build web, token ini berbagi penyimpanan browser yang sama dengan data situs lainnya.",
       "variablesTitle": "Variabel lingkungan",
