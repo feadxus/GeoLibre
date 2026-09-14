@@ -29,6 +29,7 @@ export function PrimaryMapboxCanvas({
     ["mapbox://styles/mapbox/standard", "Mapbox Standard"],
     ["mapbox://styles/mapbox/streets-v12", "Mapbox Streets"],
     ["mapbox://styles/mapbox/outdoors-v12", "Mapbox Outdoors"],
+    ["mapbox://styles/mapbox/satellite-v9", "Mapbox Satellite"],
     ["mapbox://styles/mapbox/satellite-streets-v12", "Mapbox Satellite Streets"],
     ["mapbox://styles/mapbox/light-v11", "Mapbox Light"],
     ["mapbox://styles/mapbox/dark-v11", "Mapbox Dark"],
