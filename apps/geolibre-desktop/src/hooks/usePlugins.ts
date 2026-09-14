@@ -1026,6 +1026,13 @@ export function createAppAPI(mapControllerRef?: RefObject<MapEngine | null>) {
           callback(state.basemapStyleUrl);
         }
       }),
+    getLayers: () => useAppStore.getState().layers.map((layer) => layer.id),
+    onLayersChanged: (callback: (layerIds: string[]) => void) =>
+      useAppStore.subscribe((state, prev) => {
+        if (state.layers !== prev.layers) {
+          callback(state.layers.map((layer) => layer.id));
+        }
+      }),
     fetchArrayBuffer: fetchRemoteArrayBuffer,
     resolvePluginAssetUrl: resolvePluginAssetUrlForLoadedPlugin,
     activatePlugin: async (pluginId: string, state?: unknown) => {
