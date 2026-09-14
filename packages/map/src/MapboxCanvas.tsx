@@ -52,6 +52,7 @@ export function MapboxCanvas({ accessToken, viewId, engineRef, onEngineReady }: 
         engine = new MapboxEngine(map, gl);
         const current = engine;
         let applying = false;
+        let publishingView = false;
         let popup: Popup | undefined;
         const update = (next: typeof state, previous?: typeof state) => {
           if (cancelled) return;
@@ -91,17 +92,19 @@ export function MapboxCanvas({ accessToken, viewId, engineRef, onEngineReady }: 
                 : next.layers;
               current.syncLayers(applyGroupEffects(layers, next.layerGroups));
             }
-            if (
-              !previous ||
-              next.mapView !== previous.mapView ||
-              targetPane?.view !== previousPane?.view ||
-              next.mapLayout.syncView !== previous.mapLayout.syncView
-            ) {
-              current.applyView(
-                viewId && !next.mapLayout.syncView
-                  ? (targetPane?.view ?? next.mapView)
-                  : next.mapView,
-              );
+            const targetView =
+              viewId && !next.mapLayout.syncView
+                ? (targetPane?.view ?? next.mapView)
+                : next.mapView;
+            const previousView =
+              viewId && previous && !previous.mapLayout.syncView
+                ? (previousPane?.view ?? previous.mapView)
+                : previous?.mapView;
+            // Local camera writes must never interrupt the active gesture.
+            // In synced panes, the shared view is authoritative; updating a
+            // pane's saved view must not reapply the previous shared camera.
+            if (!publishingView && targetView !== previousView) {
+              current.applyView(targetView);
             }
             if (
               !viewId &&
@@ -122,12 +125,17 @@ export function MapboxCanvas({ accessToken, viewId, engineRef, onEngineReady }: 
         const unsubscribe = useAppStore.subscribe(update);
         cleanup = unsubscribe;
         update(state);
-        map.on("moveend", () => {
+        map.on("move", () => {
           if (applying || cancelled) return;
           const next = useAppStore.getState(),
             camera = current.readView();
-          if (viewId) next.setSecondaryMapView(viewId, camera, true);
-          if (!viewId || next.mapLayout.syncView) next.setMapView(camera, true);
+          publishingView = true;
+          try {
+            if (viewId) next.setSecondaryMapView(viewId, camera, true);
+            if (!viewId || next.mapLayout.syncView) next.setMapView(camera, true);
+          } finally {
+            publishingView = false;
+          }
         });
         map.on("mousemove", (e) => {
           if (!viewId) useAppStore.getState().setPointerCoords(e.lngLat.toArray());
