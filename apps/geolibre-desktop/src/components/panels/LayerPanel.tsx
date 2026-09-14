@@ -705,7 +705,11 @@ export function LayerPanel({
   const setBlankBackgroundColor = useAppStore((s) => s.setBlankBackgroundColor);
   const applyPlanetaryBasemap = useAppStore((s) => s.applyPlanetaryBasemap);
   const restoreEarthBasemap = useAppStore((s) => s.restoreEarthBasemap);
-  const basemapStyleUrl = useAppStore((s) => s.basemapStyleUrl);
+  const basemapStyleUrl = useAppStore((s) =>
+    s.primaryRenderer === "mapbox"
+      ? (s.preferences.map.mapboxStyleUrl ?? s.basemapStyleUrl)
+      : s.basemapStyleUrl,
+  );
   // The body the switcher reflects, derived from the active *basemap* — not the
   // ellipsoid, which Settings lets diverge from the basemap (e.g. Mars scale
   // under an Earth style). Any planetary basemap resolves to its body: the

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   applyProjectToStore,
+  BLANK_BASEMAP,
+  PLANETARY_BASEMAPS,
   createEmptyProject,
   parseProject,
   projectFromStore,
@@ -151,5 +153,43 @@ describe("Mapbox-specific basemap preference", () => {
     const reopened = parseProject(serializeProject(project));
     assert.equal(reopened.basemapStyleUrl, shared);
     assert.equal(reopened.preferences.map.mapboxStyleUrl, "mapbox://styles/mapbox/standard");
+  });
+});
+
+describe("Mapbox background picker", () => {
+  const satellite = "mapbox://styles/mapbox/satellite-v9";
+  const selectSatellite = () => {
+    const state = useAppStore.getState();
+    state.setPreferences({
+      ...state.preferences,
+      map: { ...state.preferences.map, mapboxStyleUrl: satellite },
+    });
+  };
+  it("lets a background selection replace the active Mapbox override", () => {
+    useAppStore.getState().newProject();
+    useAppStore.getState().setPrimaryRenderer("mapbox");
+    selectSatellite();
+    useAppStore.getState().setBasemapStyleUrl(BLANK_BASEMAP);
+    assert.equal(useAppStore.getState().basemapStyleUrl, BLANK_BASEMAP);
+    assert.equal(useAppStore.getState().preferences.map.mapboxStyleUrl, undefined);
+  });
+  it("also replaces the override for planetary basemaps and returning to Earth", () => {
+    useAppStore.getState().newProject();
+    useAppStore.getState().setPrimaryRenderer("mapbox");
+    selectSatellite();
+    const planetary = PLANETARY_BASEMAPS[0];
+    useAppStore.getState().applyPlanetaryBasemap(planetary);
+    assert.equal(useAppStore.getState().preferences.map.mapboxStyleUrl, undefined);
+    assert.equal(useAppStore.getState().preferences.map.ellipsoidId, planetary.ellipsoidId);
+    selectSatellite();
+    useAppStore.getState().restoreEarthBasemap(BLANK_BASEMAP);
+    assert.equal(useAppStore.getState().preferences.map.mapboxStyleUrl, undefined);
+  });
+  it("preserves a Mapbox override when changing the background in MapLibre", () => {
+    useAppStore.getState().newProject();
+    useAppStore.getState().setPrimaryRenderer("maplibre");
+    selectSatellite();
+    useAppStore.getState().setBasemapStyleUrl(BLANK_BASEMAP);
+    assert.equal(useAppStore.getState().preferences.map.mapboxStyleUrl, satellite);
   });
 });
