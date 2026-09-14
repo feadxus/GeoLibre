@@ -150,8 +150,10 @@ it("materializes small tiled layers as GeoJSON records and leaves oversize ones 
   const handlers = new Map<string, Array<() => void>>();
   const exported: string[] = [];
   let infos: VectorLayerInfo[] = [];
+  let bridged: MapLibreMap | undefined;
   const control = {
     onAdd(map: MapLibreMap) {
+      bridged = map;
       for (const id of ["small", "big"]) {
         map.addSource(`${id}-source`, { type: "vector", tiles: [`duckdb://${id}/{z}/{x}/{y}`] });
       }
@@ -200,6 +202,17 @@ it("materializes small tiled layers as GeoJSON records and leaves oversize ones 
     await new Promise((resolve) => setImmediate(resolve));
     assert.deepEqual(exported, ["small"]);
     assert.equal(warnings.length, 1);
+    // A reload that comes back oversize is a new source revision: the cached
+    // collection must go with the old one rather than keep drawing stale data.
+    bridged!.addSource("small-source", { type: "vector", tiles: ["duckdb://small2/{z}/{x}/{y}"] });
+    infos = [tiledInfo("small", { ingestMode: "stream", featureCount: 1 }), infos[1]];
+    emit();
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.deepEqual(exported, ["small"]);
+    assert.equal(warnings.length, 2);
+    const reloaded = useAppStore.getState().layers[0];
+    assert.equal(reloaded.type, "vector-tiles");
+    assert.equal(reloaded.geojson, undefined);
   } finally {
     console.warn = originalWarn;
   }

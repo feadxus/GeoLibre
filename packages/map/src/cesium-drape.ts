@@ -71,7 +71,11 @@ export function isDrapedLayer(layer: GeoLibreLayer): boolean {
     // maplibre-gl-vector's tiled records are control-owned: the 2D sync the
     // drape reuses never creates their DuckDB source, so they render from a
     // collection (see the plugin's vector-cesium-bridge) or not at all.
-    if (layer.metadata?.sourceKind === VECTOR_CONTROL_SOURCE_KIND) return false;
+    if (
+      layer.metadata?.sourceKind === VECTOR_CONTROL_SOURCE_KIND &&
+      layer.metadata.externalNativeLayer === true
+    )
+      return false;
     return (
       Boolean(str(layer.source?.url)) ||
       (Array.isArray(layer.source?.tiles) && layer.source.tiles.length > 0)

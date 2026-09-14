@@ -83,6 +83,7 @@ describe("isDrapedLayer", () => {
     assert.equal(isDrapedLayer(layer), false);
     assert.equal(isCesiumSupportedLayerType(layer), false);
     assert.equal(isDrapedLayer({ ...layer, metadata: { externalNativeLayer: true } }), true);
+    assert.equal(isDrapedLayer({ ...layer, metadata: { sourceKind: "maplibre-gl-vector" } }), true);
   });
 
   it("only promises ArcGIS rendering when the resolved vector style is present", () => {

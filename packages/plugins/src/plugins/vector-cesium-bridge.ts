@@ -118,6 +118,8 @@ export function bridgeVectorControlToCesium(control: VectorControl, app: GeoLibr
       const source = sources.get(info.sourceId);
       if (!source || source.serialize().type === "geojson" || pending.get(info.id) === source)
         continue;
+      // A new revision must not keep drawing the previous one's features.
+      collections.delete(info.id);
       pending.set(info.id, source);
       if (exceedsCesiumVectorLimit(info)) {
         // Console-only: the plugin layer has no notification API; the layer
