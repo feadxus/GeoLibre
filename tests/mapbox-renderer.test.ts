@@ -11,6 +11,7 @@ import {
   useAppStore,
 } from "@geolibre/core";
 import { compileMapboxLayer, styleUsesUnsupportedSource } from "../packages/map/src/mapbox-layers";
+import { proxyWmsTiles } from "../packages/map/src/wms-proxy";
 import { MAPBOX_CAPABILITIES, redactMapboxError } from "../packages/map/src/mapbox-engine";
 import { isPluginEngineSupported } from "../packages/plugins/src/types";
 import { geojsonLayer } from "./helpers/layer-fixtures";
@@ -119,6 +120,15 @@ describe("Mapbox native layer compilation", () => {
       true,
     );
     assert.equal(styleUsesUnsupportedSource({}), false);
+  });
+  it("routes WMS tiles through the dev-server proxy like the MapLibre path", () => {
+    const tiles = ["https://example.gov/wms?bbox={bbox-epsg-3857}&x=1"];
+    assert.deepEqual(proxyWmsTiles("wms", tiles, false), tiles);
+    assert.deepEqual(proxyWmsTiles("xyz", tiles, true), tiles);
+    const [proxied] = proxyWmsTiles("wms", tiles, true);
+    assert.ok(proxied.startsWith("/__geolibre_wms_proxy?url=https%3A%2F%2Fexample.gov"));
+    // The bbox placeholder must survive encoding so the map still fills it in.
+    assert.ok(proxied.includes("{bbox-epsg-3857}"));
   });
   it("uses Mapbox's native GeoJSON path even for plugin-owned in-memory vector data", () => {
     const layer = geojsonLayer({ id: "external" });

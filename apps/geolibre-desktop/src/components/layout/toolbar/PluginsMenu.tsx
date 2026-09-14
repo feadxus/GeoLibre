@@ -84,6 +84,9 @@ export function PluginsMenu({
         <DropdownMenuItem
           key={p.id}
           disabled={!canToggle}
+          // A greyed-out item still says why on hover, matching the command
+          // palette's disabledReason for the same condition.
+          title={!canToggle ? t("renderer.pluginUnsupported") : undefined}
           onClick={() => {
             if (!canToggle) return;
             toggle(p.id, appApi);
@@ -97,7 +100,10 @@ export function PluginsMenu({
 
     return (
       <DropdownMenuSub key={p.id}>
-        <DropdownMenuSubTrigger disabled={!canToggle}>
+        <DropdownMenuSubTrigger
+          disabled={!canToggle}
+          title={!canToggle ? t("renderer.pluginUnsupported") : undefined}
+        >
           {pluginName}
           {isActive(p.id) ? " ✓" : ""}
         </DropdownMenuSubTrigger>

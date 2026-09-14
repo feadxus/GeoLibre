@@ -12,6 +12,7 @@ import type {
   FilterSpecification,
 } from "mapbox-gl";
 import { circlePaint, fillPaint, fillExtrusionPaint, linePaint, rasterPaint } from "./style-mapper";
+import { proxyWmsTiles } from "./wms-proxy";
 
 export interface MapboxLayerPlan {
   sourceId: string;
@@ -228,11 +229,14 @@ export function compileMapboxLayer(layer: GeoLibreLayer): MapboxLayerPlan {
     },
   ] as LayerSpecification[];
   if (["raster", "wms", "wmts", "xyz"].includes(layer.type) && (tiles.length || url)) {
+    // Same dev-server WMS proxy as the MapLibre path (getRenderableRasterTiles),
+    // so a WMS layer that works in a MapLibre pane also works here in `npm run dev`.
+    const rasterTiles = proxyWmsTiles(layer.type, tiles);
     return {
       sourceId,
       source: {
         type: "raster",
-        ...(tiles.length ? { tiles } : { url }),
+        ...(rasterTiles.length ? { tiles: rasterTiles } : { url }),
         tileSize: typeof layer.source.tileSize === "number" ? layer.source.tileSize : 256,
         ...options,
       },

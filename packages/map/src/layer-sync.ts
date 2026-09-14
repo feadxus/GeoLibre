@@ -98,6 +98,7 @@ import {
   linePaint,
   rasterPaint,
 } from "./style-mapper";
+import { isViteDevServer, proxyWmsTileUrl, proxyWmsTiles } from "./wms-proxy";
 
 /**
  * Notified of the computed `beforeId` for a deck.gl-backed external custom layer
@@ -117,7 +118,6 @@ export function setExternalDeckLayerOrderHandler(
   externalDeckLayerOrderHandler = handler;
 }
 
-const WMS_PROXY_PATH = "/__geolibre_wms_proxy";
 const PMTILES_PROTOCOL_GLOBAL_KEY = "__geolibrePMTilesProtocol";
 const PMTILES_ARCHIVE_KEYS_GLOBAL_KEY = "__geolibrePMTilesArchiveKeys";
 const MIN_LAYER_ZOOM = DEFAULT_LAYER_STYLE.minZoom;
@@ -3182,27 +3182,7 @@ function syncImageLayer(map: maplibregl.Map, layer: GeoLibreLayer, beforeId?: st
 }
 
 function getRenderableRasterTiles(layer: GeoLibreLayer): string[] {
-  const tiles = (layer.source.tiles as string[]) ?? [];
-  if (layer.type !== "wms" || !isViteDevServer()) return tiles;
-  return tiles.map((tile) => (/^https?:\/\//i.test(tile) ? proxyWmsTileUrl(tile) : tile));
-}
-
-function isViteDevServer(): boolean {
-  return Boolean(
-    (
-      import.meta as ImportMeta & {
-        env?: { DEV?: boolean };
-      }
-    ).env?.DEV,
-  );
-}
-
-function proxyWmsTileUrl(tileUrl: string): string {
-  const encodedUrl = encodeURIComponent(tileUrl).replaceAll(
-    "%7Bbbox-epsg-3857%7D",
-    "{bbox-epsg-3857}",
-  );
-  return `${WMS_PROXY_PATH}?url=${encodedUrl}`;
+  return proxyWmsTiles(layer.type, (layer.source.tiles as string[]) ?? []);
 }
 
 /** The parts of MapLibre's `VectorTileSource` this module reads and updates. */
