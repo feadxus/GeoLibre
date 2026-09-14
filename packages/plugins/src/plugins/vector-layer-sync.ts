@@ -263,7 +263,15 @@ export function syncVectorLayersToStore(
     for (const info of infos) {
       const layer = createVectorStoreLayer(info, panelCollapsed);
       const geometryReader = geometryReaders.get(control);
-      if (geometryReader) layer.geojson = geometryReader(info);
+      if (geometryReader) {
+        layer.geojson = geometryReader(info);
+        // The globe draws the collection itself, so a tiled record takes the
+        // GeoJSON path: the drape never creates the control's DuckDB source.
+        if (layer.geojson) {
+          layer.type = "geojson";
+          layer.source = { ...layer.source, type: "geojson" };
+        }
+      }
       const existing = useAppStore.getState().layers.find((current) => current.id === layer.id);
 
       if (!existing) {
