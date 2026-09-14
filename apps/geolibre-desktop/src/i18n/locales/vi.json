@@ -1896,7 +1896,9 @@
     "sceneColumbus": "Chế độ xem Columbus",
     "fullscreenEnter": "Toàn màn hình",
     "fullscreenExit": "Thoát toàn màn hình",
-    "fullscreenUnavailable": "Không hỗ trợ toàn màn hình"
+    "fullscreenUnavailable": "Không hỗ trợ toàn màn hình",
+    "mapboxTokenHint": "Thêm mã truy cập Mapbox trong Cài đặt → Biến môi trường (VITE_MAPBOX_ACCESS_TOKEN) để sử dụng trình kết xuất này.",
+    "pluginUnsupported": "Plugin này không hỗ trợ công cụ kết xuất đã chọn."
   },
   "mapContextMenu": {
     "zoomInHere": "Phóng to ở đây",
@@ -2751,6 +2753,7 @@
       "splitViewSync": "Đồng bộ hóa lượt xem",
       "renderingEngine": "Bộ kết xuất",
       "rendererMapLibre": "MapLibre",
+      "rendererMapbox": "Mapbox",
       "rendererCesium": "Cesium",
       "viewInGoogleMaps": "Xem trên Google Maps",
       "viewInGoogleEarth": "Xem trong Google Earth",

@@ -2125,7 +2125,9 @@
     "sceneColumbus": "عرض كولومبوس",
     "fullscreenEnter": "ملء الشاشة",
     "fullscreenExit": "إنهاء ملء الشاشة",
-    "fullscreenUnavailable": "ملء الشاشة غير متاح"
+    "fullscreenUnavailable": "ملء الشاشة غير متاح",
+    "mapboxTokenHint": "أضف رمز وصول Mapbox في الإعدادات ← متغيرات البيئة (VITE_MAPBOX_ACCESS_TOKEN) لاستخدام هذا المحرك.",
+    "pluginUnsupported": "لا تدعم هذه الإضافة محرك العرض المحدد."
   },
   "mapContextMenu": {
     "copyCoordinatesHint": "نسخ الإحداثيات إلى الحافظة",
@@ -2990,6 +2992,7 @@
       "splitViewSync": "مزامنة العروض",
       "renderingEngine": "محرك العرض",
       "rendererMapLibre": "MapLibre",
+      "rendererMapbox": "Mapbox",
       "rendererCesium": "Cesium",
       "viewInGoogleMaps": "عرض في Google Maps",
       "viewInGoogleEarth": "عرض في Google Earth",

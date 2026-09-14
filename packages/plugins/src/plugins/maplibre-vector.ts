@@ -899,7 +899,8 @@ function createVectorControl(
     },
   });
 
-  if (app.getMapRenderer?.() === "cesium") bridgeVectorControlToCesium(control, app);
+  if (app.getMapRenderer?.() === "cesium" || app.getMapRenderer?.() === "mapbox")
+    bridgeVectorControlToCesium(control, app);
 
   for (const event of ["layeradded", "layerremoved", "layerupdated"] as const) {
     control.on(event, () => syncVectorLayersToStore(control));

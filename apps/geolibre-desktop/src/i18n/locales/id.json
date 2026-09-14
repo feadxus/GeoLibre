@@ -1896,7 +1896,9 @@
     "sceneColumbus": "Tampilan Columbus",
     "fullscreenEnter": "Layar penuh",
     "fullscreenExit": "Keluar dari layar penuh",
-    "fullscreenUnavailable": "Layar penuh tidak tersedia"
+    "fullscreenUnavailable": "Layar penuh tidak tersedia",
+    "mapboxTokenHint": "Tambahkan token akses Mapbox Anda di Pengaturan → Variabel lingkungan (VITE_MAPBOX_ACCESS_TOKEN) untuk menggunakan perender ini.",
+    "pluginUnsupported": "Plugin ini tidak mendukung mesin perender yang dipilih."
   },
   "mapContextMenu": {
     "copyCoordinatesHint": "Salin koordinat ke papan klip",
@@ -2751,6 +2753,7 @@
       "splitViewSync": "Sinkronkan tampilan",
       "renderingEngine": "Mesin render",
       "rendererMapLibre": "MapLibre",
+      "rendererMapbox": "Mapbox",
       "rendererCesium": "Cesium",
       "viewInGoogleMaps": "Lihat di Google Maps",
       "viewInGoogleEarth": "Lihat di Google Earth",

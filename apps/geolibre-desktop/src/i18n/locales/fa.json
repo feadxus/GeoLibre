@@ -1942,7 +1942,9 @@
     "sceneColumbus": "نمای کلمبوس",
     "fullscreenEnter": "تمام‌صفحه",
     "fullscreenExit": "خروج از تمام‌صفحه",
-    "fullscreenUnavailable": "تمام‌صفحه در دسترس نیست"
+    "fullscreenUnavailable": "تمام‌صفحه در دسترس نیست",
+    "mapboxTokenHint": "برای استفاده از این موتور، توکن دسترسی Mapbox خود را در تنظیمات ← متغیرهای محیطی (VITE_MAPBOX_ACCESS_TOKEN) اضافه کنید.",
+    "pluginUnsupported": "این افزونه از موتور رندر انتخاب‌شده پشتیبانی نمی‌کند."
   },
   "mapContextMenu": {
     "copyCoordinatesHint": "رونوشت مختصات در بریده‌دان",
@@ -2799,6 +2801,7 @@
       "splitViewSync": "هم‌گام‌سازی نماها",
       "renderingEngine": "موتور ترسیم",
       "rendererMapLibre": "MapLibre",
+      "rendererMapbox": "Mapbox",
       "rendererCesium": "Cesium",
       "viewInGoogleMaps": "دیدن در Google Maps",
       "viewInGoogleEarth": "دیدن در Google Earth",

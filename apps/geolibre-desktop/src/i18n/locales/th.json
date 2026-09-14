@@ -1896,7 +1896,9 @@
     "sceneColumbus": "มุมมองโคลัมบัส",
     "fullscreenEnter": "เต็มหน้าจอ",
     "fullscreenExit": "ออกจากเต็มหน้าจอ",
-    "fullscreenUnavailable": "ไม่รองรับเต็มหน้าจอ"
+    "fullscreenUnavailable": "ไม่รองรับเต็มหน้าจอ",
+    "mapboxTokenHint": "เพิ่มโทเค็นการเข้าถึง Mapbox ในการตั้งค่า → ตัวแปรสภาพแวดล้อม (VITE_MAPBOX_ACCESS_TOKEN) เพื่อใช้เอนจินนี้",
+    "pluginUnsupported": "ปลั๊กอินนี้ไม่รองรับเอนจินการเรนเดอร์ที่เลือก"
   },
   "mapContextMenu": {
     "copyCoordinatesHint": "คัดลอกพิกัดไปยังคลิปบอร์ด",
@@ -2751,6 +2753,7 @@
       "splitViewSync": "ซิงค์มุมมอง",
       "renderingEngine": "เอนจินการแสดงผล",
       "rendererMapLibre": "MapLibre",
+      "rendererMapbox": "Mapbox",
       "rendererCesium": "Cesium",
       "viewInGoogleMaps": "ดูใน Google Maps",
       "viewInGoogleEarth": "ดูใน Google Earth",

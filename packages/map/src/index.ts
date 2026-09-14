@@ -1,3 +1,5 @@
+export { MapboxCanvas, type MapboxCanvasProps } from "./MapboxCanvas";
+export { MapboxEngine, MAPBOX_CAPABILITIES } from "./mapbox-engine";
 export {
   MapCanvas,
   type MapCanvasIdentifyAllLabels,

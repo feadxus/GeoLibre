@@ -6,12 +6,15 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@geolibre/ui";
 import { Globe, Layers, Map as MapIcon, X } from "lucide-react";
 import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { PrimaryMapboxCanvas } from "./PrimaryMapboxCanvas";
 import { useCesiumIonToken } from "../../hooks/useCesiumIonToken";
 
 /**
@@ -117,13 +120,16 @@ function SecondaryMapPane({ viewId, index, cesiumToken }: SecondaryMapPaneProps)
   const setSecondaryViewKind = useAppStore((s) => s.setSecondaryViewKind);
   const label = useAppStore((s) => s.secondaryMapViews.find((p) => p.id === viewId)?.label ?? "");
   // Absent viewKind means the default 2D map (back-compat with older panes).
-  const is3d = useAppStore(
-    (s) => s.secondaryMapViews.find((p) => p.id === viewId)?.viewKind === "cesium",
+  const renderer = useAppStore(
+    (s) => s.secondaryMapViews.find((p) => p.id === viewId)?.viewKind ?? "maplibre",
   );
+  const is3d = renderer === "cesium";
 
   return (
     <div className="relative isolate min-h-0 min-w-0 overflow-hidden bg-background">
-      {is3d ? (
+      {renderer === "mapbox" ? (
+        <PrimaryMapboxCanvas viewId={viewId} />
+      ) : is3d ? (
         // Key on the token so changing the Cesium Ion token in Settings remounts
         // the globe: `Cesium.Ion.defaultAccessToken` is applied once at viewer
         // creation, so without a remount a swapped (e.g. corrected) token would
@@ -150,19 +156,38 @@ function SecondaryMapPane({ viewId, index, cesiumToken }: SecondaryMapPaneProps)
         {/* Both the 2D map and the 3D globe render the shared layers, so the
             per-pane layer-visibility toggle applies to either. */}
         <PaneLayerToggle viewId={viewId} index={index} is3d={is3d} />
-        <button
-          type="button"
-          className="flex h-7 w-7 items-center justify-center rounded-md border border-input map-glass text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground"
-          aria-label={
-            is3d
-              ? t("mapGrid.show2d", { number: index + 2 })
-              : t("mapGrid.show3d", { number: index + 2 })
-          }
-          aria-pressed={is3d}
-          onClick={() => setSecondaryViewKind(viewId, is3d ? "maplibre" : "cesium")}
-        >
-          {is3d ? <MapIcon className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="flex h-7 w-7 items-center justify-center rounded-md border border-input map-glass text-muted-foreground shadow-sm hover:bg-accent"
+              aria-label={t("toolbar.item.renderingEngine")}
+            >
+              {is3d ? <Globe className="h-4 w-4" /> : <MapIcon className="h-4 w-4" />}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuRadioGroup
+              value={renderer}
+              onValueChange={(value) =>
+                setSecondaryViewKind(
+                  viewId,
+                  value === "cesium" || value === "mapbox" ? value : "maplibre",
+                )
+              }
+            >
+              <DropdownMenuRadioItem value="maplibre">
+                {t("toolbar.item.rendererMapLibre")}
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="mapbox">
+                {t("toolbar.item.rendererMapbox")}
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="cesium">
+                {t("toolbar.item.rendererCesium")}
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <button
           type="button"
           className="flex h-7 w-7 items-center justify-center rounded-md border border-input map-glass text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground"

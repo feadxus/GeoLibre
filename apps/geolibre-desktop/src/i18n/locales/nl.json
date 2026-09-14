@@ -1942,7 +1942,9 @@
     "sceneColumbus": "Columbus-weergave",
     "fullscreenEnter": "Volledig scherm",
     "fullscreenExit": "Volledig scherm verlaten",
-    "fullscreenUnavailable": "Volledig scherm niet beschikbaar"
+    "fullscreenUnavailable": "Volledig scherm niet beschikbaar",
+    "mapboxTokenHint": "Voeg uw Mapbox-toegangstoken toe via Instellingen → Omgevingsvariabelen (VITE_MAPBOX_ACCESS_TOKEN) om deze renderer te gebruiken.",
+    "pluginUnsupported": "Deze plugin ondersteunt de geselecteerde renderer niet."
   },
   "mapContextMenu": {
     "copyCoordinatesHint": "Coördinaten naar klembord kopiëren",
@@ -2799,6 +2801,7 @@
       "splitViewSync": "Weergaven synchroniseren",
       "renderingEngine": "Renderengine",
       "rendererMapLibre": "MapLibre",
+      "rendererMapbox": "Mapbox",
       "rendererCesium": "Cesium",
       "viewInGoogleMaps": "Bekijken in Google Maps",
       "viewInGoogleEarth": "Bekijken in Google Earth",

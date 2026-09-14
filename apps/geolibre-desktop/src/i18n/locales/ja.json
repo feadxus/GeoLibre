@@ -1896,7 +1896,9 @@
     "sceneColumbus": "コロンバスビュー",
     "fullscreenEnter": "全画面表示",
     "fullscreenExit": "全画面表示を終了",
-    "fullscreenUnavailable": "全画面表示は利用できません"
+    "fullscreenUnavailable": "全画面表示は利用できません",
+    "mapboxTokenHint": "このレンダラーを使用するには、設定 → 環境変数（VITE_MAPBOX_ACCESS_TOKEN）にMapboxアクセストークンを追加してください。",
+    "pluginUnsupported": "このプラグインは選択したレンダリングエンジンに対応していません。"
   },
   "mapContextMenu": {
     "copyCoordinatesHint": "座標をクリップボードにコピー",
@@ -2751,6 +2753,7 @@
       "splitViewSync": "ビューを同期",
       "renderingEngine": "レンダリングエンジン",
       "rendererMapLibre": "MapLibre",
+      "rendererMapbox": "Mapbox",
       "rendererCesium": "Cesium",
       "viewInGoogleMaps": "Google マップで表示",
       "viewInGoogleEarth": "Google Earth で表示",

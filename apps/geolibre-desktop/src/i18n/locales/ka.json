@@ -1942,7 +1942,9 @@
     "sceneColumbus": "კოლუმბუსის ხედი",
     "fullscreenEnter": "სრულ ეკრანზე",
     "fullscreenExit": "სრული ეკრანიდან გასვლა",
-    "fullscreenUnavailable": "სრული ეკრანი მიუწვდომელია"
+    "fullscreenUnavailable": "სრული ეკრანი მიუწვდომელია",
+    "mapboxTokenHint": "ამ რენდერერის გამოსაყენებლად დაამატეთ Mapbox-ის წვდომის token პარამეტრები → გარემოს ცვლადები (VITE_MAPBOX_ACCESS_TOKEN) განყოფილებაში.",
+    "pluginUnsupported": "ეს დანამატი არ უჭერს მხარს არჩეულ რენდერის ძრავას."
   },
   "mapContextMenu": {
     "copyCoordinatesHint": "კოორდინატების კოპირება ბუფერში",
@@ -2799,6 +2801,7 @@
       "splitViewSync": "ხედების სინქრონიზაცია",
       "renderingEngine": "რენდერინგის ძრავა",
       "rendererMapLibre": "MapLibre",
+      "rendererMapbox": "Mapbox",
       "rendererCesium": "Cesium",
       "viewInGoogleMaps": "ნახვა Google Maps-ში",
       "viewInGoogleEarth": "ნახვა Google Earth-ში",

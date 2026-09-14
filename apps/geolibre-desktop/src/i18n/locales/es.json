@@ -1942,7 +1942,9 @@
     "sceneColumbus": "Vista Columbus",
     "fullscreenEnter": "Pantalla completa",
     "fullscreenExit": "Salir de pantalla completa",
-    "fullscreenUnavailable": "Pantalla completa no disponible"
+    "fullscreenUnavailable": "Pantalla completa no disponible",
+    "mapboxTokenHint": "Añada su token de acceso de Mapbox en Configuración → Variables de entorno (VITE_MAPBOX_ACCESS_TOKEN) para usar este motor.",
+    "pluginUnsupported": "Este complemento no admite el motor de renderizado seleccionado."
   },
   "mapContextMenu": {
     "copyCoordinatesHint": "Copiar coordenadas al portapapeles",
@@ -2799,6 +2801,7 @@
       "splitViewSync": "Sincronizar vistas",
       "renderingEngine": "Motor de renderizado",
       "rendererMapLibre": "MapLibre",
+      "rendererMapbox": "Mapbox",
       "rendererCesium": "Cesium",
       "viewInGoogleMaps": "Ver en Google Maps",
       "viewInGoogleEarth": "Ver en Google Earth",

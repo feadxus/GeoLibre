@@ -1942,7 +1942,9 @@
     "sceneColumbus": "Columbus-Ansicht",
     "fullscreenEnter": "Vollbild",
     "fullscreenExit": "Vollbild beenden",
-    "fullscreenUnavailable": "Vollbild nicht verfügbar"
+    "fullscreenUnavailable": "Vollbild nicht verfügbar",
+    "mapboxTokenHint": "Fügen Sie Ihr Mapbox-Zugriffstoken unter Einstellungen → Umgebungsvariablen (VITE_MAPBOX_ACCESS_TOKEN) hinzu, um diesen Renderer zu verwenden.",
+    "pluginUnsupported": "Dieses Plugin unterstützt den ausgewählten Renderer nicht."
   },
   "mapContextMenu": {
     "copyCoordinatesHint": "Koordinaten in die Zwischenablage kopieren",
@@ -2799,6 +2801,7 @@
       "splitViewSync": "Ansichten synchronisieren",
       "renderingEngine": "Rendering-Engine",
       "rendererMapLibre": "MapLibre",
+      "rendererMapbox": "Mapbox",
       "rendererCesium": "Cesium",
       "viewInGoogleMaps": "In Google Maps ansehen",
       "viewInGoogleEarth": "In Google Earth ansehen",

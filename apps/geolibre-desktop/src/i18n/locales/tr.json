@@ -1942,7 +1942,9 @@
     "sceneColumbus": "Columbus görünümü",
     "fullscreenEnter": "Tam ekran",
     "fullscreenExit": "Tam ekrandan çık",
-    "fullscreenUnavailable": "Tam ekran kullanılamıyor"
+    "fullscreenUnavailable": "Tam ekran kullanılamıyor",
+    "mapboxTokenHint": "Bu işleyiciyi kullanmak için Ayarlar → Ortam değişkenleri (VITE_MAPBOX_ACCESS_TOKEN) bölümüne Mapbox erişim belirtecinizi ekleyin.",
+    "pluginUnsupported": "Bu eklenti seçilen işleme motorunu desteklemiyor."
   },
   "mapContextMenu": {
     "copyCoordinatesHint": "Koordinatları panoya kopyala",
@@ -2799,6 +2801,7 @@
       "splitViewSync": "Görünümleri eşzamanla",
       "renderingEngine": "Çizim motoru",
       "rendererMapLibre": "MapLibre",
+      "rendererMapbox": "Mapbox",
       "rendererCesium": "Cesium",
       "viewInGoogleMaps": "Google Haritalar'da görüntüle",
       "viewInGoogleEarth": "Google Earth'te görüntüle",

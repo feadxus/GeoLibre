@@ -1154,7 +1154,8 @@ export function TopToolbar({
   const setSegmentEverythingOpen = useAppStore((s) => s.setSegmentEverythingOpen);
   // The globe owns the primary map, so the MapLibre-only entries below are dead
   // while it is active and the View menu becomes the only way back to 2D (#2217).
-  const cesiumPrimary = useAppStore((s) => s.primaryRenderer) === "cesium";
+  const primaryRenderer = useAppStore((s) => s.primaryRenderer);
+  const cesiumPrimary = primaryRenderer === "cesium";
   const capabilities = useMapCapabilities(mapControllerRef);
   const setSqlWorkspaceOpen = useAppStore((s) => s.setSqlWorkspaceOpen);
   const setLoadEditorFeaturesOpen = useAppStore((s) => s.setLoadEditorFeaturesOpen);
@@ -2039,9 +2040,8 @@ export function TopToolbar({
         group: t("toolbar.commandGroup.plugins"),
         keywords: isActive(plugin.id) ? "plugin deactivate" : "plugin activate",
         disabledReason:
-          !isActive(plugin.id) &&
-          !isPluginEngineSupported(plugin, cesiumPrimary ? "cesium" : "maplibre")
-            ? t(cesiumPrimary ? "mapGrid.only2d" : "toolbar.item.rendererCesium")
+          !isActive(plugin.id) && !isPluginEngineSupported(plugin, primaryRenderer)
+            ? t("renderer.pluginUnsupported")
             : undefined,
         run: () => toggle(plugin.id, appApi),
       })),
@@ -2188,7 +2188,7 @@ export function TopToolbar({
           would strand the user on the globe with no path back to MapLibre, so
           the menu stays mounted there and renders only the Rendering engine
           submenu (#2217 review). */}
-      {(isMenuVisible(uiProfile, "view") || cesiumPrimary) && (
+      {(isMenuVisible(uiProfile, "view") || primaryRenderer !== "maplibre") && (
         <ViewMenu
           chrome={chrome}
           history={viewportHistory}

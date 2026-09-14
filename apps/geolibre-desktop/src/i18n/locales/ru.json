@@ -2034,7 +2034,9 @@
     "sceneColumbus": "Вид Колумба",
     "fullscreenEnter": "Полный экран",
     "fullscreenExit": "Выйти из полного экрана",
-    "fullscreenUnavailable": "Полный экран недоступен"
+    "fullscreenUnavailable": "Полный экран недоступен",
+    "mapboxTokenHint": "Чтобы использовать этот движок, добавьте токен доступа Mapbox в Настройки → Переменные среды (VITE_MAPBOX_ACCESS_TOKEN).",
+    "pluginUnsupported": "Этот плагин не поддерживает выбранный движок рендеринга."
   },
   "mapContextMenu": {
     "copyCoordinatesHint": "Копировать координаты в буфер обмена",
@@ -2895,6 +2897,7 @@
       "splitViewSync": "Синхронизировать виды",
       "renderingEngine": "Механизм отрисовки",
       "rendererMapLibre": "MapLibre",
+      "rendererMapbox": "Mapbox",
       "rendererCesium": "Cesium",
       "viewInGoogleMaps": "Открыть в Google Maps",
       "viewInGoogleEarth": "Открыть в Google Earth",
