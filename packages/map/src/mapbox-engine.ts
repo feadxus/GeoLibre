@@ -20,7 +20,12 @@ import type {
   ExtentDrawingOptions,
   MapExtent,
 } from "./map-engine";
-import { compileMapboxLayer, type MapboxLayerPlan } from "./mapbox-layers";
+import {
+  compileMapboxLayer,
+  DEFAULT_MAPBOX_TEXT_FONT,
+  type MapboxLayerPlan,
+} from "./mapbox-layers";
+import { resolveTextFontFromStyleLayers } from "./text-font";
 import { getLayerBounds } from "./geojson-loader";
 import { captureEngineImage } from "./map-capture";
 import { drawExtentOnCanvas } from "./extent-drawing";
@@ -53,6 +58,8 @@ export class MapboxEngine implements MapEngine {
   private previous = new Map<string, GeoLibreLayer>();
   private errors = new Map<string, string>();
   private basemap: mapboxgl.LayerSpecification[] = [];
+  // Label font borrowed from the basemap: a style only serves its own glyphs.
+  private textFont: string[] = DEFAULT_MAPBOX_TEXT_FONT;
   private basemapVisible = true;
   private basemapOpacity = 1;
   private blankColor: string | null = null;
@@ -125,6 +132,10 @@ export class MapboxEngine implements MapEngine {
     this.previous.clear();
     this.errors.clear();
     this.basemap = structuredClone(map.getStyle()?.layers ?? []);
+    this.textFont = resolveTextFontFromStyleLayers(
+      this.basemap as { type: string; layout?: Record<string, unknown> }[],
+      DEFAULT_MAPBOX_TEXT_FONT,
+    );
     if (this.preferences) this.applyMapPreferences(this.preferences);
     this.applyBasemap();
     this.setBlankBackgroundColor(this.blankColor);
@@ -297,7 +308,7 @@ export class MapboxEngine implements MapEngine {
         if (!original.visible) this.errors.delete(`layer:${original.id}`);
         const opacity = this.storyOpacities.get(original.id);
         const layer = opacity === undefined ? original : { ...original, opacity };
-        const plan = compileMapboxLayer(layer);
+        const plan = compileMapboxLayer(layer, { textFont: this.textFont });
         const previous = this.previous.get(layer.id);
         const oldPlan = this.plans.get(layer.id);
         const sourceChanged =

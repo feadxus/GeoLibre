@@ -99,6 +99,7 @@ import {
   rasterPaint,
 } from "./style-mapper";
 import { isViteDevServer, proxyWmsTileUrl, proxyWmsTiles } from "./wms-proxy";
+import { resolveTextFontFromStyleLayers } from "./text-font";
 
 /**
  * Notified of the computed `beforeId` for a deck.gl-backed external custom layer
@@ -2994,51 +2995,8 @@ function textFontForMapStyle(map: maplibregl.Map): string[] {
   return fonts;
 }
 
-// Operators that can start a data-driven text-font expression. A bare
-// ["get", "font"] is all strings, so an every(typeof === "string") check
-// alone would mistake it for a font stack.
-const FONT_EXPRESSION_OPERATORS = new Set([
-  "literal",
-  "get",
-  "has",
-  "at",
-  "in",
-  "case",
-  "match",
-  "coalesce",
-  "step",
-  "interpolate",
-  "let",
-  "var",
-  "concat",
-  "to-string",
-  "string",
-  "array",
-  "format",
-]);
-
 function resolveTextFontFromStyle(map: maplibregl.Map): string[] {
-  for (const styleLayer of map.getStyle().layers ?? []) {
-    if (styleLayer.type !== "symbol") continue;
-    // Icon-only symbol layers may carry a glyph/sprite font unsuited to text.
-    if (!styleLayer.layout?.["text-field"]) continue;
-    const textFont = styleLayer.layout?.["text-font"];
-    if (!Array.isArray(textFont)) continue;
-    // Unwrap the ["literal", ["Font A", "Font B"]] expression form used by
-    // many popular styles.
-    const fonts =
-      textFont[0] === "literal" && Array.isArray(textFont[1])
-        ? (textFont[1] as unknown[])
-        : (textFont as unknown[]);
-    if (
-      fonts.length > 0 &&
-      fonts.every((font) => typeof font === "string") &&
-      !FONT_EXPRESSION_OPERATORS.has(fonts[0] as string)
-    ) {
-      return fonts as string[];
-    }
-  }
-  return ["Noto Sans Regular"];
+  return resolveTextFontFromStyleLayers(map.getStyle().layers, ["Noto Sans Regular"]);
 }
 
 function syncRasterTileLayer(map: maplibregl.Map, layer: GeoLibreLayer, beforeId?: string): void {

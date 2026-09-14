@@ -76,8 +76,24 @@ export function isMapboxSupportedLayer(layer: GeoLibreLayer): boolean {
 // full compile per layer per render would be wasted work.
 const supportedLayerCache = new WeakMap<GeoLibreLayer, boolean>();
 
+/** Options the engine derives from the loaded basemap style. */
+export interface CompileMapboxLayerOptions {
+  /**
+   * Font stack for label layers. Mapbox's hosted styles all serve this default
+   * from Mapbox's glyph catalog; the engine passes the active basemap's own
+   * font instead (`resolveTextFontFromStyleLayers` in text-font.ts) so labels still
+   * render on a third-party basemap whose glyphs do not include it.
+   */
+  textFont?: string[];
+}
+
+export const DEFAULT_MAPBOX_TEXT_FONT = ["Open Sans Regular"];
+
 /** Compile only native Mapbox sources. Never hand MapLibre protocol URLs to its workers. */
-export function compileMapboxLayer(layer: GeoLibreLayer): MapboxLayerPlan {
+export function compileMapboxLayer(
+  layer: GeoLibreLayer,
+  compileOptions: CompileMapboxLayerOptions = {},
+): MapboxLayerPlan {
   const sourceId = `geolibre-mapbox-${layer.id}`;
   const style = { ...DEFAULT_LAYER_STYLE, ...layer.style };
   const layout = { visibility: layer.visible ? ("visible" as const) : ("none" as const) };
@@ -156,7 +172,7 @@ export function compileMapboxLayer(layer: GeoLibreLayer): MapboxLayerPlan {
         layout: {
           ...layout,
           "text-field": text,
-          "text-font": ["Open Sans Regular"],
+          "text-font": compileOptions.textFont ?? DEFAULT_MAPBOX_TEXT_FONT,
           "text-size": labels.size,
           "symbol-placement": labels.placement,
           "text-allow-overlap": labels.allowOverlap,

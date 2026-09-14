@@ -322,6 +322,33 @@ describe("MapboxEngine.syncLayers", () => {
     ]);
   });
 
+  it("labels with the font the loaded basemap style uses", () => {
+    const layer = geojsonLayer();
+    layer.style = {
+      ...layer.style,
+      labels: { ...layer.style.labels, enabled: true, field: "name" },
+    };
+    engine.syncLayers([layer]);
+    const font = () =>
+      (map.layers.find((l) => l.type === "symbol")?.layout as Record<string, unknown>)?.[
+        "text-font"
+      ];
+    // The fake style has no symbol layer, so the Mapbox default applies.
+    assert.deepEqual(font(), ["Open Sans Regular"]);
+    map.getStyle = () => ({
+      layers: [
+        { id: "background", type: "background" },
+        {
+          id: "place",
+          type: "symbol",
+          layout: { "text-field": "{name}", "text-font": ["Noto Sans Regular"] },
+        },
+      ],
+    });
+    map.fire("style.load");
+    assert.deepEqual(font(), ["Noto Sans Regular"]);
+  });
+
   it("rebuilds everything after a style swap", () => {
     engine.syncLayers([geojsonLayer()]);
     map.sources.clear();

@@ -12,6 +12,7 @@ import {
 } from "@geolibre/core";
 import { compileMapboxLayer, styleUsesUnsupportedSource } from "../packages/map/src/mapbox-layers";
 import { proxyWmsTiles } from "../packages/map/src/wms-proxy";
+import { resolveTextFontFromStyleLayers } from "../packages/map/src/text-font";
 import { MAPBOX_CAPABILITIES, redactMapboxError } from "../packages/map/src/mapbox-engine";
 import { isPluginEngineSupported } from "../packages/plugins/src/types";
 import { geojsonLayer } from "./helpers/layer-fixtures";
@@ -81,6 +82,33 @@ describe("Mapbox native layer compilation", () => {
     // The line layer draws everything except points, so it must exclude
     // MultiPoint too, or a MultiPoint renders as a line instead of circles.
     assert.match(filterOf("line"), /"Point","MultiPoint"\],false,true/);
+  });
+  it("labels with the basemap's font when the engine supplies one", () => {
+    const layer = geojsonLayer({ id: "fonts" });
+    layer.style = {
+      ...layer.style,
+      labels: { ...layer.style.labels, enabled: true, field: "name" },
+    };
+    const font = (plan: ReturnType<typeof compileMapboxLayer>) =>
+      plan.layers.find((s) => s.type === "symbol")?.layout?.["text-font"];
+    assert.deepEqual(font(compileMapboxLayer(layer)), ["Open Sans Regular"]);
+    assert.deepEqual(font(compileMapboxLayer(layer, { textFont: ["Noto Sans Regular"] })), [
+      "Noto Sans Regular",
+    ]);
+    // The resolver reads the first text symbol layer, unwrapping the literal
+    // form, and ignores icon-only and data-driven fonts.
+    assert.deepEqual(
+      resolveTextFontFromStyleLayers(
+        [
+          { type: "symbol", layout: { "icon-image": "x", "text-font": ["Icon Font"] } },
+          { type: "symbol", layout: { "text-field": "{n}", "text-font": ["get", "font"] } },
+          { type: "symbol", layout: { "text-field": "{n}", "text-font": ["literal", ["A", "B"]] } },
+        ],
+        ["Fallback"],
+      ),
+      ["A", "B"],
+    );
+    assert.deepEqual(resolveTextFontFromStyleLayers([], ["Fallback"]), ["Fallback"]);
   });
   it("keeps the geometry when a label expression is not valid JSON", () => {
     const layer = geojsonLayer({ id: "labels" });
