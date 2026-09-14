@@ -2182,12 +2182,12 @@ export function TopToolbar({
       {!viewer && isMenuVisible(uiProfile, "edit") && (
         <EditMenu chrome={chrome} mapControllerRef={mapControllerRef} />
       )}
-      {/* `|| cesiumPrimary`: an admin or custom profile can hide the whole "view"
-          menu via `hiddenMenus`, which ViewMenu's own item-level override cannot
-          defeat. Hiding it while a project opens with `primaryRenderer: "cesium"`
-          would strand the user on the globe with no path back to MapLibre, so
-          the menu stays mounted there and renders only the Rendering engine
-          submenu (#2217 review). */}
+      {/* `|| primaryRenderer !== "maplibre"`: an admin or custom profile can hide
+          the whole "view" menu via `hiddenMenus`, which ViewMenu's own item-level
+          override cannot defeat. Hiding it while a project opens on another
+          renderer (the Cesium globe or Mapbox) would strand the user there with
+          no path back to MapLibre, so the menu stays mounted and renders only
+          the Rendering engine submenu (#2217 review). */}
       {(isMenuVisible(uiProfile, "view") || primaryRenderer !== "maplibre") && (
         <ViewMenu
           chrome={chrome}
