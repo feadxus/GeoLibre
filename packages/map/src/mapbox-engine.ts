@@ -1,3 +1,4 @@
+import { installMapboxWheelZoom } from "./mapbox-wheel-zoom";
 import type * as mapboxgl from "mapbox-gl";
 import type * as maplibregl from "maplibre-gl";
 import type { FeatureCollection } from "geojson";
@@ -85,6 +86,7 @@ export class MapboxEngine implements MapEngine {
       unproject: (p) => map.unproject(p),
       redraw: () => map.triggerRepaint(),
     };
+    this.disposers.add(installMapboxWheelZoom(map));
     map.on("style.load", this.styleLoaded);
     map.on("error", this.onError);
     map.on("idle", this.flushLayers);
