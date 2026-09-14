@@ -861,7 +861,17 @@ export function createAppAPI(mapControllerRef?: RefObject<MapEngine | null>) {
   // itself (e.g. addCogLayer -> addRasterToMap) can pass `api`. Only read
   // when those methods are called, which is always after assignment.
   const api = {
-    setBasemap: (url: string) => store.setBasemapStyleUrl(url),
+    setBasemap: (url: string) => {
+      const state = useAppStore.getState();
+      if (state.primaryRenderer === "mapbox") {
+        state.setPreferences({
+          ...state.preferences,
+          map: { ...state.preferences.map, mapboxStyleUrl: url },
+        });
+      } else {
+        state.setBasemapStyleUrl(url);
+      }
+    },
     addGeoJsonLayer: (name: string, data: GeoJSON.FeatureCollection, sourcePath?: string) => {
       const id = store.addGeoJsonLayer(name, data, sourcePath);
       return id;
@@ -1019,7 +1029,12 @@ export function createAppAPI(mapControllerRef?: RefObject<MapEngine | null>) {
       return detach;
     },
     unregisterTemporalLayer: (layerId: string) => unregisterTemporalLayer(layerId),
-    getActiveBasemap: () => useAppStore.getState().basemapStyleUrl,
+    getActiveBasemap: () => {
+      const state = useAppStore.getState();
+      return state.primaryRenderer === "mapbox"
+        ? (state.preferences.map.mapboxStyleUrl ?? state.basemapStyleUrl)
+        : state.basemapStyleUrl;
+    },
     onBasemapChange: (callback: (styleUrl: string) => void) =>
       useAppStore.subscribe((state, prev) => {
         if (state.basemapStyleUrl !== prev.basemapStyleUrl) {

@@ -207,6 +207,16 @@ describe("Mapbox native layer compilation", () => {
 });
 
 describe("Mapbox-specific basemap preference", () => {
+  it("defaults new projects to Mapbox Streets while retaining the shared basemap", () => {
+    const project = createEmptyProject();
+    assert.equal(project.preferences.map.mapboxStyleUrl, "mapbox://styles/mapbox/streets-v12");
+    assert.notEqual(project.basemapStyleUrl, project.preferences.map.mapboxStyleUrl);
+    project.preferences.map.mapboxStyleUrl = undefined;
+    project.basemapStyleUrl = BLANK_BASEMAP;
+    const reopened = parseProject(serializeProject(project));
+    assert.equal(reopened.preferences.map.mapboxStyleUrl, undefined);
+    assert.equal(reopened.basemapStyleUrl, BLANK_BASEMAP);
+  });
   it("persists the override without changing the other engines' shared basemap", () => {
     const project = createEmptyProject();
     const shared = project.basemapStyleUrl;
