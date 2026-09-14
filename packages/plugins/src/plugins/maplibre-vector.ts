@@ -36,6 +36,7 @@ import {
   unwireVectorStoreSync,
   wireVectorStoreSync,
 } from "./vector-layer-sync";
+import { bridgeVectorControlToCesium } from "./vector-cesium-bridge";
 import { readableStacLayerHref } from "./stac-signing";
 import type { FeatureCollection } from "geojson";
 
@@ -408,7 +409,9 @@ export function restoreVectorLayers(app: GeoLibreAppAPI): void {
         // Replay them directly (re-ingesting tiles when that was the render
         // mode); the restored layer becomes data-backed and re-embeds on the
         // next save.
-        const embedded = readEmbeddedVectorGeoJSON(layer.metadata.embeddedGeoJSON);
+        const embedded =
+          readEmbeddedVectorGeoJSON(layer.geojson) ??
+          readEmbeddedVectorGeoJSON(layer.metadata.embeddedGeoJSON);
         if (embedded) {
           pending.push(
             trackReplay(
@@ -678,6 +681,15 @@ function readEmbeddedVectorGeoJSON(value: unknown): FeatureCollection | null {
 async function ensureVectorControl(app: GeoLibreAppAPI): Promise<VectorControl | null> {
   const VectorControlClass = await getVectorControlClass();
 
+  // MapLibre's teardown can detach controls without invoking their onRemove.
+  // Recreate a detached panel so a renderer switch cannot reuse its old map.
+  if (vectorControlMounted && vectorControl && !vectorControl.getContainer()?.isConnected) {
+    try {
+      vectorControl.onRemove();
+    } catch (error) {
+      console.warn("[GeoLibre] Failed to tear down the detached vector control", error);
+    }
+  }
   vectorControl ??= createVectorControl(VectorControlClass, app);
 
   if (!vectorControlMounted) {
@@ -841,6 +853,8 @@ function createVectorControl(
       byteSize: DUCKDB_VECTOR_ROUTE_BYTES,
     },
   });
+
+  if (app.getMapRenderer?.() === "cesium") bridgeVectorControlToCesium(control, app);
 
   for (const event of ["layeradded", "layerremoved", "layerupdated"] as const) {
     control.on(event, () => syncVectorLayersToStore(control));
