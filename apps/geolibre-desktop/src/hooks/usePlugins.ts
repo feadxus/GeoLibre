@@ -1029,8 +1029,12 @@ export function createAppAPI(mapControllerRef?: RefObject<MapEngine | null>) {
     getLayers: () => useAppStore.getState().layers.map((layer) => layer.id),
     onLayersChanged: (callback: (layerIds: string[]) => void) =>
       useAppStore.subscribe((state, prev) => {
-        if (state.layers !== prev.layers) {
-          callback(state.layers.map((layer) => layer.id));
+        const layerIds = state.layers.map((layer) => layer.id);
+        if (
+          layerIds.length !== prev.layers.length ||
+          layerIds.some((id, index) => id !== prev.layers[index]?.id)
+        ) {
+          callback(layerIds);
         }
       }),
     fetchArrayBuffer: fetchRemoteArrayBuffer,
