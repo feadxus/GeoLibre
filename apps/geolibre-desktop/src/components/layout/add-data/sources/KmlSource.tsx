@@ -1,22 +1,25 @@
 import { createCesiumKmlLayer, useAppStore } from "@geolibre/core";
-import { routeKmlFileSelection, type KmlFileImport } from "@geolibre/plugins";
+import { routeKmlFileSelection } from "@geolibre/plugins";
 import { Button, Input, Label } from "@geolibre/ui";
 import { useState } from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { isTauri } from "../../../../lib/is-tauri";
-import { kmlFileNameFromUrl, kmlImportFile } from "../../../../lib/kml-import-file";
+import {
+  kmlFileNameFromUrl,
+  kmlImportFile,
+  kmlMapImports,
+  type PickedKmlDocument,
+} from "../../../../lib/kml-import-file";
 import { openLocalDataFileWithFallback } from "../../../../lib/tauri-io";
-import { errorMessage, fileNameFromPath, layerNameFromPath, proxyFeedRequestUrl } from "../helpers";
+import {
+  errorMessage,
+  fileNameFromPath,
+  layerNameFromPath,
+  proxyFeedRequestUrl,
+  serviceRequestErrorMessage,
+} from "../helpers";
 import { AddDataSourceForm, useAddDataSource } from "../shared";
-
-interface PickedKml {
-  path: string;
-  /** The KMZ archive bytes (binary picks). */
-  data?: ArrayBuffer;
-  /** The KML document text (text picks). */
-  text?: string;
-}
 
 /** Encodes a picked KMZ archive as the data URL a Cesium KML layer persists. */
 function kmzDataUrl(data: ArrayBuffer): Promise<string> {
@@ -40,7 +43,14 @@ async function fetchKmlImportFile(url: string, t: TFunction): Promise<File> {
     const raw = await fetchUrlBytes(url, { context: "KML / KMZ" });
     bytes = raw instanceof Uint8Array ? raw : new Uint8Array(raw);
   } else {
-    const response = await fetch(proxyFeedRequestUrl(url));
+    let response: Response;
+    try {
+      response = await fetch(proxyFeedRequestUrl(url), { signal: AbortSignal.timeout(30_000) });
+    } catch (error) {
+      // A CORS block or a timeout surfaces as an opaque TypeError/AbortError;
+      // map it to the localized hint the other service sources show.
+      throw new Error(serviceRequestErrorMessage(error, t, t("addData.shared.addError")));
+    }
     if (!response.ok) {
       throw new Error(t("addData.common.requestFailed", { status: response.status }));
     }
@@ -63,7 +73,7 @@ export function KmlSource({ initialUrl }: { initialUrl?: string }) {
   const [defaultName] = useState(() => t("addData.kml.defaultName"));
   const source = useAddDataSource(defaultName);
   const [url, setUrl] = useState(initialUrl ?? "");
-  const [picked, setPicked] = useState<PickedKml | null>(null);
+  const [picked, setPicked] = useState<PickedKmlDocument | null>(null);
   const chooseFile = async () => {
     source.setError(null);
     try {
@@ -103,16 +113,12 @@ export function KmlSource({ initialUrl }: { initialUrl?: string }) {
       );
       return;
     }
-    const imports: KmlFileImport[] = picked
-      ? [
-          {
-            file: kmlImportFile(fileNameFromPath(picked.path), picked.data ?? picked.text ?? ""),
-            // Only a native pick has a filesystem path; a browser File's
-            // `path` is just its name, which the importer must not re-read.
-            sourcePath: isTauri() ? picked.path : undefined,
-          },
-        ]
-      : [{ file: await fetchKmlImportFile(trimmedUrl, t) }];
+    const imports = await kmlMapImports(picked, trimmedUrl, {
+      // Only a native pick has a filesystem path the importer may re-read.
+      nativePath: isTauri(),
+      fileName: fileNameFromPath,
+      fetchFile: (target) => fetchKmlImportFile(target, t),
+    });
     // The host importer reports its own failures through the shell's import
     // banner; a `false` here means no importer is registered at all.
     if (!(await routeKmlFileSelection(imports))) {

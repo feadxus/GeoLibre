@@ -1,10 +1,16 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { afterEach, describe, it } from "node:test";
 import {
   isKmzBytes,
   kmlFileNameFromUrl,
   kmlImportFile,
+  kmlMapImports,
 } from "../apps/geolibre-desktop/src/lib/kml-import-file";
+import {
+  routeKmlFileSelection,
+  setKmlFileImportHandler,
+  type KmlFileImport,
+} from "../packages/plugins/src/plugins/maplibre-vector";
 
 const ZIP = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x00]);
 const XML = new TextEncoder().encode('<?xml version="1.0"?><kml/>');
@@ -38,5 +44,71 @@ describe("kml-import-file", () => {
     const kml = kmlImportFile("doc.kml", "<kml/>");
     assert.equal(kml.type, "application/vnd.google-earth.kml+xml");
     assert.equal(await kml.text(), "<kml/>");
+  });
+
+  describe("kmlMapImports (the Add Data dialog's 2D path)", () => {
+    afterEach(() => setKmlFileImportHandler(null));
+    const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
+
+    it("hands a desktop KMZ pick to the host importer with its filesystem path", async () => {
+      const received: KmlFileImport[][] = [];
+      setKmlFileImportHandler((imports) => {
+        received.push(imports);
+      });
+      const imports = await kmlMapImports(
+        { path: "/data/parks.kmz", data: ZIP.buffer.slice(0) as ArrayBuffer },
+        "",
+        { nativePath: true, fileName, fetchFile: () => assert.fail("must not fetch a URL") },
+      );
+      assert.equal(await routeKmlFileSelection(imports), true);
+      assert.equal(received.length, 1);
+      assert.equal(received[0][0].file.name, "parks.kmz");
+      assert.equal(received[0][0].sourcePath, "/data/parks.kmz");
+      assert.deepEqual(new Uint8Array(await received[0][0].file.arrayBuffer()), ZIP);
+    });
+
+    it("drops the path for a browser pick and carries the KML text", async () => {
+      const received: KmlFileImport[][] = [];
+      setKmlFileImportHandler((imports) => {
+        received.push(imports);
+      });
+      const imports = await kmlMapImports({ path: "parks.kml", text: "<kml/>" }, "", {
+        nativePath: false,
+        fileName,
+        fetchFile: () => assert.fail("must not fetch a URL"),
+      });
+      assert.equal(await routeKmlFileSelection(imports), true);
+      assert.equal(received[0][0].sourcePath, undefined);
+      assert.equal(await received[0][0].file.text(), "<kml/>");
+    });
+
+    it("downloads a URL into the importer when nothing is picked", async () => {
+      const received: KmlFileImport[][] = [];
+      setKmlFileImportHandler((imports) => {
+        received.push(imports);
+      });
+      const fetched: string[] = [];
+      const imports = await kmlMapImports(null, "https://h.test/export?id=7", {
+        nativePath: true,
+        fileName,
+        fetchFile: async (url) => {
+          fetched.push(url);
+          return kmlImportFile(kmlFileNameFromUrl(url, ZIP), ZIP);
+        },
+      });
+      assert.deepEqual(fetched, ["https://h.test/export?id=7"]);
+      assert.equal(await routeKmlFileSelection(imports), true);
+      assert.equal(received[0][0].file.name, "export.kmz");
+      assert.equal(received[0][0].sourcePath, undefined);
+    });
+
+    it("is refused by the router when no host importer is registered", async () => {
+      const imports = await kmlMapImports({ path: "parks.kml", text: "<kml/>" }, "", {
+        nativePath: false,
+        fileName,
+        fetchFile: () => assert.fail("must not fetch a URL"),
+      });
+      assert.equal(await routeKmlFileSelection(imports), false);
+    });
   });
 });

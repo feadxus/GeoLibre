@@ -6,6 +6,8 @@
  * Super-Overlays), rather than the Cesium-only `KmlDataSource`.
  */
 
+import type { KmlFileImport } from "@geolibre/plugins";
+
 const KMZ_MIME = "application/vnd.google-earth.kmz";
 const KML_MIME = "application/vnd.google-earth.kml+xml";
 
@@ -59,4 +61,48 @@ export function kmlImportFile(name: string, content: string | ArrayBuffer | Uint
         ) as ArrayBuffer)
       : content;
   return new File([part], name, { type: kmz ? KMZ_MIME : KML_MIME });
+}
+
+/** A KML/KMZ document picked through the local file dialog. */
+export interface PickedKmlDocument {
+  /** The filesystem path on desktop; just the file name in the browser. */
+  path: string;
+  /** The KMZ archive bytes (binary picks). */
+  data?: ArrayBuffer;
+  /** The KML document text (text picks). */
+  text?: string;
+}
+
+/**
+ * Builds the imports the Add Data dialog hands to the host KML importer on the
+ * 2D renderers: the picked document when there is one, otherwise the document
+ * downloaded from `url`.
+ *
+ * @param picked - The picked document, or `null` to use the URL.
+ * @param url - The KML/KMZ URL (used only without a pick).
+ * @param options.nativePath - Whether `picked.path` is a real filesystem path
+ *   the importer may re-read (a desktop pick); a browser File's `path` is just
+ *   its name and must not be forwarded.
+ * @param options.fileName - Derives the file name from a picked path.
+ * @param options.fetchFile - Downloads a URL into a `File`.
+ * @returns The imports, always exactly one.
+ */
+export async function kmlMapImports(
+  picked: PickedKmlDocument | null,
+  url: string,
+  options: {
+    nativePath: boolean;
+    fileName: (path: string) => string;
+    fetchFile: (url: string) => Promise<File>;
+  },
+): Promise<KmlFileImport[]> {
+  if (picked) {
+    return [
+      {
+        file: kmlImportFile(options.fileName(picked.path), picked.data ?? picked.text ?? ""),
+        sourcePath: options.nativePath ? picked.path : undefined,
+      },
+    ];
+  }
+  return [{ file: await options.fetchFile(url) }];
 }
