@@ -42,9 +42,10 @@ come from Environment variables or the basemap control's API keys panel.
   or Kerchunk cubes with a time axis, drawn by `@carbonplan/zarr-layer` — a
   `CustomLayerInterface` implementation that targets Mapbox GL as well as
   MapLibre (globe and Mercator), added by the same Zarr control. Zarr Layer
-  and STAC adds keep the current projection; the NetCDF/HDF and Kerchunk cube
-  path draws untiled in Web Mercator, so adding one switches the map to
-  Mercator, as on MapLibre.
+  and STAC adds keep the current projection; local NetCDF/HDF cubes and
+  Kerchunk references draw untiled in Web Mercator, so adding one switches the
+  map to Mercator, as on MapLibre. A remote NetCDF/HDF URL renders its
+  selected slice as an image overlay instead.
 - HTTP(S) raster tiles (XYZ, WMS and WMTS), vector tiles with named source layers,
   and georeferenced image/video sources.
 - Shared layer/group visibility, opacity and ordering; synchronized or independent
@@ -187,7 +188,7 @@ service restrictions are included explicitly.
 | GeoParquet | US states: 52 features imported and rendered |
 | FlatGeobuf | Countries: 179 features imported through the shared vector bridge |
 | PMTiles | Remote vector archives use native Mapbox sources; Tilezen’s nine source layers and Mapbox’s earthquake archive rendered |
-| Zarr | CarbonPlan climate sample added through the panel: the custom layer mounts on the Mapbox map and loads its pyramid (6 levels, band/month axes) |
+| Zarr | CarbonPlan climate sample added through the panel: the custom layer mounts on the Mapbox map and loads its pyramid (6 levels, band/month axes). Checked without a paintable token, so pixel output was not confirmed; the renderer's Mapbox support is upstream's |
 | NetCDF / HDF | Air-temperature file: selected time slice added as a native image |
 | LiDAR | Autzen COPC rendered (10,653,336 archive points); the small PDAL COPC fixture loads 1,065 points |
 | Gaussian Splatting | Panel opens; custom rendering unsupported and entry disabled |
