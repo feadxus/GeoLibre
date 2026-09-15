@@ -1476,6 +1476,9 @@ export function DesktopShell({
       // whose placemarks are followed by an overlay or model is still
       // recognized as the last source imported.
       let lastSourcePath: string | null = null;
+      // Whether any time-tagged KML placemark layer was added, so the Time
+      // Slider opens even when every frame already sits in a KML Folder group.
+      let hasVectorTimeFrames = false;
       for (const layer of importedLayers) {
         if (layer.path) lastSourcePath = layer.path;
         if (isLoadedKmlSuperOverlay(layer)) {
@@ -1542,6 +1545,24 @@ export function DesktopShell({
           );
         }
         lastLayerId = addGeoJsonLayer(layerName, layer.data, layer.path);
+        // Time-tagged KML placemarks are Time Slider frames, animated through
+        // the same `metadata.timeSpan` visibility toggling as ground overlays.
+        if (layer.timeSpan) {
+          const frameId = lastLayerId;
+          const added = useAppStore.getState().layers.find((item) => item.id === frameId);
+          useAppStore.getState().updateLayer(frameId, {
+            metadata: { ...added?.metadata, timeSpan: layer.timeSpan },
+            ...(layer.visible === false ? { visible: false } : {}),
+          });
+          hasVectorTimeFrames = true;
+          // Frames outside any KML Folder are gathered into one group below;
+          // foldered frames already sit in their Folder groups.
+          if (layer.groupId && !layer.groupPath?.length) {
+            const ids = frameGroups.get(layer.groupId) ?? [];
+            ids.push(frameId);
+            frameGroups.set(layer.groupId, ids);
+          }
+        }
         if (layer.path) {
           const sourceIds = layerIdsBySource.get(layer.path) ?? [];
           sourceIds.push(lastLayerId);
@@ -1585,7 +1606,7 @@ export function DesktopShell({
             : t("kml.timeOverlayGroup");
         addLayerGroup(name, ids);
       });
-      const hasTimeAnimation = sequences.length > 0;
+      const hasTimeAnimation = sequences.length > 0 || hasVectorTimeFrames;
       // Auto-open the Time Slider so a time-animated overlay sequence can be
       // stepped through immediately, without the user hunting for the plugin.
       if (hasTimeAnimation && !isPluginActive(TIME_SLIDER_PLUGIN_ID)) {

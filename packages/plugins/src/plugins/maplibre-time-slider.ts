@@ -847,11 +847,18 @@ function reconcileBoundLayers(control: TimeSliderControl): void {
       }
       lastBoundRangeKey = rangeKey;
       control.setRange(new Date(min), new Date(max), undefined, granularity);
+      const baseGranularities = preBindingRange?.granularities ??
+        control.getConfig().granularities ?? [...TIME_GRANULARITIES];
+      // The control snaps back to its first listed unit when the requested one
+      // is not offered, so hourly KML frames on the default year/month/day
+      // track would step a whole day and never advance (#2411). Offer the
+      // stepping unit the data needs alongside the existing ones.
       control.setGranularities(
         orderedDisplayUnits
           ? orderedDisplayUnits
-          : (preBindingRange?.granularities ??
-              control.getConfig().granularities ?? [...TIME_GRANULARITIES]),
+          : baseGranularities.includes(granularity)
+            ? baseGranularities
+            : [granularity, ...baseGranularities],
       );
     }
   } else {
