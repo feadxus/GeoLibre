@@ -112,7 +112,7 @@ function categorizedStops(values: unknown[], colorRamp: string): VectorStyleStop
  * @param request The symbology to apply.
  * @returns A partial style ready for `setLayerStyle`.
  * @throws If the property is missing, graduated mode has too few numeric values,
- *   or `breaks` was supplied with no finite value in it.
+ *   or `breaks` was supplied with fewer than two distinct finite values in it.
  */
 export function buildSymbologyStyle(
   layer: GeoLibreLayer,
@@ -135,13 +135,21 @@ export function buildSymbologyStyle(
     }
     if (request.breaks !== undefined) {
       // Explicit breaks describe the classes outright, so neither the class
-      // count nor the scheme applies and the "needs two values to classify"
+      // count nor the scheme applies, and the "needs two values to classify"
       // floor below does not either: the thresholds come from the caller, not
-      // from the sample. The scheme field is deliberately left out of the patch
-      // rather than set to a scheme that did not produce these breaks.
+      // from the sample. `vectorStyleClassificationScheme` is left out of the
+      // patch because no scheme produced these stops; note that `setLayerStyle`
+      // merges shallowly, so the layer keeps whatever scheme it already had.
+      // That leftover value only matters if the user then edits the ramp or
+      // class count in the Style panel, which regenerates stops from scratch —
+      // the same thing that already happens to hand-edited stops there.
       const stops = customGraduatedStops(request.breaks, colorRamp);
-      if (stops.length === 0) {
-        throw new Error("`breaks` must contain at least one finite number.");
+      // Two is the render-side floor, not a stylistic one: vectorColorExpression
+      // falls back to a flat color below two graduated stops, so a single break
+      // would report success and paint nothing. The statistical path holds the
+      // same floor through `Math.max(2, ...)` on the class count.
+      if (stops.length < 2) {
+        throw new Error("`breaks` must contain at least two distinct finite numbers.");
       }
       return {
         vectorStyleMode: "graduated",

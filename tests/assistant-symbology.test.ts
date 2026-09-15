@@ -91,7 +91,8 @@ describe("buildSymbologyStyle", () => {
       style.vectorStyleStops?.map((stop) => stop.value),
       [0, 25, 37, 50, 90],
     );
-    // No scheme produced these breaks, so the patch does not claim one.
+    // No scheme produced these breaks, so the patch does not carry one; the
+    // layer keeps whatever scheme it already had (setLayerStyle merges shallowly).
     assert.equal(style.vectorStyleClassificationScheme, undefined);
   });
 
@@ -121,7 +122,7 @@ describe("buildSymbologyStyle", () => {
     assert.equal(style.vectorStyleStops?.length, 3);
   });
 
-  it("throws when explicit breaks hold no usable value", () => {
+  it("throws when explicit breaks hold fewer than two usable values", () => {
     const layer = layerWith("pm25", [3, 12, 30]);
     assert.throws(() =>
       buildSymbologyStyle(layer, { mode: "graduated", property: "pm25", breaks: [] }),
@@ -132,6 +133,14 @@ describe("buildSymbologyStyle", () => {
         property: "pm25",
         breaks: [Number.NaN, Number.POSITIVE_INFINITY],
       }),
+    );
+    // vectorColorExpression paints a flat fallback below two graduated stops,
+    // so one break would report success and render nothing.
+    assert.throws(() =>
+      buildSymbologyStyle(layer, { mode: "graduated", property: "pm25", breaks: [25] }),
+    );
+    assert.throws(() =>
+      buildSymbologyStyle(layer, { mode: "graduated", property: "pm25", breaks: [25, 25] }),
     );
   });
 

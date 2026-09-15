@@ -722,7 +722,7 @@ export function createAssistantTools(deps: AssistantToolDeps): Tool[] {
         .array(z.number())
         .optional()
         .describe(
-          "Explicit class lower bounds for graduated mode, e.g. [0, 25, 37, 50, 90]. Overrides class_count and scheme. Each value opens a class that runs up to the next one; the last class is open-ended above.",
+          "Explicit class lower bounds for graduated mode, e.g. [0, 25, 37, 50, 90]. Overrides class_count and scheme. Each value opens a class that runs up to the next one; the last class is open-ended above. At least two distinct values are required.",
         ),
     }),
     callback: (input) => {
