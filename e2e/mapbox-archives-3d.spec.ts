@@ -313,3 +313,94 @@ for (const theme of ["light", "dark"]) {
     await page.screenshot({ path: info.outputPath(`pmtiles-extrusion-${theme}.png`) });
   });
 }
+
+for (const theme of ["light", "dark"]) {
+  test(`Mapbox Standard background opacity includes ocean labels (${theme})`, async ({
+    page,
+  }, info) => {
+    test.setTimeout(120_000);
+    await page.addInitScript(
+      ({ key, token }) =>
+        localStorage.setItem(
+          key,
+          JSON.stringify({
+            mapboxAccessToken: token,
+            uiProfile: { onboarded: true, hiddenDataSources: [] },
+          }),
+        ),
+      { key: DESKTOP_SETTINGS_STORAGE_KEY, token: process.env.MAPBOX_TOKEN! },
+    );
+    await page.goto("/");
+    if (theme === "dark") await page.getByRole("button", { name: "Switch to Dark Mode" }).click();
+    await page.getByRole("button", { name: "View", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Rendering engine", exact: true }).hover();
+    await page.getByRole("menuitemradio", { name: "Mapbox", exact: true }).click();
+    await bindEngine(page);
+    await page.evaluate(() =>
+      (window as any).mapboxArchiveTestRef.current
+        .getMapboxMap()
+        .jumpTo({ center: [-74, 40], zoom: 5, pitch: 0 }),
+    );
+    await page.waitForFunction(() =>
+      (window as any).mapboxArchiveTestRef.current.getMapboxMap().loaded(),
+    );
+    const stats = () =>
+      page.evaluate(
+        (blank) => {
+          const map = (window as any).mapboxArchiveTestRef.current.getMapboxMap();
+          const source = map.getCanvas();
+          const canvas = document.createElement("canvas");
+          canvas.width = source.width;
+          canvas.height = source.height;
+          const ctx = canvas.getContext("2d")!;
+          ctx.fillStyle = `rgb(${blank},${blank},${blank})`;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(source, 0, 0);
+          const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+          let changed = 0,
+            total = 0;
+          for (let i = 0; i < pixels.length; i += 4) {
+            const diff = Math.max(
+              Math.abs(pixels[i] - blank),
+              Math.abs(pixels[i + 1] - blank),
+              Math.abs(pixels[i + 2] - blank),
+            );
+            if (diff > 3) changed++;
+            total += diff;
+          }
+          return { changed, mean: total / (pixels.length / 4) };
+        },
+        theme === "dark" ? 38 : 255,
+      );
+    await expect.poll(async () => (await stats()).mean).toBeGreaterThan(5);
+    const full = (await stats()).mean;
+    const slider = page.getByRole("slider", { name: "Background opacity", exact: true });
+    await slider.press("Home");
+    // Exact pixels catch small ocean labels left behind by a compositing cover.
+    await expect.poll(async () => (await stats()).changed, { timeout: 30_000 }).toBe(0);
+    for (let i = 0; i < 10; i++) await slider.press("ArrowRight");
+    await expect(slider).toHaveAttribute("aria-valuenow", "0.5");
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: info.outputPath(`standard-half-${theme}.png`) });
+    const half = (await stats()).mean;
+    expect(half).toBeGreaterThan(1);
+    expect(half).toBeLessThan(full);
+    await slider.press("End");
+    await page.getByRole("button", { name: "Hide background", exact: true }).click();
+    await expect.poll(async () => (await stats()).changed).toBe(0);
+    // Real project data remains visible when the basemap is hidden.
+    const response = await page.request.get(
+      "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json",
+    );
+    expect(response.ok()).toBeTruthy();
+    await openSource(page, "Vector Layer");
+    await page.locator('input[type="file"]').setInputFiles({
+      name: "US states.geojson",
+      mimeType: "application/geo+json",
+      buffer: await response.body(),
+    });
+    await expect(layerRow(page, "US states")).toBeVisible();
+    await expect.poll(async () => (await stats()).changed).toBeGreaterThan(1000);
+    await page.screenshot({ path: info.outputPath(`standard-hidden-data-${theme}.png`) });
+  });
+}

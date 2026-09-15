@@ -54,9 +54,9 @@ materialization limits, custom COG terrain, general deck.gl visualizations, and 
 layers require additional adapters. Visible unsupported layers report an error
 on the map instead of being silently omitted. Advanced MapLibre-only symbology
 (such as custom marker assets and blend modes) is not reproduced by this native
-renderer. Mapbox Standard's imported basemap layers do not expose the same
-per-layer opacity controls as classic styles; use a classic style for background
-opacity editing.
+renderer. Mapbox Standard is loaded as a local style import with a shared opacity setting.
+The Background card fades its land and water colors, labels (including ocean labels),
+3D objects, and atmosphere while preserving project layers and Standard's configuration.
 
 ## License and terms
 

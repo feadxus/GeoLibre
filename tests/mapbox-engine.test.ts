@@ -641,3 +641,36 @@ describe("Mapbox ArcGIS vector tile services", () => {
     assert.match(engine.getRenderStatus().errors[0] ?? "", /tile templates/);
   });
 });
+
+it("retries a Standard visibility change made while its opacity update is loading", () => {
+  const { engine, map } = makeEngine();
+  engine.setBlankBackgroundColor("#ffffff");
+  const config: Record<string, unknown> = {
+    geolibreBasemapOpacity: 1,
+    geolibreBlankColor: "#ffffff",
+  };
+  Object.assign(map, {
+    getConfigProperty: (_id: string, key: string) => config[key],
+    setConfigProperty: (_id: string, key: string, value: unknown) => {
+      config[key] = value;
+      map.setStyleLoaded(false);
+    },
+  });
+  map.getStyle = () => ({
+    layers: [],
+    imports: [
+      {
+        id: "basemap",
+        url: "mapbox://styles/mapbox/standard",
+        data: { schema: { geolibreBasemapOpacity: { type: "number", default: 1 } } },
+      },
+    ],
+  });
+  map.fire("style.load");
+  engine.setBasemapOpacity(0.5);
+  engine.setBasemapVisible(false);
+  assert.equal(config.geolibreBasemapOpacity, 0.5);
+  map.setStyleLoaded(true);
+  map.fire("idle");
+  assert.equal(config.geolibreBasemapOpacity, 0);
+});

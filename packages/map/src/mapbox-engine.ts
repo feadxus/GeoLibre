@@ -30,6 +30,12 @@ import { resolveTextFontFromStyleLayers } from "./text-font";
 import { getLayerBounds } from "./geojson-loader";
 import { captureEngineImage } from "./map-capture";
 import { drawExtentOnCanvas } from "./extent-drawing";
+import {
+  prepareMapboxStandard,
+  isMapboxStandard,
+  STANDARD_OPACITY,
+  STANDARD_BLANK_COLOR,
+} from "./mapbox-standard-style";
 import { arcgisOpacity } from "./arcgis-vector-style";
 
 export const MAPBOX_CAPABILITIES: MapEngineCapabilities = Object.freeze({
@@ -63,6 +69,7 @@ export class MapboxEngine implements MapEngine {
   private textFont: string[] = DEFAULT_MAPBOX_TEXT_FONT;
   private basemapVisible = true;
   private basemapOpacity = 1;
+  private styleRequest = 0;
   private blankColor: string | null = null;
   private terrain = false;
   private exaggeration = 1;
@@ -76,13 +83,16 @@ export class MapboxEngine implements MapEngine {
   private storyOpacities = new Map<string, number>();
   private rotating = false;
   private syncPending = false;
+  private basemapPending = false;
   private flushLayers = () => {
     if (this.syncPending) this.syncLayers(this.layers);
+    if (this.basemapPending) this.applyBasemap();
   };
 
   constructor(
     map: mapboxgl.Map,
     private gl: typeof mapboxgl.default,
+    private accessToken = "",
   ) {
     this.map = map;
     this.surface = {
@@ -145,6 +155,7 @@ export class MapboxEngine implements MapEngine {
   };
   destroy(): void {
     if (!this.map) return;
+    this.styleRequest++;
     this.stopCamera();
     for (const dispose of this.disposers) dispose();
     this.disposers.clear();
@@ -409,25 +420,32 @@ export class MapboxEngine implements MapEngine {
     return source?.type === "raster" || source?.type === "image" ? { ...source } : null;
   }
   setStyle(url: string): void {
-    this.errors.clear();
-    this.plans.clear();
-    this.previous.clear();
-    this.map?.setStyle(url, {
-      diff: false,
-      localFontFamily: null,
-      localIdeographFontFamily: "sans-serif",
-    });
+    this.setResolvedStyle(url);
   }
   /** Accepts GeoLibre's expanded inline basemaps without persisting an engine-specific style. */
   setResolvedStyle(style: string | mapboxgl.StyleSpecification): void {
-    this.errors.clear();
-    this.plans.clear();
-    this.previous.clear();
-    this.map?.setStyle(style, {
-      diff: false,
-      localFontFamily: null,
-      localIdeographFontFamily: "sans-serif",
-    });
+    const request = ++this.styleRequest;
+    const apply = (prepared: string | mapboxgl.StyleSpecification) => {
+      if (!this.map || request !== this.styleRequest) return;
+      this.errors.clear();
+      this.plans.clear();
+      this.previous.clear();
+      this.map.setStyle(prepared, {
+        diff: false,
+        localFontFamily: null,
+        localIdeographFontFamily: "sans-serif",
+      });
+    };
+    if (!isMapboxStandard(style)) {
+      apply(style);
+      return;
+    }
+    void prepareMapboxStandard(style, this.accessToken)
+      .then(apply)
+      .catch((error: unknown) => {
+        if (this.map && request === this.styleRequest)
+          this.onError({ error: error instanceof Error ? error : new Error(String(error)) });
+      });
   }
   getBasemapStyleLayerIds(): string[] {
     return this.basemap.map((s) => s.id);
@@ -442,7 +460,22 @@ export class MapboxEngine implements MapEngine {
   }
   private applyBasemap(): void {
     const map = this.map;
-    if (!map?.isStyleLoaded()) return;
+    if (!map?.isStyleLoaded()) {
+      this.basemapPending = true;
+      return;
+    }
+    this.basemapPending = false;
+    for (const imported of map.getStyle()?.imports ?? []) {
+      if (!imported.data?.schema?.[STANDARD_OPACITY]) continue;
+      const opacity = this.basemapVisible ? this.basemapOpacity : 0;
+      const color =
+        this.blankColor ??
+        (document.documentElement.classList.contains("dark") ? "#262626" : "#ffffff");
+      if (map.getConfigProperty(imported.id, STANDARD_OPACITY) !== opacity)
+        map.setConfigProperty(imported.id, STANDARD_OPACITY, opacity);
+      if (map.getConfigProperty(imported.id, STANDARD_BLANK_COLOR) !== color)
+        map.setConfigProperty(imported.id, STANDARD_BLANK_COLOR, color);
+    }
     for (const spec of this.basemap) {
       if (!map.getLayer(spec.id)) continue;
       map.setLayoutProperty(
@@ -478,6 +511,7 @@ export class MapboxEngine implements MapEngine {
   }
   setBlankBackgroundColor(color: string | null): void {
     this.blankColor = color;
+    this.applyBasemap();
     if (this.map?.getLayer("geolibre-blank-background"))
       this.map.setPaintProperty(
         "geolibre-blank-background",
