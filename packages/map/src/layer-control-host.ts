@@ -91,6 +91,8 @@ interface LayerControlInternalState {
   state?: {
     layerStates?: Record<string, { visible: boolean; opacity: number; name: string }>;
   };
+  /** Rebuilds the panel's rows from `state.layerStates`; the control's own refresh path. */
+  buildLayerItems?: () => void;
 }
 
 /**
@@ -465,15 +467,27 @@ export class LayerControlHost {
     const control = this.control as unknown as LayerControlInternalState;
     const { visible, opacity } = this.adapter.getBasemapState();
 
-    const backgroundState =
-      control.state?.layerStates?.Background ??
-      (control.state?.layerStates
-        ? (control.state.layerStates.Background = { visible, opacity, name: "Background" })
-        : null);
-    if (backgroundState) {
-      backgroundState.visible = visible;
-      backgroundState.opacity = opacity;
+    // Only touch the control's state once it has mounted (onAdd builds the
+    // panel). Seeding `Background` earlier would make the control skip its own
+    // layer detection, which is keyed on the state being empty at mount.
+    if (!control.panel || !control.state?.layerStates) return;
+
+    let backgroundState = control.state.layerStates.Background;
+    if (!backgroundState) {
+      // The control only creates a Background row when it finds basemap
+      // layers in the root style. A style whose basemap lives in imports
+      // (Mapbox Standard) has none, so a project with no layers would show an
+      // empty panel. GeoLibre always has a basemap to toggle (the store drives
+      // it through onBackgroundVisibilityChange), so add the row ourselves.
+      backgroundState = control.state.layerStates.Background = {
+        visible,
+        opacity,
+        name: "Background",
+      };
+      control.buildLayerItems?.();
     }
+    backgroundState.visible = visible;
+    backgroundState.opacity = opacity;
 
     const backgroundItem = this.getItem("Background");
     if (!backgroundItem) return;

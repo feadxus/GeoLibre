@@ -791,8 +791,8 @@ describe("MapboxEngine layer control", () => {
       const container = window.document.getElementById("map")!;
       map.getContainer = () => container;
       // The fake's fixed style only names the basemap; the control needs to
-      // see the live layer list to classify layers.
-      map.layers.push({ id: "background", type: "background" });
+      // see the live layer list to classify layers. Start with no root layers
+      // at all, the shape of Mapbox Standard (its basemap lives in imports).
       map.getStyle = () => ({ sources: {}, layers: map.layers as { id: string; type: string }[] });
       // A real map runs a control's onAdd inside addControl; the control
       // detects its layers there, so the fake has to do the same here.
@@ -811,6 +811,18 @@ describe("MapboxEngine layer control", () => {
         },
       });
       const engine = new MapboxEngine(map as unknown as mapboxgl.Map, gl);
+      // With no root layers and no project layers the control alone would
+      // build an empty panel; the host still offers the Background row.
+      assert.deepEqual(
+        Array.from(container.querySelectorAll(".layer-control-item")).map((item) =>
+          item.getAttribute("data-layer-id"),
+        ),
+        ["Background"],
+      );
+
+      // A style with a root basemap layer, loaded afresh.
+      map.layers.push({ id: "background", type: "background" });
+      map.fire("style.load");
       engine.syncLayers([geojsonLayer()]);
       const nativeIds = map.layers.map((l) => l.id as string).filter((id) => id !== "background");
       assert.ok(nativeIds.length > 0);
