@@ -169,6 +169,9 @@ export class MapboxEngine implements MapEngine {
     this.controlVisibility = {
       ...DEFAULT_BUILT_IN_CONTROL_VISIBILITY,
       ...options.controlVisibility,
+      // Attribution is required by Mapbox; an override cannot hide it, the
+      // same rule setBuiltInControlVisible applies later.
+      attribution: true,
     };
     this.layerControlVisible = this.controlVisibility["layer-control"];
     this.surface = {
@@ -187,6 +190,10 @@ export class MapboxEngine implements MapEngine {
     for (const id of MAPBOX_HOSTED_CONTROL_ORDER) {
       if (this.controlVisibility[id]) this.mountBuiltInControl(id);
     }
+    // Terrain is a scene setting here (see setBuiltInControlVisible); an
+    // override asking for it is applied now, or by styleLoaded once the style
+    // is in, since setTerrainEnabled remembers the request either way.
+    if (this.controlVisibility.terrain) this.setTerrainEnabled(true);
     if (map.isStyleLoaded()) this.styleLoaded();
   }
   getMap(): null {

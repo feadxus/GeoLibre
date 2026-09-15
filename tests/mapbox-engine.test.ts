@@ -270,6 +270,21 @@ describe("MapboxEngine construction", () => {
       "AttributionControl",
     ]);
   });
+  it("applies constructor overrides through the same rules as the control API", () => {
+    const map = makeMap();
+    map.setStyleLoaded(false);
+    const engine = new MapboxEngine(map as unknown as mapboxgl.Map, gl, "", {
+      controlVisibility: { attribution: false, terrain: true, "layer-control": false },
+    });
+    // Attribution cannot be hidden by an override either.
+    assert.ok(controlNames(map).includes("AttributionControl"));
+    // Terrain is remembered while the style loads and applied once it is in.
+    assert.equal(engine.isTerrainEnabled(), true);
+    assert.ok(!map.calls.some((call) => call.startsWith("setTerrain:{")));
+    map.setStyleLoaded(true);
+    map.fire("style.load");
+    assert.ok(map.calls.some((call) => call.startsWith("setTerrain:{")));
+  });
   it("keeps the attribution control mounted", () => {
     const { engine, map } = makeEngine();
     assert.equal(engine.setBuiltInControlVisible("attribution", false), false);
