@@ -53,14 +53,9 @@ export function kmlFileNameFromUrl(url: string, bytes: Uint8Array): string {
  */
 export function kmlImportFile(name: string, content: string | ArrayBuffer | Uint8Array): File {
   const kmz = /\.kmz$/i.test(name);
-  const part: BlobPart =
-    content instanceof Uint8Array
-      ? (content.buffer.slice(
-          content.byteOffset,
-          content.byteOffset + content.byteLength,
-        ) as ArrayBuffer)
-      : content;
-  return new File([part], name, { type: kmz ? KMZ_MIME : KML_MIME });
+  // A typed-array view is read by its byteOffset/byteLength, so no copy is
+  // needed; the cast only widens `Uint8Array<ArrayBufferLike>` to BlobPart.
+  return new File([content as BlobPart], name, { type: kmz ? KMZ_MIME : KML_MIME });
 }
 
 /** A KML/KMZ document picked through the local file dialog. */
