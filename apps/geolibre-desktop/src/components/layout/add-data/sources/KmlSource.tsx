@@ -21,6 +21,9 @@ import {
 } from "../helpers";
 import { AddDataSourceForm, useAddDataSource } from "../shared";
 
+/** Download budget for a whole KML/KMZ document (matches the vector loader's). */
+const KML_DOWNLOAD_TIMEOUT_SECS = 180;
+
 /** Encodes a picked KMZ archive as the data URL a Cesium KML layer persists. */
 function kmzDataUrl(data: ArrayBuffer): Promise<string> {
   return new Promise<string>((resolve, reject) => {
@@ -39,13 +42,24 @@ function kmzDataUrl(data: ArrayBuffer): Promise<string> {
 async function fetchKmlImportFile(url: string, t: TFunction): Promise<File> {
   let bytes: Uint8Array;
   if (isTauri()) {
-    const { fetchUrlBytes } = await import("../../../../lib/native-http");
-    const raw = await fetchUrlBytes(url, { context: "KML / KMZ" });
-    bytes = raw instanceof Uint8Array ? raw : new Uint8Array(raw);
+    try {
+      const { fetchUrlBytes } = await import("../../../../lib/native-http");
+      // The native default timeout suits a tile; a whole document (possibly
+      // with embedded overlay imagery) needs the vector-download budget.
+      const raw = await fetchUrlBytes(url, {
+        context: "KML / KMZ",
+        timeoutSecs: KML_DOWNLOAD_TIMEOUT_SECS,
+      });
+      bytes = raw instanceof Uint8Array ? raw : new Uint8Array(raw);
+    } catch (error) {
+      throw new Error(serviceRequestErrorMessage(error, t, t("addData.shared.addError")));
+    }
   } else {
     let response: Response;
     try {
-      response = await fetch(proxyFeedRequestUrl(url), { signal: AbortSignal.timeout(30_000) });
+      response = await fetch(proxyFeedRequestUrl(url), {
+        signal: AbortSignal.timeout(KML_DOWNLOAD_TIMEOUT_SECS * 1000),
+      });
     } catch (error) {
       // A CORS block or a timeout surfaces as an opaque TypeError/AbortError;
       // map it to the localized hint the other service sources show.
