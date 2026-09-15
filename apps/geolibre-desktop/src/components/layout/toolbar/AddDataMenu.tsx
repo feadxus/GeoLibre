@@ -114,7 +114,9 @@ export function AddDataMenu({
     // The glTF model opens the same deck.gl scenegraph builder, so it is
     // gated the way "deckgl-viz" is.
     "gltf-model": { onSelect: onAddGltfModel, disabled: !capabilities.deckOverlay },
-    duckdb: { onSelect: addLayer.duckdb },
+    // DuckDB results draw through the panel's own deck.gl overlay, so the
+    // entry follows the same gate as the Deck.gl builder.
+    duckdb: { onSelect: addLayer.duckdb, disabled: !capabilities.deckOverlay },
     postgres: { onSelect: () => onSetAddDataKind("postgres") },
     iceberg: { onSelect: () => onSetAddDataKind("iceberg") },
   };

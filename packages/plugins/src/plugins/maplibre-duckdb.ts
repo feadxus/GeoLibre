@@ -382,13 +382,16 @@ async function openStandaloneDuckDBControl(app: GeoLibreAppAPI): Promise<boolean
     // A remount (after a renderer swap or map re-init removed the control)
     // starts without a renderer: the control drops it in onRemove and only
     // rebuilds it, against the new map, inside renderLayer(). Kick that, then
-    // redraw every cached result with the store's styles and order.
-    void getMutableDuckDBControl()
-      ?.renderLayer?.()
-      .then(() => syncDuckDBRenderedLayersFromStore(useAppStore.getState().layers))
-      .catch((error: unknown) => {
-        console.warn("[GeoLibre] duckdb: could not redraw cached layers after remount", error);
-      });
+    // redraw every cached result with the store's styles and order. A first
+    // open has nothing cached, so it skips the kick.
+    if (duckdbRenderedLayers.size > 0) {
+      void getMutableDuckDBControl()
+        ?.renderLayer?.()
+        .then(() => syncDuckDBRenderedLayersFromStore(useAppStore.getState().layers))
+        .catch((error: unknown) => {
+          console.warn("[GeoLibre] duckdb: could not redraw cached layers after remount", error);
+        });
+    }
   }
 
   setTimeout(() => {
