@@ -503,6 +503,14 @@ function mergeFeatureCollections(collections: FeatureCollection[]): FeatureColle
  */
 export const KML_PLACEMARK_LAYER_LIMIT = 50;
 
+/**
+ * The most layers a time-animated KML import may split into. Every time window
+ * becomes at least one layer, so a file with more distinct times than this
+ * loads as static layers rather than freezing the page the same way one layer
+ * per placemark did (#2411).
+ */
+export const KML_TIME_FRAME_LAYER_LIMIT = 100;
+
 /** A placemark with its internal KML import metadata read off and stripped. */
 interface KmlPlacemarkEntry {
   feature: Feature;
@@ -586,23 +594,34 @@ export function splitKmlFolderLayers(
   const begins = new Set(
     entries.flatMap((entry) => (typeof entry.time?.begin === "number" ? [entry.time.begin] : [])),
   );
-  const animated = begins.size >= 2;
-  const frameTime = (entry: KmlPlacemarkEntry): KmlTimeBounds | null =>
-    animated && typeof entry.time?.begin === "number" ? entry.time : null;
-
   const perPlacemark =
     entries.filter((entry) => entry.groupPath.length > 0).length <= KML_PLACEMARK_LAYER_LIMIT;
-  // Map iteration keeps first-seen document order.
-  const buckets = new Map<string, KmlPlacemarkBucket>();
-  for (const entry of entries) {
-    const time = frameTime(entry);
-    const key =
-      perPlacemark && entry.groupPath.length > 0
-        ? `placemark:${entry.index}`
-        : `${JSON.stringify(entry.groupPath)}|${time ? `${time.begin}|${time.end}` : ""}`;
-    const bucket = buckets.get(key);
-    if (bucket) bucket.entries.push(entry);
-    else buckets.set(key, { entries: [entry], groupPath: entry.groupPath, time });
+
+  const planBuckets = (animated: boolean): Map<string, KmlPlacemarkBucket> => {
+    // Map iteration keeps first-seen document order.
+    const planned = new Map<string, KmlPlacemarkBucket>();
+    for (const entry of entries) {
+      const time = animated && typeof entry.time?.begin === "number" ? entry.time : null;
+      const key =
+        perPlacemark && entry.groupPath.length > 0
+          ? `placemark:${entry.index}`
+          : `${JSON.stringify(entry.groupPath)}|${time ? `${time.begin}|${time.end}` : ""}`;
+      const bucket = planned.get(key);
+      if (bucket) bucket.entries.push(entry);
+      else planned.set(key, { entries: [entry], groupPath: entry.groupPath, time });
+    }
+    return planned;
+  };
+
+  let buckets = planBuckets(begins.size >= 2);
+  if (begins.size >= 2 && buckets.size > KML_TIME_FRAME_LAYER_LIMIT) {
+    // One layer per time window would bring back the per-layer freeze (e.g. a
+    // GPS track with a `<TimeStamp>` on every point), so load the placemarks
+    // as static layers instead.
+    console.warn(
+      `[GeoLibre] "${path}" has ${begins.size} distinct KML times, which would need ${buckets.size} layers; loading it without Time Slider animation (limit ${KML_TIME_FRAME_LAYER_LIMIT}).`,
+    );
+    buckets = planBuckets(false);
   }
 
   // A merged Folder layer stands in for the Folder itself (so it is not nested

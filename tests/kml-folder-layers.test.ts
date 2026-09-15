@@ -15,12 +15,14 @@ type TauriIo = typeof import("../apps/geolibre-desktop/src/lib/tauri-io");
 let splitKmlFolderLayers: SplitKmlFolderLayers;
 let sequenceTimeFrames: TauriIo["sequenceTimeFrames"];
 let placemarkLayerLimit: number;
+let timeFrameLayerLimit: number;
 
 before(async () => {
   const mod = await import("../apps/geolibre-desktop/src/lib/tauri-io");
   splitKmlFolderLayers = mod.splitKmlFolderLayers;
   sequenceTimeFrames = mod.sequenceTimeFrames;
   placemarkLayerLimit = mod.KML_PLACEMARK_LAYER_LIMIT;
+  timeFrameLayerLimit = mod.KML_TIME_FRAME_LAYER_LIMIT;
 });
 
 /** A point placemark, optionally inside the given KML Folder ancestry and time window. */
@@ -253,6 +255,25 @@ describe("splitKmlFolderLayers", () => {
         [undefined, undefined, undefined],
       ],
     );
+  });
+
+  it("loads too many distinct times as static layers instead of one layer per time", () => {
+    // A flat GPS track: every point carries its own <TimeStamp>, no Folder.
+    const track = Array.from({ length: timeFrameLayerLimit + 1 }, (_, index) =>
+      placemark(`Point ${index}`, undefined, { begin: T0 + index * HOUR, end: null }),
+    );
+    const warn = console.warn;
+    console.warn = () => {};
+    try {
+      const layers = splitKmlFolderLayers(collection(track), "track.kml");
+
+      assert.equal(layers.length, 1);
+      assert.equal(layers[0]?.data.features.length, timeFrameLayerLimit + 1);
+      assert.equal(layers[0]?.timeSpan, undefined);
+      assert.equal(layers[0]?.data.features[0]?.properties?.[KML_TIME_PROPERTY], undefined);
+    } finally {
+      console.warn = warn;
+    }
   });
 
   it("does not animate placemarks that all share one inherited time", () => {

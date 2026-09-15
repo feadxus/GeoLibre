@@ -520,14 +520,17 @@ interface SelectorLayer {
   adapter: TemporalLayerAdapter;
 }
 
-/** A KML `<TimeSpan>`/`<TimeStamp>` overlay frame's epoch-ms window. */
+/**
+ * The epoch-ms window of a KML `<TimeSpan>`/`<TimeStamp>` frame: a ground
+ * overlay or a time-tagged placemark layer, keyed by `metadata.timeSpan`.
+ */
 interface TimeOverlayFrame {
   id: string;
   begin: number;
   end: number | null;
 }
 
-/** Collect the image-overlay frames tagged with a `<TimeSpan>`/`<TimeStamp>`. */
+/** Collect the KML ground-overlay and placemark frames tagged with a time window. */
 function getTimeOverlayFrames(): TimeOverlayFrame[] {
   const frames: TimeOverlayFrame[] = [];
   for (const layer of useAppStore.getState().layers) {
@@ -546,7 +549,7 @@ function getTimeOverlayFrames(): TimeOverlayFrame[] {
 }
 
 /**
- * Show only the overlay frame whose `[begin, end)` window contains the control's
+ * Show only the KML frames whose `[begin, end)` window contains the control's
  * current date; hide the rest. Writes are guarded and diffed so scrubbing does
  * not churn the store. A frame with an open end (the last in a sequence) stays
  * visible for any date at or after its start.
@@ -1007,8 +1010,8 @@ export function getLayerTimeBinding(layer: {
  * - the dock's own sources (COG stacks, mosaics, tile templates added through
  *   its "Add data" form), which are mirrored into the store under
  *   {@link STORE_LAYER_SOURCE_KIND};
- * - KML `<TimeSpan>` / `<TimeStamp>` image overlays, which the slider animates
- *   by visibility rather than by filter.
+ * - KML `<TimeSpan>` / `<TimeStamp>` ground overlays and placemark layers, which
+ *   the slider animates by visibility rather than by filter.
  *
  * The last two matter because the dock is the only way to reach them: turning
  * the plugin off while either exists would take the user's own timeline data

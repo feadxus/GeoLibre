@@ -1464,6 +1464,8 @@ export function DesktopShell({
       // Frame ids for each time-animated overlay sequence (keyed by the loader's
       // group marker), so they can be gathered into one layer group afterward.
       const frameGroups = new Map<string, string[]>();
+      // The same for time-tagged KML placemark layers outside any Folder.
+      const placemarkFrameGroups = new Map<string, { name: string; ids: string[] }>();
       // KML Folder ancestry becomes nested GeoLibre groups. Prefix keys with
       // the source path so identically named folders from separate files do not
       // get combined when several files are imported in one batch.
@@ -1555,12 +1557,16 @@ export function DesktopShell({
             ...(layer.visible === false ? { visible: false } : {}),
           });
           hasVectorTimeFrames = true;
-          // Frames outside any KML Folder are gathered into one group below;
-          // foldered frames already sit in their Folder groups.
+          // Frames outside any KML Folder are gathered into one group named
+          // after their file below; foldered frames already sit in their
+          // Folder groups.
           if (layer.groupId && !layer.groupPath?.length) {
-            const ids = frameGroups.get(layer.groupId) ?? [];
-            ids.push(frameId);
-            frameGroups.set(layer.groupId, ids);
+            const group = placemarkFrameGroups.get(layer.groupId) ?? {
+              name: layerNameFromPath(layer.path),
+              ids: [],
+            };
+            group.ids.push(frameId);
+            placemarkFrameGroups.set(layer.groupId, group);
           }
         }
         if (layer.path) {
@@ -1606,6 +1612,9 @@ export function DesktopShell({
             : t("kml.timeOverlayGroup");
         addLayerGroup(name, ids);
       });
+      for (const { name, ids } of placemarkFrameGroups.values()) {
+        if (ids.length > 1) addLayerGroup(name, ids);
+      }
       const hasTimeAnimation = sequences.length > 0 || hasVectorTimeFrames;
       // Auto-open the Time Slider so a time-animated overlay sequence can be
       // stepped through immediately, without the user hunting for the plugin.
