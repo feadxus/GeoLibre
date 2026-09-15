@@ -437,6 +437,13 @@ both counts in the entry. Anything upgradeable gets upgraded instead. Stale entr
 print a warning rather than failing, since the advisory database is a live service
 and a transient omission must not redden an unrelated PR.
 
+When the fix is a scoped `overrides` entry (such as `@loaders.gl/compression` →
+`fflate`), npm 12 accepts it and rewrites the declared range, but it keeps the
+old nested copy and `npm ls` reports it as `invalid`. Delete that package's
+nested `node_modules/.../<pkg>` entries from `package-lock.json` (and from
+`node_modules`), then run `npm install` again so it resolves them fresh. Confirm
+with `npm ls <pkg>` before you commit.
+
 ## Publishing `@geolibre/core` and `@geolibre/map`
 
 Both are published to npm by `.github/workflows/publish-packages.yml` on each
