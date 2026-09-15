@@ -238,3 +238,78 @@ for (const theme of ["light", "dark"] as const) {
     expect(errors).toEqual([]);
   });
 }
+
+for (const theme of ["light", "dark"]) {
+  test(`Mapbox PMTiles building extrusion uses loaded height attributes (${theme})`, async ({
+    page,
+  }, info) => {
+    test.setTimeout(120_000);
+    await page.addInitScript(
+      ({ key, token }) => {
+        localStorage.setItem(
+          key,
+          JSON.stringify({
+            mapboxAccessToken: token,
+            uiProfile: { onboarded: true, hiddenDataSources: [] },
+          }),
+        );
+      },
+      { key: DESKTOP_SETTINGS_STORAGE_KEY, token: process.env.MAPBOX_TOKEN! },
+    );
+    await page.goto("/");
+    if (theme === "dark") await page.getByRole("button", { name: "Switch to Dark Mode" }).click();
+    await page.getByRole("button", { name: "View", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Rendering engine", exact: true }).hover();
+    await page.getByRole("menuitemradio", { name: "Mapbox", exact: true }).click();
+    await bindEngine(page);
+    await openSource(page, "PMTiles Layer");
+    await page
+      .getByRole("textbox", { name: "https://example.com/tiles.pmtiles", exact: true })
+      .fill("https://r2-public.protomaps.com/protomaps-sample-datasets/tilezen.pmtiles");
+    await page.getByRole("button", { name: "Add Layer", exact: true }).click();
+    await expect(layerRow(page, "buildings")).toBeVisible();
+    await page.locator(".maplibre-gl-pmtiles-layer-close").click();
+    for (const name of [
+      "water",
+      "transit",
+      "roads",
+      "pois",
+      "places",
+      "landuse",
+      "earth",
+      "boundaries",
+    ]) {
+      await layerRow(page, name).getByRole("button", { name: "Hide layer", exact: true }).click();
+    }
+    await page.evaluate(() =>
+      (window as any).mapboxArchiveTestRef.current
+        .getMapboxMap()
+        .jumpTo({ center: [-74.006, 40.713], zoom: 15, pitch: 60 }),
+    );
+    await layerRow(page, "buildings")
+      .getByRole("button", { name: "Open Style panel", exact: true })
+      .click();
+    await page.getByRole("radio", { name: "3D extrusion", exact: true }).check();
+    // This failed before the fix even though the native tiles had height data.
+    await expect(page.locator("#extrusionHeightProperty option[value=height]")).toHaveCount(1, {
+      timeout: 60_000,
+    });
+    await page.locator("#extrusionHeightProperty").selectOption("height");
+    const apply = page.getByRole("button", { name: "Apply 3D extrusion", exact: true });
+    if (await apply.isEnabled()) await apply.click();
+    await page.waitForFunction(() => {
+      const map = (window as any).mapboxArchiveTestRef.current.getMapboxMap();
+      const layer = map
+        .getStyle()
+        .layers.find((l: any) => l["source-layer"] === "buildings" && l.type === "fill-extrusion");
+      return (
+        layer &&
+        JSON.stringify(layer.paint["fill-extrusion-height"]).includes('["get","height"]') &&
+        map
+          .queryRenderedFeatures({ layers: [layer.id] })
+          .some((f: any) => Number(f.properties.height) > 0)
+      );
+    });
+    await page.screenshot({ path: info.outputPath(`pmtiles-extrusion-${theme}.png`) });
+  });
+}
