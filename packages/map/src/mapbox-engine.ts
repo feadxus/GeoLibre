@@ -22,7 +22,7 @@ import type {
 } from "./map-engine";
 import {
   compileMapboxLayer,
-  isMapboxPluginRaster,
+  isMapboxPluginLayer,
   DEFAULT_MAPBOX_TEXT_FONT,
   type MapboxLayerPlan,
 } from "./mapbox-layers";
@@ -266,6 +266,19 @@ export class MapboxEngine implements MapEngine {
   fitLayer(layer: GeoLibreLayer): void {
     const bounds = getLayerBounds(layer);
     if (bounds) this.fitBounds(bounds);
+    else {
+      const center = layer.metadata.center;
+      if (
+        Array.isArray(center) &&
+        center.length >= 2 &&
+        center.slice(0, 2).every((v) => typeof v === "number" && Number.isFinite(v))
+      ) {
+        this.map?.flyTo({
+          center: [center[0] as number, center[1] as number],
+          zoom: typeof layer.metadata.zoom === "number" ? layer.metadata.zoom : 16,
+        });
+      }
+    }
   }
   readProjection(): MapProjection {
     return this.map?.getProjection().name === "globe" ? "globe" : "mercator";
@@ -306,9 +319,9 @@ export class MapboxEngine implements MapEngine {
     // with the layer panel, including after a style swap or drag reorder.
     for (const original of [...layers].reverse()) {
       try {
-        // The raster control owns these layers and synchronizes their display
-        // settings from the store. Compiling the COG URL again is unsupported.
-        if (isMapboxPluginRaster(original)) {
+        // The plugin controls own these layers and synchronizes their display
+        // settings from the store. They synchronize custom renderers separately from native sources.
+        if (isMapboxPluginLayer(original)) {
           this.removeLayer(original.id);
           continue;
         }
