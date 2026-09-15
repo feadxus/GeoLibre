@@ -11,6 +11,7 @@ import { MapboxEngine, redactMapboxError } from "./mapbox-engine";
 import { prepareMapboxStandard } from "./mapbox-standard-style";
 import { styleUsesUnsupportedSource } from "./mapbox-layers";
 import { resolveMapStyle } from "./map-controller";
+import { isGlobeControlToggleClick } from "./globe-control-toggle";
 
 export interface MapboxCanvasProps {
   accessToken: string;
@@ -157,6 +158,25 @@ export function MapboxCanvas({ accessToken, viewId, engineRef, onEngineReady }: 
           // pane against a stale `mapView` would jump to the old camera first.
           if (!viewId || next.mapLayout.syncView) next.setMapView(camera, true);
           if (viewId) next.setSecondaryMapView(viewId, camera, true);
+        });
+        // Persist clicks on the engine's globe toggle into project preferences,
+        // as MapCanvas does for MapLibre's GlobeControl, so a project reopens in
+        // the projection it was saved in. The control's own handler runs on the
+        // button before this container listener and `setProjection` is
+        // synchronous, so `readProjection()` already reflects the toggle. A
+        // split pane's toggle stays local to that pane, as on MapLibre.
+        map.getContainer().addEventListener("click", (event) => {
+          if (viewId || cancelled || !isGlobeControlToggleClick(event.target)) return;
+          const projection = current.readProjection();
+          // Functional update so a concurrent preference change between read
+          // and write is not clobbered by a stale snapshot.
+          useAppStore.setState((s) => {
+            if (s.preferences.map.projection === projection) return s;
+            return {
+              preferences: { ...s.preferences, map: { ...s.preferences.map, projection } },
+              isDirty: true,
+            };
+          });
         });
         map.on("mousemove", (e) => {
           if (!viewId) useAppStore.getState().setPointerCoords(e.lngLat.toArray());
