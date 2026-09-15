@@ -57,7 +57,12 @@ describe("run_python tool description", () => {
   });
 
   it("only names methods the console API actually defines", () => {
-    for (const [, method] of toolsSource.matchAll(/`geolibre\.(\w+)\(/g)) {
+    const mentioned = new Set(
+      [...toolsSource.matchAll(/geolibre\.(\w+)\(/g)].map(([, method]) => method),
+    );
+    // Guard the loop below against a regex that quietly matches nothing.
+    assert.ok(mentioned.size > 0, "no geolibre.*() examples found in tools.ts");
+    for (const method of mentioned) {
       assert.match(
         consoleApiSource,
         new RegExp(`def ${method}\\(`),
