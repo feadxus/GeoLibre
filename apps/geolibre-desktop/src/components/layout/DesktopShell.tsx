@@ -1549,9 +1549,9 @@ export function DesktopShell({
         // the same `metadata.timeSpan` visibility toggling as ground overlays.
         if (layer.timeSpan) {
           const frameId = lastLayerId;
-          const added = useAppStore.getState().layers.find((item) => item.id === frameId);
+          // `addGeoJsonLayer` starts every layer with empty metadata.
           useAppStore.getState().updateLayer(frameId, {
-            metadata: { ...added?.metadata, timeSpan: layer.timeSpan },
+            metadata: { timeSpan: layer.timeSpan },
             ...(layer.visible === false ? { visible: false } : {}),
           });
           hasVectorTimeFrames = true;
