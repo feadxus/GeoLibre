@@ -1,5 +1,10 @@
 import { DEFAULT_LAYER_STYLE, useAppStore } from "@geolibre/core";
-import { fillLayerId, lineLayerId } from "@geolibre/map/style-layer-ids";
+import {
+  fillLayerId,
+  lineLayerId,
+  mapboxFillLayerId,
+  mapboxLineLayerId,
+} from "@geolibre/map/style-layer-ids";
 import type { FeatureCollection, Geometry } from "geojson";
 import type { GeoJSONSource, Map as MapLibreMap } from "maplibre-gl";
 import type { Map as MapboxMap } from "mapbox-gl";
@@ -658,8 +663,8 @@ function footprintStyleLayers(map: StacMap): string[] {
   return [
     fillLayerId(footprintLayerId),
     lineLayerId(footprintLayerId),
-    `geolibre-mapbox-${footprintLayerId}-geojson-fill`,
-    `geolibre-mapbox-${footprintLayerId}-geojson-line`,
+    mapboxFillLayerId(footprintLayerId),
+    mapboxLineLayerId(footprintLayerId),
   ].filter((id) => map.getLayer(id));
 }
 

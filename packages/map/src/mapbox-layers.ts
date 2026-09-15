@@ -14,6 +14,7 @@ import type {
 import { circlePaint, fillPaint, fillExtrusionPaint, linePaint, rasterPaint } from "./style-mapper";
 import { proxyWmsTiles } from "./wms-proxy";
 import { arcgisOpacity, arcgisVectorStyle } from "./arcgis-vector-style";
+import { mapboxFillLayerId, mapboxLineLayerId, mapboxSourceId } from "./style-layer-ids";
 
 export interface MapboxLayerPlan {
   sourceId: string;
@@ -153,7 +154,7 @@ export function compileMapboxLayer(
   const sourceId =
     basemap && typeof layer.metadata?.sourceId === "string"
       ? layer.metadata.sourceId
-      : `geolibre-mapbox-${layer.id}`;
+      : mapboxSourceId(layer.id);
   const nativeIds = basemap ? layer.metadata?.nativeLayerIds : undefined;
   const rasterId =
     Array.isArray(nativeIds) && typeof nativeIds[0] === "string"
@@ -189,7 +190,7 @@ export function compileMapboxLayer(
     const result = [
       {
         ...base,
-        id: `${id}-fill`,
+        id: mapboxFillLayerId(layer.id, sourceLayer),
         type: style.extrusionEnabled ? "fill-extrusion" : "fill",
         filter: geometryFilter("Polygon"),
         paint: mapboxPaint(
@@ -200,7 +201,7 @@ export function compileMapboxLayer(
       },
       {
         ...base,
-        id: `${id}-line`,
+        id: mapboxLineLayerId(layer.id, sourceLayer),
         type: "line",
         filter: (filter ? ["all", notPoint, filter] : notPoint) as FilterSpecification,
         paint: mapboxPaint(linePaint(style, layer.opacity)),
