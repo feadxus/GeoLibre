@@ -688,14 +688,16 @@ function installGooglePhotorealisticTilesPanelHandlers(
       }
       applyDefaults();
       const url = urlInput?.value.trim() ?? "";
+      // A blank URL falls through to the library's own submit handler so its
+      // "Tileset URL is required." error is shown, on Mapbox as on MapLibre.
       if (
+        url &&
         activeThreeDTilesApp?.getMapRenderer?.() === "mapbox" &&
         !isGooglePhotorealisticTilesetUrl(url) &&
         !isArcgisI3sSceneLayerUrl(url)
       ) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        if (!url) return;
         const id = `tiles-${crypto.randomUUID()}`;
         const layer = createThreeDTilesStoreLayer(
           {

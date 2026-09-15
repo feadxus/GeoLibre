@@ -73,6 +73,15 @@ describe("Mapbox Add Data adapters", () => {
     await control.addLayer("blob:unsupported");
     assert.match(control.getState().error ?? "", /remote vector/);
     assert.equal(events.length, 1);
+    // Overlapping requests run one at a time, each reporting its own outcome
+    // to the caller that awaits it.
+    const failed = control.addLayer("blob:other");
+    const added = control.addLayer(url);
+    await failed;
+    assert.match(control.getState().error ?? "", /remote vector/);
+    await added;
+    assert.equal(control.getState().error, null);
+    assert.equal(events.length, 2);
   });
   it("only recognizes supported plugin source kinds, rather than all custom layers", () => {
     for (const [type, sourceKind] of [

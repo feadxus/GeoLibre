@@ -67,6 +67,34 @@ it("restores Mapbox tiles, applies store changes, reports load errors and dispos
     rendered[0].props.onError(new Error("403: denied"));
     assert.equal(useAppStore.getState().layers[0].metadata.status, "error");
     assert.equal(useAppStore.getState().layers[0].metadata.error, "403: denied");
+    // A changed source is a new deck layer; a stale instance's late callbacks
+    // must not touch the store once it has been superseded.
+    const stale = rendered[0];
+    useAppStore.getState().updateLayer("tiles", {
+      source: { url: "https://example.com/tileset.json", altitudeOffset: 0 },
+    });
+    assert.notEqual(rendered[0].id, stale.id);
+    stale.props.onError(new Error("late"));
+    assert.equal(useAppStore.getState().layers[0].metadata.error, "403: denied");
+    rendered[0].props.onTilesetLoad({ cartographicCenter: [-75, 40, 320], zoom: 15 });
+    assert.equal(useAppStore.getState().layers[0].metadata.status, "loaded");
+    // Adding a tileset re-runs the restore; loaded layers keep their revision
+    // (deck.gl would otherwise reload them under a new id).
+    const loadedId = rendered[0].id;
+    useAppStore.getState().addLayer({
+      id: "second",
+      name: "Second",
+      type: "3d-tiles",
+      visible: true,
+      opacity: 1,
+      style: { ...DEFAULT_LAYER_STYLE },
+      source: { url: "https://example.com/second.json" },
+      metadata: { sourceKind: "3d-tiles-url", externalNativeLayer: true },
+    });
+    await restoreMapboxTiles(app, "second");
+    assert.equal(rendered.length, 2);
+    assert.ok(rendered.some((layer) => layer.id === loadedId));
+    useAppStore.getState().removeLayer("second");
     useAppStore.getState().removeLayer("tiles");
     assert.equal(rendered.length, 0);
     await restoreMapboxTiles(app);

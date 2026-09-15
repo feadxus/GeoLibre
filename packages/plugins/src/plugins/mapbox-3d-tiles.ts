@@ -14,6 +14,12 @@ let unsubscribe: (() => void) | undefined;
 let boundMap: unknown;
 let generation = 0;
 const flyToRequests = new Set<string>();
+// Revision bookkeeping outlives a single restore call: the panel re-runs
+// restoreMapboxTiles for every added tileset, and a fresh map here would renumber
+// already-loaded layers, which deck.gl treats as new layers and reloads.
+let signature = "";
+let revisionCounter = 0;
+const versions = new Map<string, { source: string; revision: number }>();
 
 export function isMapboxTilesLayer(layer: GeoLibreLayer): boolean {
   return layer.type === "3d-tiles" && layer.metadata.sourceKind === "3d-tiles-url";
@@ -32,8 +38,10 @@ export async function restoreMapboxTiles(app: GeoLibreAppAPI, flyToId?: string):
   unsubscribe?.();
   const newlyBound = boundMap !== map;
   boundMap = map;
-  let signature = "";
-  const versions = new Map<string, { source: string; revision: number }>();
+  if (newlyBound) {
+    signature = "";
+    versions.clear();
+  }
   const render = () => {
     if (boundMap !== map) return;
     const layers = useAppStore.getState().layers.filter(isMapboxTilesLayer);
@@ -51,77 +59,83 @@ export async function restoreMapboxTiles(app: GeoLibreAppAPI, flyToId?: string):
     ) => Layer;
     for (const id of versions.keys())
       if (!layers.some((layer) => layer.id === id)) versions.delete(id);
+    // Revisions are unique across the session, so a removed and re-added layer
+    // (or a re-sourced one) never shares a token with a superseded instance.
     const revision = (layer: GeoLibreLayer) => {
       const source = JSON.stringify(layer.source);
       const previous = versions.get(layer.id);
       if (previous?.source === source) return previous.revision;
-      const revision = (previous?.revision ?? -1) + 1;
+      const revision = ++revisionCounter;
       versions.set(layer.id, { source, revision });
       return revision;
     };
+    // deck.gl finalizes a replaced Tile3DLayer but still fires its pending
+    // callbacks; only the live revision may touch the store or the camera.
+    const isLive = (layer: GeoLibreLayer, token: number) =>
+      boundMap === map && versions.get(layer.id)?.revision === token;
     setSharedDeckLayers(
       SOURCE,
-      [...layers].reverse().map(
-        (layer) =>
-          new Tile3DLayer({
-            id: `${layer.id}-${revision(layer)}-mapbox-tiles`,
-            data: layer.source.url,
-            altitudeOffset: layer.source.altitudeOffset,
-            visible: layer.visible,
-            opacity: layer.opacity,
-            pickable: false,
-            loadOptions: {
-              ...THREE_D_TILES_DECK_LOAD_OPTIONS,
-              fetch: {
-                headers: resolveThreeDTilesRequestHeaders(
-                  String(layer.source.url),
-                  layer.source.requestHeaders as Record<string, string> | undefined,
-                ),
+      [...layers].reverse().map((layer) => {
+        const token = revision(layer);
+        return new Tile3DLayer({
+          id: `${layer.id}-${token}-mapbox-tiles`,
+          data: layer.source.url,
+          altitudeOffset: layer.source.altitudeOffset,
+          visible: layer.visible,
+          opacity: layer.opacity,
+          pickable: false,
+          loadOptions: {
+            ...THREE_D_TILES_DECK_LOAD_OPTIONS,
+            fetch: {
+              headers: resolveThreeDTilesRequestHeaders(
+                String(layer.source.url),
+                layer.source.requestHeaders as Record<string, string> | undefined,
+              ),
+            },
+          },
+          onTilesetLoad: (tileset: PositionedTileset & { zoom?: number }) => {
+            applyTilesetAltitudeOffset(tileset, Number(layer.source.altitudeOffset ?? 0));
+            const current = useAppStore.getState().layers.find(({ id }) => id === layer.id);
+            if (!current || !isLive(layer, token)) return;
+            const center = tileset.cartographicCenter;
+            useAppStore.getState().updateLayer(layer.id, {
+              metadata: {
+                ...current.metadata,
+                status: "loaded",
+                error: undefined,
+                ...(center
+                  ? {
+                      center: Array.from(center).slice(0, 2),
+                      altitude: center[2],
+                      zoom: tileset.zoom,
+                    }
+                  : {}),
               },
-            },
-            onTilesetLoad: (tileset: PositionedTileset & { zoom?: number }) => {
-              applyTilesetAltitudeOffset(tileset, Number(layer.source.altitudeOffset ?? 0));
-              const current = useAppStore.getState().layers.find(({ id }) => id === layer.id);
-              if (!current || boundMap !== map) return;
-              const center = tileset.cartographicCenter;
-              useAppStore.getState().updateLayer(layer.id, {
-                metadata: {
-                  ...current.metadata,
-                  status: "loaded",
-                  error: undefined,
-                  ...(center
-                    ? {
-                        center: Array.from(center).slice(0, 2),
-                        altitude: center[2],
-                        zoom: tileset.zoom,
-                      }
-                    : {}),
-                },
+            });
+            if (center && flyToRequests.delete(layer.id))
+              map.flyTo({
+                center: [center[0], center[1]],
+                zoom: Math.max(0, (tileset.zoom ?? 16) - 1),
+                pitch: 60,
               });
-              if (center && flyToRequests.delete(layer.id))
-                map.flyTo({
-                  center: [center[0], center[1]],
-                  zoom: Math.max(0, (tileset.zoom ?? 16) - 1),
-                  pitch: 60,
-                });
-            },
-            onError: (error: Error) => {
-              const current = useAppStore.getState().layers.find(({ id }) => id === layer.id);
-              if (current && boundMap === map)
-                useAppStore.getState().updateLayer(layer.id, {
-                  metadata: { ...current.metadata, status: "error", error: error.message },
-                });
-              return true;
-            },
-            onTileError: (_tile: unknown, message: string) => {
-              const current = useAppStore.getState().layers.find(({ id }) => id === layer.id);
-              if (current && boundMap === map)
-                useAppStore.getState().updateLayer(layer.id, {
-                  metadata: { ...current.metadata, status: "error", error: message },
-                });
-            },
-          }) as unknown as Layer,
-      ),
+          },
+          onError: (error: Error) => {
+            const current = useAppStore.getState().layers.find(({ id }) => id === layer.id);
+            if (current && isLive(layer, token))
+              useAppStore.getState().updateLayer(layer.id, {
+                metadata: { ...current.metadata, status: "error", error: error.message },
+              });
+            return true;
+          },
+          onTileError: (_tile: unknown, message: string) => {
+            const current = useAppStore.getState().layers.find(({ id }) => id === layer.id);
+            if (current && isLive(layer, token))
+              useAppStore.getState().updateLayer(layer.id, {
+                metadata: { ...current.metadata, status: "error", error: message },
+              });
+          },
+        }) as unknown as Layer;
+      }),
     );
   };
   unsubscribe = useAppStore.subscribe((state, previous) => {
@@ -134,6 +148,8 @@ export async function restoreMapboxTiles(app: GeoLibreAppAPI, flyToId?: string):
       unsubscribe?.();
       unsubscribe = undefined;
       boundMap = null;
+      signature = "";
+      versions.clear();
       setSharedDeckLayers(SOURCE, []);
       releaseMercatorProjectionLock(SOURCE, app);
     });

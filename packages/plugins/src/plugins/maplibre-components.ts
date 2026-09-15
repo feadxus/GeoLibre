@@ -3908,6 +3908,11 @@ function createLidarControl(
   });
   lidarLayerAdapter = new LidarLayerAdapterClass(control);
   const onUnload = createLidarUnloadHandler();
+  const onLoad = createLidarLoadHandler();
+  const handleLoad: LidarControlEventHandler = (event) => {
+    acquireMercatorProjectionLock("lidar", app);
+    onLoad(event);
+  };
   const onRemove = control.onRemove.bind(control);
   control.onRemove = () => {
     // Mapbox destroys controls when switching engines. Drop singleton handles
@@ -3920,6 +3925,10 @@ function createLidarControl(
     // Stopping a renderer emits unload for every streamed cloud. Preserve
     // project records during teardown so the next engine can restore them.
     control.off("unload", onUnload);
+    // A restore still streaming into this control must not land as a fresh
+    // layer once its queue entry is gone: the saved record stays in the store
+    // and the next engine's restoreLidarLayers re-streams it under its own id.
+    control.off("load", handleLoad);
     onRemove();
     releaseMercatorProjectionLock("lidar", app);
     if (lidarControl === control) {
@@ -3929,11 +3938,7 @@ function createLidarControl(
     }
   };
   control.on("collapse", () => hideLidarControl(control));
-  const onLoad = createLidarLoadHandler();
-  control.on("load", (event) => {
-    acquireMercatorProjectionLock("lidar", app);
-    onLoad(event);
-  });
+  control.on("load", handleLoad);
   control.on("unload", onUnload);
   lidarStoreUnsubscribe ??= useAppStore.subscribe((state, previous) => {
     if (state.layers === previous.layers) return;

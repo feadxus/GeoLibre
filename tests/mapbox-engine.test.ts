@@ -140,6 +140,12 @@ function makeMap() {
       calls.push("jumpTo");
       ({ center, zoom, bearing, pitch } = view);
     },
+    flyTo: (view: { center: [number, number]; zoom: number; pitch?: number }) => {
+      calls.push(`flyTo:${JSON.stringify(view)}`);
+      center = view.center;
+      zoom = view.zoom;
+      if (view.pitch !== undefined) pitch = view.pitch;
+    },
     setMinZoom: (v: number) => calls.push(`setMinZoom:${v}`),
     setMaxZoom: (v: number) => calls.push(`setMaxZoom:${v}`),
     getMaxZoom: () => 18,
@@ -454,6 +460,36 @@ describe("MapboxEngine camera and preferences", () => {
     assert.deepEqual(map.calls, ["jumpTo"]);
     assert.deepEqual(engine.readView().center, [10, 20]);
     assert.equal(engine.readView().bearing, 30);
+  });
+
+  it("tilts into a tileset on zoom-to-layer, like the MapLibre engine", () => {
+    const { engine, map } = makeEngine();
+    const tileset = {
+      ...geojsonLayer(),
+      geojson: undefined,
+      type: "3d-tiles" as const,
+      source: { url: "https://example.com/tileset.json" },
+      metadata: {
+        externalNativeLayer: true,
+        sourceKind: "3d-tiles-url",
+        center: [-75, 40],
+        zoom: 15,
+      },
+    };
+    map.calls.length = 0;
+    engine.fitLayer(tileset);
+    assert.deepEqual(map.calls, ['flyTo:{"center":[-75,40],"zoom":15,"pitch":60}']);
+    // An already steeper camera is kept, and a point cloud is not tilted.
+    engine.fitLayer(tileset);
+    assert.equal(map.calls.at(-1), 'flyTo:{"center":[-75,40],"zoom":15,"pitch":60}');
+    engine.fitLayer({
+      ...tileset,
+      type: "lidar",
+      metadata: { ...tileset.metadata, sourceKind: "lidar-url", zoom: undefined },
+    });
+    assert.equal(map.calls.at(-1), 'flyTo:{"center":[-75,40],"zoom":16}');
+    engine.fitLayer({ ...tileset, metadata: { externalNativeLayer: true, center: "nowhere" } });
+    assert.equal(map.calls.length, 3);
   });
 
   it("clamps a saved camera to the project preferences before moving", () => {

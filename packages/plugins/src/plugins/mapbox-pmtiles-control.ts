@@ -40,13 +40,24 @@ export function adaptMapboxPMTilesControl(
   };
   // Keep the existing metadata/selection UI and layeradd event. Only the host
   // store creates map sources, so there is no duplicate unmanaged layer.
-  panel._addLayer = async () => {
+  //
+  // The panel state is shared, so additions run one at a time. Inputs are read
+  // when the request is made (the upstream addLayer sets `url` synchronously
+  // before calling this), and the queue yields a macrotask between requests so
+  // a caller that awaits addLayer reads its own `error` before the next request
+  // clears it.
+  let queue: Promise<void> = Promise.resolve();
+  const addArchive = async (
+    url: string,
+    selection: string[],
+    layerName: string,
+    opacity: number,
+    pickable: boolean,
+  ): Promise<void> => {
     if (disposed) return;
     const request = new AbortController();
     pending.add(request);
     const state = panel._state;
-    const url = state.url;
-    const selection = [...state.selectedSourceLayers];
     state.loading = true;
     state.error = null;
     panel._render();
@@ -67,12 +78,12 @@ export function adaptMapboxPMTilesControl(
       const info: State["layers"][number] = {
         id,
         url,
-        name: state.layerName.trim() || undefined,
+        name: layerName || undefined,
         tileType: "vector",
         sourceLayers: archive.sourceLayers,
         layerIds: [],
-        opacity: state.layerOpacity,
-        pickable: state.pickable,
+        opacity,
+        pickable,
       };
       panel._pmtilesLayers.set(id, info);
       Object.assign(state, {
@@ -96,5 +107,17 @@ export function adaptMapboxPMTilesControl(
     } finally {
       pending.delete(request);
     }
+  };
+  panel._addLayer = () => {
+    const { url, selectedSourceLayers, layerName, layerOpacity, pickable } = panel._state;
+    const run = () =>
+      addArchive(url, [...selectedSourceLayers], layerName.trim(), layerOpacity, pickable);
+    const settled = queue.then(
+      () => new Promise<void>((resolve) => setTimeout(resolve, 0)),
+      () => undefined,
+    );
+    const next = settled.then(run);
+    queue = next;
+    return next;
   };
 }

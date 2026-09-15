@@ -287,6 +287,8 @@ export class MapboxEngine implements MapEngine {
         this.map?.flyTo({
           center: [center[0] as number, center[1] as number],
           zoom: typeof layer.metadata.zoom === "number" ? layer.metadata.zoom : 16,
+          // Match MapController.fitLayer: a tileset is looked at in perspective.
+          ...(layer.type === "3d-tiles" ? { pitch: Math.max(this.map.getPitch(), 60) } : {}),
         });
       }
     }
