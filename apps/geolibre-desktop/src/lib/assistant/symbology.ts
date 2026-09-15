@@ -151,6 +151,13 @@ export function buildSymbologyStyle(
       if (stops.length < 2) {
         throw new Error("`breaks` must contain at least two distinct finite numbers.");
       }
+      // No ceiling to match the statistical path's 12, though: that cap exists so
+      // a derived classification never asks for more breaks than the sample
+      // supports, which says nothing about a published band table. The map paints
+      // every break; only the Style panel's Classes control clamps its reading to
+      // 12 (clampClassCount), so past that the stop list and the count it shows
+      // disagree. Truncating a standard's thresholds to fit that widget would
+      // defeat the point of accepting them, so the breaks win.
       return {
         vectorStyleMode: "graduated",
         vectorStyleProperty: request.property,
