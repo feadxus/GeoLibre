@@ -41,7 +41,10 @@ come from Environment variables or the basemap control's API keys panel.
 - Zarr layers from **Add Data → Zarr Layer**, STAC Zarr assets, and NetCDF/HDF
   or Kerchunk cubes with a time axis, drawn by `@carbonplan/zarr-layer` — a
   `CustomLayerInterface` implementation that targets Mapbox GL as well as
-  MapLibre (globe and Mercator), added by the same Zarr control.
+  MapLibre (globe and Mercator), added by the same Zarr control. Zarr Layer
+  and STAC adds keep the current projection; the NetCDF/HDF and Kerchunk cube
+  path draws untiled in Web Mercator, so adding one switches the map to
+  Mercator, as on MapLibre.
 - HTTP(S) raster tiles (XYZ, WMS and WMTS), vector tiles with named source layers,
   and georeferenced image/video sources.
 - Shared layer/group visibility, opacity and ordering; synchronized or independent
