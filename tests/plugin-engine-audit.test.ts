@@ -18,6 +18,39 @@ const PLUGIN_DIR = resolve(import.meta.dirname, "..", "packages", "plugins", "sr
 /** Declares Cesium in its `engines` list, whatever the order, spacing, or quotes. */
 const DECLARES_CESIUM = /engines:\s*\[[^\]]*["']cesium["'][^\]]*\]/;
 
+// Mapbox-capable plugins have the same problem in a different door:
+// `app.getMap()` is null on the Mapbox renderer too, and the map it does hand
+// out lacks MapLibre's extensions. A plugin that declares
+// `engines: [..., "mapbox"]` reads the map through `getStyleMap(app)`
+// (packages/plugins/src/plugins/style-map.ts), which falls back to
+// `app.getMapboxMap()`, and stays on the Style Spec surface the two engines
+// share.
+
+/** Declares Mapbox in its `engines` list. */
+const DECLARES_MAPBOX = /engines:\s*\[[^\]]*["']mapbox["'][^\]]*\]/;
+
+/**
+ * A read of the MapLibre-only map: `app.getMap()`, `app?.getMap?.()`, or the
+ * same off an `appRef` / `appApi` alias. `getMapboxMap` and a control's own
+ * `control.getMap()` do not match: the member access before it must be the
+ * host API, not a control.
+ */
+const GETMAP_READ = /(?:\bapp(?:Ref|Api|API)?\??\.)getMap\??\.?\(\)/g;
+
+/**
+ * Members a mapbox-gl map does not have. Reaching one through the shared map
+ * throws on Mapbox, or silently does nothing when guarded, which is exactly
+ * the degradation the `engines` declaration promises does not happen.
+ */
+const MAPLIBRE_ONLY_MEMBERS =
+  /\.(?:addProtocol|removeProtocol|setTransformRequest|calculateCameraOptionsFromCameraLngLatAltRotation|getCenterClampedToGround|setCenterClampedToGround|getCameraTargetElevation|setSky|getSky|setVerticalFieldOfView|_camera)\b|\.transform\.(?:[a-zA-Z_]\w*)/g;
+
+/** Opt out one deliberate `app.getMap()` read: a branch that detects MapLibre. */
+const MAPBOX_GETMAP_OPT_OUT = "engine-audit-allow: getMap-mapbox";
+
+/** Opt out one deliberate MapLibre-only call behind a runtime engine check. */
+const MAPLIBRE_ONLY_OPT_OUT = "engine-audit-allow: maplibre-only";
+
 /** A chained read: `app.getMap?.()?.getBounds()`. */
 const CHAINED_BOUNDS = /getMap\??\.?\(\)[^;\n]*\.getBounds\(\)/g;
 
@@ -64,10 +97,10 @@ function lineOf(source: string, index: number): number {
 }
 
 /** Whether an opt-out marker sits on, or just above, this line. */
-function optedOutAt(rawLines: string[], line: number): boolean {
+function optedOutAt(rawLines: string[], line: number, marker = AUDIT_OPT_OUT): boolean {
   return rawLines
     .slice(Math.max(0, line - 1 - OPT_OUT_LOOKBACK), line)
-    .some((text) => text.includes(AUDIT_OPT_OUT));
+    .some((text) => text.includes(marker));
 }
 
 /** Resolve a relative import to the file it names, `.ts` or `/index.ts`. */
@@ -121,13 +154,56 @@ function boundsReadsThroughGetMap(file: string): number[] {
   return [...lines].filter((line) => !optedOutAt(rawLines, line)).sort((a, b) => a - b);
 }
 
-/** Plugin entry points that declare Cesium support, with everything they import. */
-function cesiumPluginClosures(): { plugin: string; files: string[] }[] {
+/** Plugin entry points whose `engines` list matches, with everything they import. */
+function pluginClosures(declares: RegExp): { plugin: string; files: string[] }[] {
   return readdirSync(PLUGIN_DIR)
     .filter((name) => name.endsWith(".ts"))
     .map((name) => join(PLUGIN_DIR, name))
-    .filter((file) => DECLARES_CESIUM.test(blankComments(readFileSync(file, "utf8"))))
+    .filter((file) => declares.test(blankComments(readFileSync(file, "utf8"))))
     .map((file) => ({ plugin: relative(PLUGIN_DIR, file), files: importClosure(file) }));
+}
+
+/** Plugin entry points that declare Cesium support, with everything they import. */
+function cesiumPluginClosures(): { plugin: string; files: string[] }[] {
+  return pluginClosures(DECLARES_CESIUM);
+}
+
+/** Plugin entry points that declare Mapbox support, with everything they import. */
+function mapboxPluginClosures(): { plugin: string; files: string[] }[] {
+  return pluginClosures(DECLARES_MAPBOX);
+}
+
+/**
+ * Lines where this module reads the map through `app.getMap()` alone. A read
+ * that falls back to `getMapboxMap` on the same line (the STAC idiom) is fine;
+ * so is one marked as a deliberate MapLibre-detection branch.
+ */
+function getMapOnlyReads(file: string): number[] {
+  const raw = readFileSync(file, "utf8");
+  const rawLines = raw.split("\n");
+  const source = blankComments(raw);
+  const lines = new Set<number>();
+  for (const match of source.matchAll(GETMAP_READ)) {
+    const line = lineOf(source, match.index);
+    if (rawLines[line - 1].includes("getMapboxMap")) continue;
+    if (optedOutAt(rawLines, line, MAPBOX_GETMAP_OPT_OUT)) continue;
+    lines.add(line);
+  }
+  return [...lines].sort((a, b) => a - b);
+}
+
+/** Lines where this module reaches a member only a MapLibre map has. */
+function maplibreOnlyCalls(file: string): string[] {
+  const raw = readFileSync(file, "utf8");
+  const rawLines = raw.split("\n");
+  const source = blankComments(raw);
+  const hits: string[] = [];
+  for (const match of source.matchAll(MAPLIBRE_ONLY_MEMBERS)) {
+    const line = lineOf(source, match.index);
+    if (optedOutAt(rawLines, line, MAPLIBRE_ONLY_OPT_OUT)) continue;
+    hits.push(`${line} (${match[0]})`);
+  }
+  return hits;
 }
 
 describe("plugin engine audit", () => {
@@ -148,6 +224,42 @@ describe("plugin engine audit", () => {
     assert.ok(
       files.includes(join("vantor", "control.ts")),
       `expected the vantor plugin's own modules in its closure, got: ${files.join(", ")}`,
+    );
+  });
+
+  it("finds the Mapbox-capable plugins to audit", () => {
+    assert.ok(mapboxPluginClosures().length > 0, "no plugin declares Mapbox support");
+  });
+
+  it("reads the map through getStyleMap(app), not app.getMap() alone, on Mapbox", () => {
+    const offenders = mapboxPluginClosures().flatMap(({ plugin, files }) =>
+      files.flatMap((file) =>
+        getMapOnlyReads(file).map((line) => `${plugin} -> ${relative(PLUGIN_DIR, file)}:${line}`),
+      ),
+    );
+    assert.deepEqual(
+      offenders,
+      [],
+      "these modules are reachable from a plugin that declares Mapbox support but read " +
+        "the map through app.getMap(), which is null on the Mapbox renderer: use " +
+        "getStyleMap(app) from ./style-map, or mark a deliberate MapLibre-detection " +
+        `branch with "${MAPBOX_GETMAP_OPT_OUT}"`,
+    );
+  });
+
+  it("stays on the Style Spec surface a mapbox-gl map shares, on Mapbox", () => {
+    const offenders = mapboxPluginClosures().flatMap(({ plugin, files }) =>
+      files.flatMap((file) =>
+        maplibreOnlyCalls(file).map((hit) => `${plugin} -> ${relative(PLUGIN_DIR, file)}:${hit}`),
+      ),
+    );
+    assert.deepEqual(
+      offenders,
+      [],
+      "these modules are reachable from a plugin that declares Mapbox support but call " +
+        "a member only a MapLibre map has, which throws (or silently no-ops) on Mapbox: " +
+        "branch on the engine, or mark a call guarded by a runtime engine check with " +
+        `"${MAPLIBRE_ONLY_OPT_OUT}"`,
     );
   });
 

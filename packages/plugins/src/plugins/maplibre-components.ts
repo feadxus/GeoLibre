@@ -1744,6 +1744,10 @@ export async function addCogRasterLayer(
     return addGeoTiffRasterLayer(app, options);
   }
 
+  // The COG control is maplibre-gl-raster, whose tile protocol only registers
+  // with MapLibre; on Mapbox the callers route COGs elsewhere (the STAC plugin
+  // draws them through the engine), so this read is MapLibre-only on purpose.
+  // engine-audit-allow: getMap-mapbox
   ensureMercatorProjection(app.getMap?.());
   const control = await ensureCogRasterControl(app);
   if (!control) {
@@ -3042,6 +3046,9 @@ async function openStandaloneMeasureControl(app: GeoLibreAppAPI): Promise<boolea
     measureControlMounted = true;
     // Terrain-aware 3D readouts (surface distance/area) appended to the
     // control's panel; requires the panel from onAdd, so attach after mounting.
+    // They read MapLibre's terrain, so the readouts stay 2D on Mapbox: a
+    // deliberate MapLibre-detection branch, not a missed fallback.
+    // engine-audit-allow: getMap-mapbox
     measureTerrainDetach = attachTerrainMeasure(
       measureControl,
       () => (app.getMap?.() ?? null) as TerrainMapLike | null,
