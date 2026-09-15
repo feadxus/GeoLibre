@@ -7,6 +7,7 @@ export {
   getAssistantToolsVersion,
   unregisterAssistantToolsByOwner,
   MAX_ASSISTANT_GUIDANCE_LENGTH,
+  type AssistantGuidanceEntry,
 } from "./assistant-tool-registry";
 export * from "./types";
 export { PluginManager } from "./plugin-manager";

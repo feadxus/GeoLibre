@@ -1163,7 +1163,8 @@ export default {
 ```
 
 Guidance is appended under a `Plugin guidance:` heading after GeoLibre's own
-prompt, in registration order, and never replaces or edits the host text. The
+prompt, in registration order, each block labelled `[plugin <id>]` with the
+plugin that registered it, and never replaces or edits the host text. The
 heading tells the model the text only governs when and how to call the plugin's
 own tools and that the host guidelines still apply. The text itself is not
 filtered: like plugin code, it is trusted once the plugin is loaded, so only

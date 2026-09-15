@@ -134,9 +134,18 @@ export function registerAssistantGuidance(text: string, ownerPluginId?: string):
   };
 }
 
-/** Registered guidance texts in registration order. */
-export function listAssistantGuidance(): string[] {
-  return [...guidanceRegistry.values()].map((entry) => entry.text);
+/** One registered guidance block: its text and the plugin that owns it. */
+export interface AssistantGuidanceEntry {
+  text: string;
+  ownerPluginId?: string;
+}
+
+/** Registered guidance in registration order, with its owner for attribution. */
+export function listAssistantGuidance(): AssistantGuidanceEntry[] {
+  return [...guidanceRegistry.values()].map(({ text, ownerPluginId }) => ({
+    text,
+    ...(ownerPluginId ? { ownerPluginId } : {}),
+  }));
 }
 
 export function getAssistantToolsVersion(): number {

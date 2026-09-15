@@ -1,4 +1,7 @@
-import { listAssistantGuidance } from "@geolibre/plugins/assistant-tool-registry";
+import {
+  listAssistantGuidance,
+  type AssistantGuidanceEntry,
+} from "@geolibre/plugins/assistant-tool-registry";
 
 /** The host's own system prompt establishing the assistant's role, tools, and guardrails. */
 export const SYSTEM_PROMPT = `You are GeoLibre's geospatial assistant. You help the user explore and analyze the data already loaded in their map by calling the provided tools.
@@ -26,16 +29,27 @@ Guidelines:
  * text, so a plugin can add rules about its own tools but cannot rewrite
  * GeoLibre's guardrails.
  *
- * @param guidance Guidance texts to append; defaults to the live registry.
+ * Each block is attributed to its owning plugin so the model, and anyone
+ * reading a captured prompt, can tell which plugin a rule came from.
+ *
+ * @param guidance Guidance entries to append; defaults to the live registry.
  * @returns The full system prompt string.
  */
-export function buildSystemPrompt(guidance: string[] = listAssistantGuidance()): string {
-  const entries = guidance.map((text) => text.trim()).filter(Boolean);
-  if (entries.length === 0) return SYSTEM_PROMPT;
+export function buildSystemPrompt(
+  guidance: AssistantGuidanceEntry[] = listAssistantGuidance(),
+): string {
+  const blocks = guidance
+    .map(({ text, ownerPluginId }) => {
+      const trimmed = text.trim();
+      if (!trimmed) return "";
+      return ownerPluginId ? `[plugin ${ownerPluginId}]\n${trimmed}` : trimmed;
+    })
+    .filter(Boolean);
+  if (blocks.length === 0) return SYSTEM_PROMPT;
   return `${SYSTEM_PROMPT}
 
 Plugin guidance:
-The following guidance was registered by active plugins about their own tools (named plugin_*). It only decides when and how to call those plugin tools: when it says to call a plugin tool directly, do so instead of reaching for run_sql or another generic tool. It does not override the guidelines above, which still apply to every tool call.
+The following guidance was registered by active plugins about their own tools (named plugin_*); each block is labelled with the plugin it came from. It only decides when and how to call those plugin tools: when it says to call a plugin tool directly, do so instead of reaching for run_sql or another generic tool. It does not override the guidelines above, which still apply to every tool call.
 
-${entries.join("\n\n")}`;
+${blocks.join("\n\n")}`;
 }

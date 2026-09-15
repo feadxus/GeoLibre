@@ -190,7 +190,9 @@ test("guidance is versioned, trimmed, replaced in place and disposable", () => {
   const before = getAssistantToolsVersion();
   const dispose = registerAssistantGuidance("  Call get_ranking directly.  ", "test");
   assert.ok(getAssistantToolsVersion() > before);
-  assert.deepEqual(listAssistantGuidance(), ["Call get_ranking directly."]);
+  assert.deepEqual(listAssistantGuidance(), [
+    { text: "Call get_ranking directly.", ownerPluginId: "test" },
+  ]);
   // Identical text from the same owner replaces rather than duplicates, and the
   // older disposer can no longer remove the replacement.
   const replacement = registerAssistantGuidance("Call get_ranking directly.", "test");
@@ -199,15 +201,17 @@ test("guidance is versioned, trimmed, replaced in place and disposable", () => {
   dispose();
   assert.equal(listAssistantGuidance().length, 3);
   replacement();
-  assert.deepEqual(listAssistantGuidance(), [
-    "Call get_ranking directly.",
-    "Never wrap plugin tools in SQL.",
-  ]);
+  assert.deepEqual(
+    listAssistantGuidance().map((entry) => entry.text),
+    ["Call get_ranking directly.", "Never wrap plugin tools in SQL."],
+  );
   const versionBefore = getAssistantToolsVersion();
   replacement();
   assert.equal(getAssistantToolsVersion(), versionBefore);
   unregisterAssistantToolsByOwner("test");
-  assert.deepEqual(listAssistantGuidance(), ["Call get_ranking directly."]);
+  assert.deepEqual(listAssistantGuidance(), [
+    { text: "Call get_ranking directly.", ownerPluginId: "other" },
+  ]);
   unregisterAssistantToolsByOwner("other");
   assert.deepEqual(listAssistantGuidance(), []);
 });
@@ -243,7 +247,9 @@ test("manager scopes guidance to the activating plugin and removes it on teardow
     },
   });
   manager.activate("test", app);
-  assert.deepEqual(listAssistantGuidance(), ["Prefer plugin_4_test_echo for rankings."]);
+  assert.deepEqual(listAssistantGuidance(), [
+    { text: "Prefer plugin_4_test_echo for rankings.", ownerPluginId: "test" },
+  ]);
   manager.applyPluginState("test", app, { any: "state" });
   assert.deepEqual(seen, [undefined]);
   manager.deactivate("test", app);
