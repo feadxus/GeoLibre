@@ -173,7 +173,8 @@ export function restoreThreeDTilesLayers(app: GeoLibreAppAPI): void {
   restoreGooglePhotorealisticTilesLayers(app);
   restoreArcgisI3sTilesLayers(app);
   if (app.getMapRenderer?.() === "mapbox") {
-    if (useAppStore.getState().layers.some(isMapboxTilesLayer)) void restoreMapboxTiles(app);
+    if (useAppStore.getState().layers.some(isMapboxTilesLayer))
+      void restoreMapboxTiles(app).catch(console.error);
     return;
   }
 
@@ -728,7 +729,7 @@ function installGooglePhotorealisticTilesPanelHandlers(
         const flyTo =
           panel.querySelector<HTMLInputElement>('input[aria-label="Fly to tileset after load"]')
             ?.checked ?? true;
-        void restoreMapboxTiles(activeThreeDTilesApp, flyTo ? id : undefined);
+        void restoreMapboxTiles(activeThreeDTilesApp, flyTo ? id : undefined).catch(console.error);
         control.collapse();
         return;
       }

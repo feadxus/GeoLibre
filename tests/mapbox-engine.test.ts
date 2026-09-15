@@ -480,8 +480,9 @@ describe("MapboxEngine camera and preferences", () => {
     engine.fitLayer(tileset);
     assert.deepEqual(map.calls, ['flyTo:{"center":[-75,40],"zoom":15,"pitch":60}']);
     // An already steeper camera is kept, and a point cloud is not tilted.
+    map.jumpTo({ center: [-75, 40], zoom: 15, bearing: 0, pitch: 70 });
     engine.fitLayer(tileset);
-    assert.equal(map.calls.at(-1), 'flyTo:{"center":[-75,40],"zoom":15,"pitch":60}');
+    assert.equal(map.calls.at(-1), 'flyTo:{"center":[-75,40],"zoom":15,"pitch":70}');
     engine.fitLayer({
       ...tileset,
       type: "lidar",
@@ -489,7 +490,7 @@ describe("MapboxEngine camera and preferences", () => {
     });
     assert.equal(map.calls.at(-1), 'flyTo:{"center":[-75,40],"zoom":16}');
     engine.fitLayer({ ...tileset, metadata: { externalNativeLayer: true, center: "nowhere" } });
-    assert.equal(map.calls.length, 3);
+    assert.equal(map.calls.length, 4);
   });
 
   it("clamps a saved camera to the project preferences before moving", () => {
