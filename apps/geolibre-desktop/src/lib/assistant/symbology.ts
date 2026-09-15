@@ -20,6 +20,14 @@ export interface SymbologyRequest {
   classCount?: number;
   /** Classification scheme for graduated mode. */
   scheme?: "equal-interval" | "quantile";
+  /**
+   * Explicit class lower bounds for graduated mode. When present these are used
+   * verbatim in place of `classCount`/`scheme`, so a caller can reproduce
+   * unevenly spaced thresholds fixed by an external standard (an air-quality
+   * band table, an agency's severity levels) that no statistical scheme
+   * reproduces.
+   */
+  breaks?: number[];
 }
 
 /** Read every value a property takes across a layer's features. */
@@ -46,6 +54,28 @@ function graduatedStops(
   const breaks = createGraduatedClassBreaks(values, classCount, scheme);
   const colors = interpolateRampColors(colorRamp, breaks.length);
   return breaks.map((value, index) => ({
+    value,
+    color: colors[index],
+  }));
+}
+
+/**
+ * Build graduated color stops from caller-supplied break values and a ramp.
+ *
+ * The breaks are class lower bounds, the same contract `graduatedStops` follows,
+ * so they are sorted ascending and de-duplicated before use: MapLibre rejects a
+ * `step` expression whose inputs are not strictly ascending, and a caller
+ * listing an official band table is under no obligation to have sorted it.
+ */
+function customGraduatedStops(breaks: number[], colorRamp: string): VectorStyleStop[] {
+  const sorted = breaks.filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
+  const unique: number[] = [];
+  for (const value of sorted) {
+    if (unique.length > 0 && value === unique[unique.length - 1]) continue;
+    unique.push(value);
+  }
+  const colors = interpolateRampColors(colorRamp, unique.length);
+  return unique.map((value, index) => ({
     value,
     color: colors[index],
   }));
@@ -81,7 +111,8 @@ function categorizedStops(values: unknown[], colorRamp: string): VectorStyleStop
  * @param layer The layer to read property values from.
  * @param request The symbology to apply.
  * @returns A partial style ready for `setLayerStyle`.
- * @throws If the property is missing, or graduated mode has too few numeric values.
+ * @throws If the property is missing, graduated mode has too few numeric values,
+ *   or `breaks` was supplied with no finite value in it.
  */
 export function buildSymbologyStyle(
   layer: GeoLibreLayer,
@@ -97,14 +128,35 @@ export function buildSymbologyStyle(
     const numbers = values
       .map((value) => (typeof value === "number" ? value : Number.parseFloat(String(value))))
       .filter((value) => Number.isFinite(value));
+    if (numbers.length === 0) {
+      throw new Error(
+        `Property "${request.property}" is not numeric; use categorized mode instead.`,
+      );
+    }
+    if (request.breaks !== undefined) {
+      // Explicit breaks describe the classes outright, so neither the class
+      // count nor the scheme applies and the "needs two values to classify"
+      // floor below does not either: the thresholds come from the caller, not
+      // from the sample. The scheme field is deliberately left out of the patch
+      // rather than set to a scheme that did not produce these breaks.
+      const stops = customGraduatedStops(request.breaks, colorRamp);
+      if (stops.length === 0) {
+        throw new Error("`breaks` must contain at least one finite number.");
+      }
+      return {
+        vectorStyleMode: "graduated",
+        vectorStyleProperty: request.property,
+        vectorStyleColorRamp: colorRamp,
+        vectorStyleClassCount: stops.length,
+        vectorStyleStops: stops,
+      };
+    }
     if (numbers.length < 2) {
       // One numeric value is not a broken property, it is too little data to
       // break into classes; saying "not numeric" there sends the reader after
       // the wrong cause.
       throw new Error(
-        numbers.length === 0
-          ? `Property "${request.property}" is not numeric; use categorized mode instead.`
-          : `Property "${request.property}" has only one numeric value on layer "${layer.name}"; graduated mode needs at least two.`,
+        `Property "${request.property}" has only one numeric value on layer "${layer.name}"; graduated mode needs at least two.`,
       );
     }
     // Cap classes by the number of values too, so we never ask for more breaks
