@@ -8,8 +8,9 @@ import {
   type AssistantProviderSelection,
 } from "./profiles";
 import type { AssistantProfile } from "./provider";
+import { describeLayers } from "./layer-summary";
 import { buildSystemPrompt } from "./system-prompt";
-import { createAssistantTools, describeLayers, type AssistantToolDeps } from "./tools";
+import { createAssistantTools, type AssistantToolDeps } from "./tools";
 
 /** A streamed update surfaced to the chat UI. */
 export type AssistantStreamEvent =
