@@ -6,12 +6,13 @@ interface Entry {
   ownerPluginId?: string;
 }
 const registry = new Map<string, Entry>();
-interface GuidanceEntry {
+/** One registered guidance block: its text and the plugin that owns it. */
+export interface AssistantGuidanceEntry {
   text: string;
   ownerPluginId?: string;
 }
 /** Keyed by owner + text so re-registering identical guidance replaces in place. */
-const guidanceRegistry = new Map<string, GuidanceEntry>();
+const guidanceRegistry = new Map<string, AssistantGuidanceEntry>();
 /** Shared by tools and guidance: the agent refreshes both when it changes. */
 let version = 0;
 const ownerScopes = new Map<string, { active: boolean }>();
@@ -124,7 +125,7 @@ export function registerAssistantGuidance(text: string, ownerPluginId?: string):
     );
   }
   const key = `${owner.length}_${owner}_${trimmed}`;
-  const entry: GuidanceEntry = { text: trimmed, ownerPluginId };
+  const entry: AssistantGuidanceEntry = { text: trimmed, ownerPluginId };
   guidanceRegistry.set(key, entry);
   version++;
   return () => {
@@ -132,12 +133,6 @@ export function registerAssistantGuidance(text: string, ownerPluginId?: string):
     guidanceRegistry.delete(key);
     version++;
   };
-}
-
-/** One registered guidance block: its text and the plugin that owns it. */
-export interface AssistantGuidanceEntry {
-  text: string;
-  ownerPluginId?: string;
 }
 
 /** Registered guidance in registration order, with its owner for attribution. */
