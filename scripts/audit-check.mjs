@@ -15,37 +15,7 @@ import { spawnSync } from "node:child_process";
 // Severities that fail the build. Moderate/low are left to Dependabot PRs.
 const BLOCKING = new Set(["high", "critical"]);
 
-const ALLOWLIST = new Map([
-  [
-    "GHSA-w3rx-r6r6-pgpr",
-    "image-size DoS (ICNS parser infinite loop). No known patched version — the " +
-      "advisory covers <=2.0.2 and the GitHub advisory API still reports " +
-      "first_patched_version: null. 2.0.3 and 2.0.4 appeared on npm on 2026-09-14 " +
-      "with no matching commit or tag in image-size/image-size, so nothing shows " +
-      "they fix it, and 2.x changed the default export texture-compressor calls " +
-      "(`sizeOf(path)`), so an override would break that package anyway. Nor can we " +
-      "drop it: @loaders.gl/textures 4.4.x, which deck.gl and luma.gl pin, still " +
-      "depends on texture-compressor@^1.0.2, which pins image-size@^0.7.4 " +
-      "(textures 4.5.1 made it a peer, but only i3s uses that line). It reaches " +
-      "us only as a dependency of texture-compressor, which @loaders.gl/textures " +
-      "spawns via `npx` from encodeImageURLToCompressedTextureURL (a Node-only " +
-      "encoder). GeoLibre never calls that encoder and it cannot bundle into the " +
-      "browser build, so no attacker-supplied image is ever parsed by it — " +
-      "confirmed by grepping the production build, which contains no reference " +
-      "to image-size or texture-compressor. Re-verified 2026-09-15.",
-  ],
-  [
-    "GHSA-5p2g-fcmc-qvqq",
-    "image-size DoS (JXL/HEIF parser infinite loops). Same package, same lack of " +
-      "a patched version, and the same unreachable texture-compressor path as " +
-      "GHSA-w3rx-r6r6-pgpr above. Note that plain `npm audit` inflates these two " +
-      "advisories into ~16 high findings by counting them once per package in the " +
-      "chain (texture-compressor → @loaders.gl/textures → gltf/3d-tiles/i3s → " +
-      "deck.gl → the maplibre-gl-* wrappers). There is only ever one copy of " +
-      "image-size in the tree; `npm ls image-size` is the honest count. " +
-      "Re-verified 2026-09-15.",
-  ],
-]);
+const ALLOWLIST = new Map([]);
 
 const audit = spawnSync("npm", ["audit", "--omit=dev", "--json"], {
   encoding: "utf8",
