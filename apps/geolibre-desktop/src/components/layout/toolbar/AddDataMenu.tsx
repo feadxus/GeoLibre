@@ -88,11 +88,12 @@ export function AddDataMenu({
     georss: { onSelect: () => onSetAddDataKind("georss") },
     stac: { onSelect: addLayer.stac },
     video: { onSelect: () => onSetAddDataKind("video") },
-    // deck.gl draws into MapLibre's own WebGL pass; there is no Cesium interop,
-    // so the builder is offered only where the engine hosts custom layers.
+    // deck.gl draws through the shared MapboxOverlay, which MapLibre and Mapbox
+    // both host; there is no Cesium interop, so the builder is offered only
+    // where the engine hosts that overlay.
     "deckgl-viz": {
       onSelect: () => onSetAddDataKind("deckgl-viz"),
-      disabled: !capabilities.customLayers,
+      disabled: !capabilities.deckOverlay,
     },
     // GeoParquet loads through the same vector file picker as "vector"; keep
     // both pointing at addLayer.vector if that handler ever changes.
@@ -112,7 +113,7 @@ export function AddDataMenu({
     kml: { onSelect: () => onSetAddDataKind("kml"), disabled: !cesiumPrimary },
     // The glTF model opens the same deck.gl scenegraph builder, so it is
     // gated the way "deckgl-viz" is.
-    "gltf-model": { onSelect: onAddGltfModel, disabled: !capabilities.customLayers },
+    "gltf-model": { onSelect: onAddGltfModel, disabled: !capabilities.deckOverlay },
     duckdb: { onSelect: addLayer.duckdb },
     postgres: { onSelect: () => onSetAddDataKind("postgres") },
     iceberg: { onSelect: () => onSetAddDataKind("iceberg") },
