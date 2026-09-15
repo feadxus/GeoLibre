@@ -1163,8 +1163,11 @@ export default {
 ```
 
 Guidance is appended under a `Plugin guidance:` heading after GeoLibre's own
-prompt, in registration order, and never replaces or edits the host text. It
-must be a non-empty string of at most 4000 characters; identical text from the
+prompt, in registration order, and never replaces or edits the host text. The
+heading tells the model the text only governs when and how to call the plugin's
+own tools and that the host guidelines still apply. The text itself is not
+filtered: like plugin code, it is trusted once the plugin is loaded, so only
+install plugins you trust. It must be a non-empty string of at most 4000 characters; identical text from the
 same plugin replaces the earlier registration instead of repeating it. Like
 tools, guidance is activation-only: the host injects the plugin owner, ignores
 any owner argument a plugin supplies, removes the text on deactivation, failed
