@@ -438,8 +438,10 @@ print a warning rather than failing, since the advisory database is a live servi
 and a transient omission must not redden an unrelated PR.
 
 When the fix is a scoped `overrides` entry (such as `@loaders.gl/compression` →
-`fflate`), npm 12 accepts it and rewrites the declared range, but it keeps the
-old nested copy and `npm ls` reports it as `invalid`. Delete that package's
+`fflate`), npm 12 accepts it and `npm ls` then checks against the override's
+range. The lockfile still lists the package's own declared dependency (`fflate:
+0.7.4`), though, and npm keeps the old nested copy, so `npm ls` reports it as
+`invalid`. Delete that package's
 nested `node_modules/.../<pkg>` entries from `package-lock.json` (and from
 `node_modules`), then run `npm install` again so it resolves them fresh. Confirm
 with `npm ls <pkg>` before you commit.
