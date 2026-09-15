@@ -13,10 +13,12 @@ import type {
 } from "mapbox-gl";
 import { circlePaint, fillPaint, fillExtrusionPaint, linePaint, rasterPaint } from "./style-mapper";
 import { proxyWmsTiles } from "./wms-proxy";
+import { arcgisOpacity, arcgisVectorStyle } from "./arcgis-vector-style";
 
 export interface MapboxLayerPlan {
   sourceId: string;
   source: SourceSpecification;
+  additionalSources?: Record<string, SourceSpecification>;
   layers: LayerSpecification[];
 }
 
@@ -103,6 +105,41 @@ export function compileMapboxLayer(
   layer: GeoLibreLayer,
   compileOptions: CompileMapboxLayerOptions = {},
 ): MapboxLayerPlan {
+  const arcgis = arcgisVectorStyle(layer);
+  if (arcgis) {
+    if (styleUsesUnsupportedSource(arcgis)) {
+      throw new Error("MapLibre custom tile protocols are not supported by Mapbox");
+    }
+    const sources = Object.entries(arcgis.sources).map(([id, original]) => {
+      // ArcGIS includes both its REST service URL and resolved tile templates.
+      // The service URL is not a Mapbox TileJSON endpoint; use the templates.
+      const source = { ...original };
+      if ("tiles" in source && source.tiles?.length) delete source.url;
+      return [id, source as SourceSpecification] as const;
+    });
+    const [sourceId, source] = sources[0];
+    return {
+      sourceId,
+      source,
+      additionalSources: Object.fromEntries(sources.slice(1)),
+      layers: arcgis.layers.map((spec) => {
+        const paint = mapboxPaint({ ...spec.paint });
+        const properties =
+          spec.type === "symbol" ? ["text-opacity", "icon-opacity"] : [`${spec.type}-opacity`];
+        for (const property of properties) {
+          paint[property] = arcgisOpacity(paint[property], layer.opacity);
+        }
+        return {
+          ...spec,
+          paint,
+          layout: {
+            ...spec.layout,
+            visibility: layer.visible ? (spec.layout?.visibility ?? "visible") : "none",
+          },
+        } as LayerSpecification;
+      }),
+    };
+  }
   // Adopt raster basemaps created by the shared control. Reusing their native
   // IDs lets store visibility, opacity, removal and style restoration work
   // without leaving a second, uncontrolled copy on the map.
