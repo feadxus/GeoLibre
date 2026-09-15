@@ -113,8 +113,13 @@ export function compileMapboxLayer(
     const sources = Object.entries(arcgis.sources).map(([id, original]) => {
       // ArcGIS includes both its REST service URL and resolved tile templates.
       // The service URL is not a Mapbox TileJSON endpoint; use the templates.
+      // The Esri SDK always resolves them, so a source without any is a
+      // hand-edited project that would only fail later inside Mapbox's worker.
       const source = { ...original };
-      if ("tiles" in source && source.tiles?.length) delete source.url;
+      if (!("tiles" in source) || !source.tiles?.length) {
+        throw new Error(`ArcGIS source "${id}" has no resolved tile templates for Mapbox`);
+      }
+      delete source.url;
       return [id, source as SourceSpecification] as const;
     });
     const [sourceId, source] = sources[0];

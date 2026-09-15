@@ -620,4 +620,24 @@ describe("Mapbox ArcGIS vector tile services", () => {
     assert.equal(map.sources.size, 0);
     assert.equal(map.layers.length, 0);
   });
+
+  it("rejects a source whose tile templates were never resolved", () => {
+    const { engine, map } = makeEngine();
+    const layer = geojsonLayer({ id: "arcgis-no-tiles" });
+    layer.type = "arcgis";
+    delete layer.geojson;
+    layer.source = {
+      // The REST service URL alone is not a TileJSON manifest Mapbox can fetch.
+      arcgisSources: { parcels: { type: "vector", url: "https://example.com/VectorTileServer/" } },
+      arcgisLayers: [
+        { id: "parcels-fill", type: "fill", source: "parcels", "source-layer": "parcels" },
+      ],
+    };
+    layer.metadata = { nativeLayerIds: ["parcels-fill"] };
+    assert.equal(isMapboxSupportedLayer(layer), false);
+    engine.syncLayers([layer]);
+    assert.equal(map.sources.size, 0);
+    assert.equal(map.layers.length, 0);
+    assert.match(engine.getRenderStatus().errors[0] ?? "", /tile templates/);
+  });
 });
