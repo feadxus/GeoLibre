@@ -712,7 +712,11 @@ export function compileArcgisLayer(
   // the SDK's VectorTileLayer accepts a Mapbox style document directly, so the
   // Mapbox compiler's plan (sources plus style layers) becomes its style.
   if (layer.type === "vector-tiles" || (layer.type === "arcgis" && arcgisVectorStyle(layer))) {
-    const plan = compileMapboxLayer(layer);
+    // Compile the style at full opacity and visible: the Mapbox compiler folds
+    // both into paint and layout, but here they are native properties of the
+    // VectorTileLayer, and a style that changed with every opacity tick would
+    // rebuild the layer (and abort its in-flight tiles) on each one.
+    const plan = compileMapboxLayer({ ...layer, opacity: 1, visible: true });
     return {
       ...base,
       kind: "vector-tile",

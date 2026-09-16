@@ -320,6 +320,13 @@ describe("ArcGIS raster, service and media compilation", () => {
     assert.equal(Object.keys(style.sources).length, 1);
     assert.ok(style.layers.length >= 3);
     assert.ok(style.layers.every((l) => l.type !== "symbol"));
+    // Opacity and visibility are native layer properties, so the style must
+    // not change with them — otherwise every slider tick rebuilds the layer.
+    const faded = compileArcgisLayer({ ...layer, opacity: 0.3, visible: false });
+    if (faded.kind !== "vector-tile") return;
+    assert.deepEqual(faded.style, plan.style);
+    assert.equal(faded.opacity, 0.3);
+    assert.equal(faded.visible, false);
   });
   it("names the SDK's service class for an ArcGIS service record", () => {
     const base = geojsonLayer({ geojson: undefined });

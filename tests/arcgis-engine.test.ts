@@ -146,6 +146,8 @@ function makeSdk() {
     stationary: true,
     updating: false,
     ready: true,
+    attributionVisible: false,
+    attributionItems: [] as { text: string; score?: number }[],
     interacting: false,
     animation: null,
     width: 800,
@@ -264,7 +266,6 @@ function makeSdk() {
       Zoom: widgetClass("Zoom"),
       Compass: widgetClass("Compass"),
       ScaleBar: widgetClass("ScaleBar"),
-      Attribution: widgetClass("Attribution"),
       Fullscreen: widgetClass("Fullscreen"),
       Locate: widgetClass("Locate"),
     },
@@ -416,16 +417,18 @@ describe("ArcgisEngine controls", () => {
   it("replaces the SDK's default UI with the Controls menu's default set", () => {
     const { engine, widgets, uiAdds, rawView } = makeEngine();
     assert.deepEqual(rawView.ui.components, []);
-    // Fullscreen, compass, scale and attribution are on by default; navigation
-    // (zoom) and geolocate are off, as on MapLibre. Globe and terrain have no
-    // SDK equivalent and are skipped.
+    // Fullscreen, compass and scale are on by default; navigation (zoom) and
+    // geolocate are off, as on MapLibre. Globe and terrain have no SDK
+    // equivalent and are skipped. Attribution is the view's own rendering
+    // (`attributionVisible`), not a widget, and can never be turned off.
+    assert.equal(rawView.attributionVisible, true);
     assert.deepEqual(
       widgets.map((w) => w.kind),
-      ["Fullscreen", "Compass", "ScaleBar", "Attribution"],
+      ["Fullscreen", "Compass", "ScaleBar"],
     );
     assert.deepEqual(
       uiAdds.map((entry) => entry.position),
-      ["top-right", "top-right", "bottom-left", "bottom-right"],
+      ["top-right", "top-right", "bottom-left"],
     );
     assert.equal(engine.setBuiltInControlVisible("navigation", true), true);
     assert.equal(widgets.at(-1)?.kind, "Zoom");

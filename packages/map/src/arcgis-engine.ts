@@ -72,7 +72,10 @@ export const ARCGIS_CAPABILITIES: MapEngineCapabilities = Object.freeze({
   domControls: false,
 });
 
-/** The built-in controls the SDK has a widget for. */
+/**
+ * The built-in controls the SDK has a widget for, plus attribution, which the
+ * view draws itself (`attributionVisible`) and which cannot be turned off.
+ */
 const HOSTED_CONTROLS: ReadonlySet<BuiltInMapControl> = new Set<BuiltInMapControl>([
   "navigation",
   "fullscreen",
@@ -89,7 +92,6 @@ const HOSTED_CONTROL_ORDER: readonly BuiltInMapControl[] = [
   "navigation",
   "geolocate",
   "scale",
-  "attribution",
 ];
 
 /** The SDK's layer instances a plan produced, plus the blob URLs backing them. */
@@ -140,6 +142,15 @@ function reportGoToFailure(error: unknown): void {
   const name = (error as { name?: string } | null)?.name;
   if (name === "view:goto-interrupted" || name === "AbortError") return;
   console.warn("[geolibre/arcgis] camera move failed", error);
+}
+
+/** Whether an SDK error is a cancelled request rather than a failure. */
+function isAbortError(error: { name?: string; message?: string } | null | undefined): boolean {
+  return (
+    error?.name === "AbortError" ||
+    error?.name === "view:goto-interrupted" ||
+    /^aborted$/i.test(error?.message?.trim() ?? "")
+  );
 }
 
 /** Normalize a bearing into `[0, 360)`. */
@@ -235,18 +246,27 @@ export class ArcgisEngine implements MapEngine {
       },
       redraw: () => {},
     };
-    // The SDK's default UI (attribution and, on older releases, zoom) is
-    // replaced by the built-in set the Controls menu governs.
+    // The SDK's default UI components (zoom on older releases) are replaced by
+    // the built-in set the Controls menu governs. Attribution is not a
+    // component in 5.x: the view draws it itself while `attributionVisible`
+    // is on, which Esri's terms require alongside its basemaps.
     view.ui.components = [];
+    view.attributionVisible = true;
     for (const id of HOSTED_CONTROL_ORDER)
       if (this.controlVisibility[id]) this.mountBuiltInControl(id);
     this.handles.add(
       view.on("layerview-create-error", (event) => {
         const layer = event.layer as ArcgisLayer | undefined;
-        const error = event.error as { message?: string } | undefined;
+        const error = event.error as { message?: string; name?: string } | undefined;
+        // A restyle rebuilds the native layers, and the SDK reports the
+        // outgoing layer's cancelled load as an error ("Aborted") — routine,
+        // not a failure. The same goes for any layer the engine no longer
+        // tracks: it was removed on purpose.
+        if (isAbortError(error)) return;
         const storeId = layer ? this.storeIdFor(layer) : undefined;
+        if (!storeId) return;
         this.errors.set(
-          storeId ? `layer:${storeId}` : `view:${layer?.id ?? "unknown"}`,
+          `layer:${storeId}`,
           `${layer?.title ?? "Layer"}: ${redactArcgisError(error?.message ?? "failed to load")}`,
         );
       }),
@@ -662,7 +682,8 @@ export class ArcgisEngine implements MapEngine {
           }),
         ];
       case "vector-tile":
-        return [new layers.VectorTileLayer({ ...common, ...fullExtent, style: plan.style })];
+        // `fullExtent` is read-only on a VectorTileLayer (it comes from the style).
+        return [new layers.VectorTileLayer({ ...common, style: plan.style })];
       case "feature-service":
         return [
           new layers.FeatureLayer({
@@ -1098,7 +1119,7 @@ export class ArcgisEngine implements MapEngine {
     if (!this.view?.ready || this.view.updating) pending.push("ArcGIS map loading");
     for (const entry of this.natives.values())
       for (const native of entry.layers)
-        if (native.loadStatus === "failed" && native.loadError) {
+        if (native.loadStatus === "failed" && native.loadError && !isAbortError(native.loadError)) {
           const key = `layer:${entry.plan.id}`;
           if (!this.errors.has(key))
             this.errors.set(
@@ -1185,8 +1206,6 @@ export class ArcgisEngine implements MapEngine {
           style: "ruler",
         });
       }
-      case "attribution":
-        return new widgets.Attribution({ view });
       default:
         return null;
     }
@@ -1195,20 +1214,24 @@ export class ArcgisEngine implements MapEngine {
     if (!this.view || this.builtInControls.has(id)) return;
     const widget = this.createBuiltInControl(id);
     if (!widget) return;
-    this.view.ui.add(widget, this.controlPositions[id]);
+    this.view.ui.add(widget.uiComponent ?? widget, this.controlPositions[id]);
     this.builtInControls.set(id, widget);
   }
   private unmountBuiltInControl(id: BuiltInMapControl): void {
     const widget = this.builtInControls.get(id);
     if (!widget) return;
-    this.view?.ui.remove(widget);
+    this.view?.ui.remove(widget.uiComponent ?? widget);
     widget.destroy();
     this.builtInControls.delete(id);
   }
   setBuiltInControlVisible(id: BuiltInMapControl, visible: boolean): boolean {
     if (!this.view) return false;
     if (!HOSTED_CONTROLS.has(id)) return false;
-    if (id === "attribution" && !visible) return false;
+    if (id === "attribution") {
+      // Always on; the view renders it from `attributionItems`.
+      if (this.view) this.view.attributionVisible = true;
+      return visible;
+    }
     this.controlVisibility[id] = visible;
     if (visible) this.mountBuiltInControl(id);
     else this.unmountBuiltInControl(id);

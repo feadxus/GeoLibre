@@ -88,9 +88,9 @@ override is set aside and the shared basemap is translated instead.
 - Feature picking (click identify with a popup), selection highlighting, extent
   drawing, draggable placement, and engine-level image capture.
 - The built-in controls the **Controls** menu governs, as the SDK's own widgets:
-  fullscreen, compass (resets rotation), zoom (navigation), locate (geolocate),
-  the scale bar (metric or imperial) and attribution, which Esri requires and
-  cannot be hidden.
+  fullscreen, compass (resets rotation), zoom (navigation), locate (geolocate)
+  and the scale bar (metric or imperial). Attribution is drawn by the view
+  itself (`attributionVisible`); Esri requires it and it cannot be hidden.
 
 ## Adding data
 

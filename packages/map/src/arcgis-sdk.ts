@@ -237,6 +237,13 @@ export interface ArcgisMapView {
   navigation: ArcgisNavigation;
   constraints: ArcgisConstraints;
   background: { type: "color"; color: unknown } | null;
+  /**
+   * Whether the view should show attribution, and the credits to show: the
+   * 5.x replacement for the deprecated Attribution widget. The core SDK only
+   * computes the items; drawing them is the host's job.
+   */
+  attributionVisible: boolean;
+  attributionItems: { text: string; score?: number }[];
   /** The popup component; `null` when none is attached (5.x). */
   popup: { autoOpenEnabled?: boolean } | null;
   popupEnabled: boolean;
@@ -314,6 +321,8 @@ export interface ArcgisWidget {
   destroy(): void;
   /** `ScaleBar`. */
   unit?: string;
+  /** What to hand `view.ui.add`; the widget itself when absent. */
+  uiComponent?: unknown;
 }
 
 /** Constructor of an autocasting SDK class: plain props in, an instance out. */
@@ -354,7 +363,6 @@ export interface ArcgisSdk {
     Zoom: ArcgisClass<ArcgisWidget>;
     Compass: ArcgisClass<ArcgisWidget>;
     ScaleBar: ArcgisClass<ArcgisWidget>;
-    Attribution: ArcgisClass<ArcgisWidget>;
     Fullscreen: ArcgisClass<ArcgisWidget>;
     Locate: ArcgisClass<ArcgisWidget>;
   };
@@ -396,7 +404,6 @@ const SDK_MODULES = {
   Zoom: "widgets/Zoom",
   Compass: "widgets/Compass",
   ScaleBar: "widgets/ScaleBar",
-  Attribution: "widgets/Attribution",
   Fullscreen: "widgets/Fullscreen",
   Locate: "widgets/Locate",
   reactiveUtils: "core/reactiveUtils",
@@ -456,7 +463,6 @@ export function assembleArcgisSdk(modules: Record<ModuleKey, Record<string, unkn
       Zoom: member("Zoom"),
       Compass: member("Compass"),
       ScaleBar: member("ScaleBar"),
-      Attribution: member("Attribution"),
       Fullscreen: member("Fullscreen"),
       Locate: member("Locate"),
     },
