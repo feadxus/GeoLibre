@@ -119,18 +119,18 @@ jobs:
       # 1️⃣4️⃣ 创建 Google Drive 目标目录
       - name: 📁 Create Google Drive Directory
         run: |
-          rclone mkdir feadxus-Google-Drive:/backup/geolibre || true
+          rclone mkdir FEADXUS-Google-Drive:/backup/geolibre || true
 
       # 1️⃣5️⃣ 上传备份包到 Google Drive
       - name: ☁️ Upload Archive to Google Drive
         run: |
           rclone copy \
             ${{ matrix.name }}_amd64.tar.xz \
-            feadxus-Google-Drive:/backup/geolibre/ \
+            FEADXUS-Google-Drive:/backup/geolibre/ \
             --progress
 
       # 1️⃣6️⃣ 校验网盘传输文件
       - name: ✅ Verify Google Drive Upload
         run: |
           echo "🎉 ${{ matrix.name }} 备份成功! 当前网盘文件清单:"
-          rclone lsf feadxus-Google-Drive:/backup/geolibre/
+          rclone lsf FEADXUS-Google-Drive:/backup/geolibre/
