@@ -137,7 +137,7 @@ browser against an authenticated Mapbox map):
   mapbox-gl).
 - **Overture Maps**. mapbox-gl 3.30+ reads `.pmtiles` archives itself, through
   a tile provider it fetches from `api.mapbox.com` (allowlisted in the desktop
-  CSP), so the plugin hands `maplibre-gl-overture-maps` its `nativePmtiles`
+  and web CSPs), so the plugin hands `maplibre-gl-overture-maps` its `nativePmtiles`
   option and the control adds plain https archive URLs instead of registering
   MapLibre's `pmtiles://` protocol; the inspection popup comes from the
   control's `createPopup` option, fed mapbox-gl's `Popup`. The Layers-panel

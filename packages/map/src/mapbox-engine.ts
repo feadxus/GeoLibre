@@ -455,6 +455,11 @@ export class MapboxEngine implements MapEngine {
     this.syncPending = false;
     const ids = new Set(layers.map((layer) => layer.id));
     for (const id of this.plans.keys()) if (!ids.has(id)) this.removeLayer(id);
+    // A control-rendered row that leaves the store mid-story gets its paint
+    // back now; a later row under the same id starts from the control's
+    // paint at that time, not from this snapshot.
+    for (const id of [...this.storyPaintBackups.keys()])
+      if (!ids.has(id)) this.restoreControlLayerPaint(id);
     for (const key of this.errors.keys())
       if (key.startsWith("layer:") && !ids.has(key.slice(6))) this.errors.delete(key);
     // Store order is topmost first. Add and move in reverse so overlays agree
@@ -601,17 +606,7 @@ export class MapboxEngine implements MapEngine {
     const backups = this.storyPaintBackups.get(layerId);
     const saved = backups?.get(nativeId);
     if (story === undefined) {
-      if (!saved) return;
-      for (const [prop, value] of saved) {
-        try {
-          map.setPaintProperty(nativeId, prop as keyof mapboxgl.AnyPaint, value as never);
-        } catch {
-          // The control may have replaced the layer meanwhile; its own paint
-          // then already applies.
-        }
-      }
-      backups!.delete(nativeId);
-      if (backups!.size === 0) this.storyPaintBackups.delete(layerId);
+      this.restoreControlLayerPaint(layerId, nativeId);
       return;
     }
     const backup = saved ?? new Map<string, unknown>();
@@ -627,6 +622,30 @@ export class MapboxEngine implements MapEngine {
     }
     if (!backups) this.storyPaintBackups.set(layerId, new Map([[nativeId, backup]]));
     else backups.set(nativeId, backup);
+  }
+  /**
+   * Hand a control-owned native layer (or all of a store layer's) the paint it
+   * carried before a story fade, and forget the snapshot.
+   */
+  private restoreControlLayerPaint(layerId: string, nativeId?: string): void {
+    const map = this.map;
+    const backups = this.storyPaintBackups.get(layerId);
+    if (!backups) return;
+    for (const [id, saved] of backups) {
+      if (nativeId !== undefined && id !== nativeId) continue;
+      if (map?.getLayer(id)) {
+        for (const [prop, value] of saved) {
+          try {
+            map.setPaintProperty(id, prop as keyof mapboxgl.AnyPaint, value as never);
+          } catch {
+            // The control may have replaced the layer meanwhile; its own paint
+            // then already applies.
+          }
+        }
+      }
+      backups.delete(id);
+    }
+    if (backups.size === 0) this.storyPaintBackups.delete(layerId);
   }
   private removeLayer(id: string): void {
     const plan = this.plans.get(id),

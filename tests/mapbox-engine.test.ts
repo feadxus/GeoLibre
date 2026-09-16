@@ -955,6 +955,18 @@ describe("Mapbox plugin-drawn native layers", () => {
       [],
       "nothing is re-applied once restored",
     );
+    // A row that leaves the store mid-fade gets the control's paint back at
+    // once, and a row re-added under the same id later is not handed the old
+    // snapshot when its own fade ends.
+    engine.setStoryLayerOpacity("overture-maps-buildings-building", 0.25);
+    assert.equal(fillPaint()["fill-opacity"], 0.25);
+    engine.syncLayers([]);
+    assert.equal(fillPaint()["fill-opacity"], 0.8, "restored when the row is removed");
+    map.setPaintProperty("overture-buildings-building-fill", "fill-opacity", 0.6);
+    engine.syncLayers([layer]);
+    assert.equal(fillPaint()["fill-opacity"], 0.25, "the active fade applies to the new row");
+    engine.restoreLayerStyles();
+    assert.equal(fillPaint()["fill-opacity"], 0.6, "the control's current paint comes back");
   });
 
   it("scales a plugin-owned fill's own opacity by the store opacity instead of replacing it", () => {
