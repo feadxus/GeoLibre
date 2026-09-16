@@ -33,7 +33,8 @@ const DECLARES_MAPBOX = /engines:\s*\[[^\]]*["']mapbox["'][^\]]*\]/;
  * A read of the MapLibre-only map: `app.getMap()`, `app?.getMap?.()`, or the
  * same off an `appRef` / `appApi` alias. `getMapboxMap` and a control's own
  * `control.getMap()` do not match: the member access before it must be the
- * host API, not a control.
+ * host API, not a control. Known limit: a host API bound to some other name
+ * (`const host = app; host.getMap()`) escapes; the directory does not do that.
  */
 const GETMAP_READ = /(?:\bapp(?:Ref|Api|API)?\??\.)getMap\??\.?\(\)/g;
 
