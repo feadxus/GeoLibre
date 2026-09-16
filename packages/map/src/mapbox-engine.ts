@@ -62,13 +62,6 @@ export const MAPBOX_CAPABILITIES: MapEngineCapabilities = Object.freeze({
 
 const BLANK_BACKGROUND_LAYER_ID = "geolibre-blank-background";
 
-/** The one paint property that scales a native style layer's opacity, by type. */
-const NATIVE_OPACITY_PROPERTY: Record<string, string | undefined> = {
-  raster: "raster-opacity",
-  fill: "fill-opacity",
-  line: "line-opacity",
-  circle: "circle-opacity",
-};
 const HIGHLIGHT_SOURCE_ID = "geolibre-mapbox-highlight";
 const HIGHLIGHT_LAYER_IDS = ["geolibre-mapbox-highlight-line", "geolibre-mapbox-highlight-point"];
 
@@ -522,12 +515,16 @@ export class MapboxEngine implements MapEngine {
     this.layerControlHost.syncState();
   }
   /**
-   * Apply a plugin-owned store layer's visibility and opacity to the native
+   * Apply a plugin-owned store layer's visibility and paint to the native
    * style layers its plugin registered under `metadata.nativeLayerIds` (the
-   * Time Slider's and Timelapse's rasters, for instance). Layers the plugin
-   * draws outside the style (deck.gl overlays) have no such ids, or none the
-   * style knows, and are left alone; so is paint when the control declares it
-   * owns it (`metadata.controlOwnsPaint`), matching MapLibre's layer-sync.
+   * Time Slider's and Timelapse's rasters, Mapillary's coverage lines, for
+   * instance), the way MapLibre's layer-sync (`setExternalNativeLayerPaint`)
+   * does: the whole paint object from the shared builders, so the Style
+   * panel's colour/width/radius edits land and the store opacity scales the
+   * style's own opacity instead of replacing it. Layers the plugin draws
+   * outside the style (deck.gl overlays) have no such ids, or none the style
+   * knows, and are left alone; so is paint when the control declares it owns
+   * it (`metadata.controlOwnsPaint`).
    */
   private mirrorPluginLayerState(layer: GeoLibreLayer): void {
     const map = this.map;
@@ -542,24 +539,28 @@ export class MapboxEngine implements MapEngine {
       if (map.getLayoutProperty(id, "visibility") !== visibility)
         map.setLayoutProperty(id, "visibility", visibility);
       if (layer.metadata.controlOwnsPaint === true) continue;
-      // The same paint builders the compiler uses, so the store opacity scales
-      // the style's own (a faint 0.08 fill stays faint) instead of replacing it.
-      const property = NATIVE_OPACITY_PROPERTY[native.type];
-      if (!property) continue;
-      const paint = mapboxPaint(
+      const paint =
         native.type === "raster"
           ? rasterPaint(style, layer.opacity)
           : native.type === "fill"
             ? fillPaint(style, layer.opacity)
             : native.type === "line"
               ? linePaint(style, layer.opacity)
-              : circlePaint(style, layer.opacity),
-      );
-      const value = paint[property];
-      if (value === undefined || value === null) continue;
-      const key = property as keyof mapboxgl.AnyPaint;
-      if (JSON.stringify(map.getPaintProperty(id, key)) !== JSON.stringify(value))
-        map.setPaintProperty(id, key, value as mapboxgl.AnyPaint[keyof mapboxgl.AnyPaint]);
+              : native.type === "circle"
+                ? circlePaint(style, layer.opacity)
+                : null;
+      if (!paint) continue;
+      for (const [property, value] of Object.entries(mapboxPaint(paint))) {
+        if (value === undefined || value === null) continue;
+        const key = property as keyof mapboxgl.AnyPaint;
+        try {
+          if (JSON.stringify(map.getPaintProperty(id, key)) !== JSON.stringify(value))
+            map.setPaintProperty(id, key, value as mapboxgl.AnyPaint[keyof mapboxgl.AnyPaint]);
+        } catch {
+          // A control's native layers can be heterogeneous; skip a paint
+          // property that does not apply to this one.
+        }
+      }
     }
   }
   private removeLayer(id: string): void {

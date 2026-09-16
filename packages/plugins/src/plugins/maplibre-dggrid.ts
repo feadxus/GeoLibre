@@ -1336,7 +1336,14 @@ export const maplibreDggridPlugin: GeoLibrePlugin = {
     if (map && clickHandler) map.off("click", clickHandler);
     unsubscribeBasemap?.();
     unregisterPanel?.();
-    if (map) removeLayers(map);
+    // A renderer swap deactivates this plugin after the old map was removed;
+    // a removed mapbox-gl map throws from getLayer (its style is gone), and
+    // there is nothing left to remove.
+    try {
+      if (map) removeLayers(map);
+    } catch {
+      // Already torn down with the map.
+    }
     moveHandler = null;
     clickHandler = null;
     unsubscribeBasemap = null;

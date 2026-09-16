@@ -38,6 +38,15 @@ const DECLARES_MAPBOX = /engines:\s*\[[^\]]*["']mapbox["'][^\]]*\]/;
 const GETMAP_READ = /(?:\bapp(?:Ref|Api|API)?\??\.)getMap\??\.?\(\)/g;
 
 /**
+ * The same read taken indirectly: `getMap` destructured off the API
+ * (`const { getMap } = app`) or the bound method aliased
+ * (`const read = app.getMap`). Either escapes {@link GETMAP_READ} and reaches
+ * the MapLibre-only map just as silently, so both count as reads.
+ */
+const GETMAP_INDIRECT =
+  /\{[^}]*\bgetMap\b[^}]*\}\s*=\s*app(?:Ref|Api|API)?\b|=\s*app(?:Ref|Api|API)?\??\.getMap\b(?!\??\.?\()/g;
+
+/**
  * Members a mapbox-gl map does not have. Reaching one through the shared map
  * throws on Mapbox, or silently does nothing when guarded, which is exactly
  * the degradation the `engines` declaration promises does not happen.
@@ -185,11 +194,26 @@ function getMapOnlyReads(file: string): number[] {
   const lines = new Set<number>();
   for (const match of source.matchAll(GETMAP_READ)) {
     const line = lineOf(source, match.index);
-    if (rawLines[line - 1].includes("getMapboxMap")) continue;
+    // The fallback must be in the same statement, read off the comment-blanked
+    // source: a `getMapboxMap` in a trailing comment does not count, and a
+    // fallback the formatter wrapped onto the next line does.
+    const statement = source.slice(match.index, statementEnd(source, match.index));
+    if (statement.includes("getMapboxMap")) continue;
+    if (optedOutAt(rawLines, line, MAPBOX_GETMAP_OPT_OUT)) continue;
+    lines.add(line);
+  }
+  for (const match of source.matchAll(GETMAP_INDIRECT)) {
+    const line = lineOf(source, match.index);
     if (optedOutAt(rawLines, line, MAPBOX_GETMAP_OPT_OUT)) continue;
     lines.add(line);
   }
   return [...lines].sort((a, b) => a - b);
+}
+
+/** Offset just past the `;` that ends the statement containing `index`, or the source's end. */
+function statementEnd(source: string, index: number): number {
+  const end = source.indexOf(";", index);
+  return end === -1 ? source.length : end + 1;
 }
 
 /** Lines where this module reaches a member only a MapLibre map has. */

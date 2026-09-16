@@ -769,7 +769,7 @@ function pickTextFont(activeMap: MapLibreMap): string[] {
       if (!Array.isArray(font) || font.length === 0) continue;
       // Prefer an upright regular face; keep the first usable font as a fallback
       // for styles that only ship italic/bold faces.
-      if (font.every((f) => !/italic|bold/i.test(f))) return font;
+      if (font.every((f) => !/italic|bold/i.test(f))) return (cachedTextFont = font);
       if (!fallback) fallback = font;
     }
   } catch {
@@ -1336,7 +1336,14 @@ export const maplibreGraticulePlugin: GeoLibrePlugin = {
     // deferred draw instead of waiting on the previous run's stale listener.
     idlePending = false;
     cachedTextFont = null;
-    if (map) teardownLayers(map);
+    // A renderer swap deactivates this plugin after the old map was removed;
+    // a removed mapbox-gl map throws from getLayer (its style is gone), and
+    // there is nothing left to remove.
+    try {
+      if (map) teardownLayers(map);
+    } catch {
+      // Already torn down with the map.
+    }
     map = null;
     appRef = null;
   },

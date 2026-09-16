@@ -884,7 +884,7 @@ describe("Mapbox plugin-drawn native layers", () => {
       {
         ...geojsonLayer({ id: "oam" }),
         opacity: 0.5,
-        style: { fillOpacity: 0.08 },
+        style: { fillOpacity: 0.08, fillColor: "#ff0000" },
         metadata: {
           externalNativeLayer: true,
           sourceKind: "openaerialmap-footprints",
@@ -895,6 +895,9 @@ describe("Mapbox plugin-drawn native layers", () => {
     const paint = map.getLayer("footprints-fill")?.paint as Record<string, unknown>;
     const opacity = paint["fill-opacity"] as number;
     assert.ok(Math.abs(opacity - 0.04) < 1e-9, `fill-opacity ${opacity}`);
+    // The whole paint object lands, not only opacity: a Style panel colour edit
+    // on a plugin-owned layer shows on Mapbox as it does on MapLibre.
+    assert.equal(paint["fill-color"], "#ff0000");
   });
 });
 

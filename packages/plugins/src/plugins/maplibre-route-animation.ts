@@ -364,7 +364,7 @@ class RouteAnimationEngine {
     try {
       this.removeLayers();
     } catch {
-      this.iconColor = "";
+      // Already torn down with the map.
     }
     this.clearDeck();
   }
