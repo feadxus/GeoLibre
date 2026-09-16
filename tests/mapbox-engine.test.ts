@@ -937,6 +937,24 @@ describe("Mapbox plugin-drawn native layers", () => {
       ],
       "#4363d8",
     );
+    // A story chapter's fade still reaches the control's layers (replacing
+    // their opacity, as on MapLibre) and hands the control's paint back when
+    // playback ends.
+    engine.syncLayers([layer]);
+    engine.setStoryLayerOpacity("overture-maps-buildings-building", 0.25);
+    const fillPaint = () =>
+      map.getLayer("overture-buildings-building-fill")?.paint as Record<string, unknown>;
+    assert.equal(fillPaint()["fill-opacity"], 0.25, "story opacity applied");
+    assert.equal(fillPaint()["fill-color"], "#4363d8", "color untouched by the fade");
+    engine.restoreLayerStyles();
+    assert.equal(fillPaint()["fill-opacity"], 0.8, "the control's opacity is restored");
+    map.calls.length = 0;
+    engine.syncLayers([layer]);
+    assert.deepEqual(
+      map.calls.filter((call) => call.startsWith("setPaintProperty:")),
+      [],
+      "nothing is re-applied once restored",
+    );
   });
 
   it("scales a plugin-owned fill's own opacity by the store opacity instead of replacing it", () => {
