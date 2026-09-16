@@ -1,6 +1,6 @@
 import { Button, cn, Input, Label, Select } from "@geolibre/ui";
 import { useAppStore } from "@geolibre/core";
-import type { MapEngine } from "@geolibre/map";
+import type { MapEngine, MapboxEngine } from "@geolibre/map";
 import {
   buildEditorSaveCollection,
   getGeoEditorFeatureCount,
@@ -16,6 +16,7 @@ import {
   type ViewVectorLayer,
 } from "@geolibre/plugins";
 import type { Feature } from "geojson";
+import type { Map as MapLibreMap } from "maplibre-gl";
 import { ChevronDown, ChevronUp, GripVertical, RefreshCw, X } from "lucide-react";
 import {
   type PointerEvent as ReactPointerEvent,
@@ -73,6 +74,21 @@ function timestampSlug(iso: string): string {
 }
 
 /**
+ * The primary 2D map on either Style Spec engine. This dialog only reads style
+ * layers, the container box and source features, which MapLibre and mapbox-gl
+ * share, so the Mapbox map is presented through MapLibre's types the way the
+ * plugins' `getStyleMap` does. `getMap()` alone is null on Mapbox and would
+ * leave the dialog unable to load anything there.
+ */
+function styleMapOf(engine: MapEngine | null): MapLibreMap | null {
+  const map = engine?.getMap();
+  if (map) return map;
+  return engine?.kind === "mapbox"
+    ? ((engine as MapboxEngine).getMapboxMap() as unknown as MapLibreMap)
+    : null;
+}
+
+/**
  * A draggable, non-modal panel that loads the features of a Layers-panel vector
  * layer visible in the current map view into the GeoEditor, then saves them back
  * out as GeoJSON — every feature, or only the ones the user added, changed, or
@@ -120,7 +136,7 @@ export function LoadFeaturesIntoEditorDialog({
   // Sketches layer (the editor's own output) is excluded. Recomputed when the
   // Layers panel changes or the dialog reopens.
   const computeEligible = useCallback((): EligibleLayer[] => {
-    const style = mapControllerRef.current?.getMap()?.getStyle();
+    const style = styleMapOf(mapControllerRef.current)?.getStyle();
     const result: EligibleLayer[] = [];
     for (const layer of storeLayers) {
       if (layer.metadata.sourceKind === SKETCHES_SOURCE_KIND) continue;
@@ -167,7 +183,7 @@ export function LoadFeaturesIntoEditorDialog({
     // Open at the bottom-left of the map canvas by default (measured from the
     // map container, so it clears the left Layers panel), leaving a gap above
     // the status bar. Anchored by `bottom` so growing content extends upward.
-    const mapRect = mapControllerRef.current?.getMap()?.getContainer()?.getBoundingClientRect();
+    const mapRect = styleMapOf(mapControllerRef.current)?.getContainer()?.getBoundingClientRect();
     const left = mapRect ? mapRect.left + EDGE_MARGIN : EDGE_MARGIN;
     const bottomOffset = (mapRect ? window.innerHeight - mapRect.bottom : 0) + STATUS_BAR_GAP;
     setAnchor({ x: left, bottom: bottomOffset });
@@ -256,7 +272,7 @@ export function LoadFeaturesIntoEditorDialog({
   // load immediately, or report that none are in view.
   const runLoad = useCallback(
     (replace: boolean) => {
-      const map = mapControllerRef.current?.getMap();
+      const map = styleMapOf(mapControllerRef.current);
       if (!map || !selectedLayer) {
         setStatus({ message: t("loadEditorFeatures.selectLayer"), kind: "error" });
         return;
