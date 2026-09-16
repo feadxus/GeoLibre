@@ -1094,6 +1094,10 @@ export function enforceEngineSupport(
   // Snapshot: the loop removes and re-adds sources on the control it iterates.
   for (const spec of [...control.getSources()]) {
     if (spec.type !== "mosaic" || !spec.id) continue;
+    // Tested on the raw template rather than the date-resolved URL
+    // ensureSourceBounds reads: this runs synchronously from the control's
+    // sourceadd/sourceremove handlers, and the check only keys off the file
+    // extension, which a date placeholder ({date}, %Y, ...) never sits in.
     const url = typeof spec.url === "string" ? spec.url : "";
     if (usesMosaicManifest(spec, url)) {
       console.warn(
