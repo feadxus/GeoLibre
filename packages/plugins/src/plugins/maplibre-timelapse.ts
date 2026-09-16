@@ -1442,10 +1442,18 @@ export const maplibreTimelapsePlugin: GeoLibrePlugin = {
     appRef = null;
     if (!timelapseControl) return;
     savedState = timelapseControl.getState();
-    timelapseControl.dispose();
-    timelapseControl.removeStack();
-    removeTimelapseStoreLayers();
-    timelapseControl = null;
+    // A renderer swap deactivates this plugin after the old map was removed;
+    // a removed mapbox-gl map throws from getLayer (its style is gone). The
+    // store and module state must still reset, or a stale control survives.
+    try {
+      timelapseControl.dispose();
+      timelapseControl.removeStack();
+    } catch {
+      // Already torn down with the map.
+    } finally {
+      removeTimelapseStoreLayers();
+      timelapseControl = null;
+    }
   },
   // The floating card is freely draggable; the position submenu in the
   // Plugins menu just picks which corner it opens at.

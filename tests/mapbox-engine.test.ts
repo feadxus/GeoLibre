@@ -854,14 +854,20 @@ describe("Mapbox plugin-drawn native layers", () => {
       [],
       "an unchanged state is not re-applied",
     );
+    map.calls.length = 0;
     engine.syncLayers([
       {
         ...layer,
         visible: true,
-        opacity: 0.5,
+        opacity: 0.8,
         metadata: { ...layer.metadata, controlOwnsPaint: true },
       },
     ]);
+    assert.deepEqual(
+      map.calls.filter((call) => call.startsWith("setPaintProperty:")),
+      [],
+      "no paint setter runs for a control that owns its paint",
+    );
     assert.equal(
       (map.getLayer("dep-index")?.layout as Record<string, unknown>).visibility,
       "visible",
@@ -898,6 +904,37 @@ describe("Mapbox plugin-drawn native layers", () => {
     // The whole paint object lands, not only opacity: a Style panel colour edit
     // on a plugin-owned layer shows on Mapbox as it does on MapLibre.
     assert.equal(paint["fill-color"], "#ff0000");
+  });
+});
+
+describe("Mapbox story opacity on plugin-owned layers", () => {
+  it("applies a story chapter's transient opacity to a plugin-owned native layer", () => {
+    const { engine, map } = makeEngine();
+    map.addSource("dep-index", { type: "raster", tiles: ["https://example.test/{z}/{x}/{y}"] });
+    map.addLayer({ id: "dep-index", type: "raster", source: "dep-index", paint: {} });
+    const layer = {
+      ...geojsonLayer({ id: "cloud" }),
+      type: "lidar" as const,
+      geojson: undefined,
+      opacity: 1,
+      source: { type: "lidar", url: "https://example.test/cloud.copc.laz" },
+      metadata: {
+        externalNativeLayer: true,
+        sourceKind: "lidar-url",
+        nativeLayerIds: ["dep-index"],
+      },
+    };
+    engine.syncLayers([layer]);
+    engine.setStoryLayerOpacity("cloud", 0.2);
+    assert.equal(
+      (map.getLayer("dep-index")?.paint as Record<string, unknown>)["raster-opacity"],
+      0.2,
+    );
+    engine.restoreLayerStyles();
+    assert.equal(
+      (map.getLayer("dep-index")?.paint as Record<string, unknown>)["raster-opacity"],
+      1,
+    );
   });
 });
 

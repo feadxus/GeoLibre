@@ -1091,7 +1091,8 @@ export function enforceEngineSupport(
   control: Pick<TimeSliderControl, "getSources" | "removeSource" | "addSource">,
 ): void {
   if (activeHost?.getMapRenderer?.() !== "mapbox") return;
-  for (const spec of control.getSources()) {
+  // Snapshot: the loop removes and re-adds sources on the control it iterates.
+  for (const spec of [...control.getSources()]) {
     if (spec.type !== "mosaic" || !spec.id) continue;
     const url = typeof spec.url === "string" ? spec.url : "";
     if (usesMosaicManifest(spec, url)) {

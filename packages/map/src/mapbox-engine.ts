@@ -451,14 +451,15 @@ export class MapboxEngine implements MapEngine {
         // from native sources; the ones that also draw native style layers get
         // the store's visibility and opacity mirrored onto those, as MapLibre's
         // layer-sync does for every external native layer.
+        // A story chapter's transient opacity applies to plugin-owned layers too.
+        const opacity = this.storyOpacities.get(original.id);
+        const layer = opacity === undefined ? original : { ...original, opacity };
         if (isMapboxPluginLayer(original)) {
           this.removeLayer(original.id);
-          this.mirrorPluginLayerState(original);
+          this.mirrorPluginLayerState(layer);
           continue;
         }
         if (!original.visible) this.errors.delete(`layer:${original.id}`);
-        const opacity = this.storyOpacities.get(original.id);
-        const layer = opacity === undefined ? original : { ...original, opacity };
         const plan = compileMapboxLayer(layer, { textFont: this.textFont });
         const previous = this.previous.get(layer.id);
         const oldPlan = this.plans.get(layer.id);

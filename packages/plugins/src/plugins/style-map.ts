@@ -21,10 +21,12 @@ import type { GeoLibreAppAPI } from "../types";
  * picking (`queryRenderedFeatures`, `querySourceFeatures`).
  *
  * It is not honest for MapLibre-only members, which simply do not exist on a
- * Mapbox map: `addProtocol`, `setTransformRequest`, `setTerrain`/`getTerrain`,
- * the terrain-aware camera helpers (`calculateCameraOptionsFromCameraLngLatAltRotation`,
+ * Mapbox map: `addProtocol`, `setTransformRequest`, the terrain-aware camera
+ * helpers (`calculateCameraOptionsFromCameraLngLatAltRotation`,
  * `getCenterClampedToGround`), the `transform`/`_camera` internals and
- * `CustomLayerInterface` layers. `getProjection()` also differs in shape
+ * `CustomLayerInterface` layers. `setTerrain`/`getTerrain` exist on both but
+ * take engine-specific DEM sources, so terrain goes through the host
+ * (`app.setTerrainEnabled`). `getProjection()` also differs in shape
  * (`{ type }` on MapLibre, `{ name }` on Mapbox). `tests/plugin-engine-audit.test.ts`
  * fails a Mapbox-declaring plugin that reaches for one of those, or that still
  * reads the map through `app.getMap()` alone.

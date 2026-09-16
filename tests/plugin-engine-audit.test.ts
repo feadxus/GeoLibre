@@ -165,9 +165,16 @@ function boundsReadsThroughGetMap(file: string): number[] {
 
 /** Plugin entry points whose `engines` list matches, with everything they import. */
 function pluginClosures(declares: RegExp): { plugin: string; files: string[] }[] {
-  return readdirSync(PLUGIN_DIR)
-    .filter((name) => name.endsWith(".ts"))
-    .map((name) => join(PLUGIN_DIR, name))
+  return readdirSync(PLUGIN_DIR, { withFileTypes: true })
+    .flatMap((entry) => {
+      // A plugin split across a subdirectory declares itself in its index.ts
+      // (elevation-profile/); it is an entry point like any top-level file.
+      if (entry.isDirectory()) {
+        const index = join(PLUGIN_DIR, entry.name, "index.ts");
+        return existsSync(index) ? [index] : [];
+      }
+      return entry.name.endsWith(".ts") ? [join(PLUGIN_DIR, entry.name)] : [];
+    })
     .filter((file) => declares.test(blankComments(readFileSync(file, "utf8"))))
     .map((file) => ({ plugin: relative(PLUGIN_DIR, file), files: importClosure(file) }));
 }
