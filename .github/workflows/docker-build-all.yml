@@ -89,7 +89,7 @@ jobs:
       # 🔟 部署 rclone 配置文件
       - name: ⚙️ Setup rclone Config
         env:
-          RCLONE_SECRET_DATA: ${{ secrets.GOOGLE_FSXEDX_DRIVE }}
+          RCLONE_SECRET_DATA: ${{ secrets.GOOGLE_FEADXUS_DRIVE }}
         run: |
           mkdir -p ~/.config/rclone
           echo "$RCLONE_SECRET_DATA" > ~/.config/rclone/rclone.conf
