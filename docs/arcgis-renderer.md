@@ -20,8 +20,9 @@ Consequences:
 
 - The first ArcGIS pane needs network access, on the desktop too. The service
   worker caches the SDK modules and stylesheet after first use
-  (`geolibre-arcgis-sdk` in `vite.config.ts`), so the renderer works offline
-  afterwards like the other CDN-loaded engines.
+  (`geolibre-arcgis-sdk` in `vite.config.ts`), so the SDK itself boots offline
+  afterwards like the other CDN-loaded engines. Esri basemaps, tile services
+  and other remote layers still need the network, as on every renderer.
 - The SDK version is pinned in `packages/map/src/arcgis-sdk.ts`
   (`ARCGIS_SDK_VERSION`). Bumping it is a deliberate change; see
   [Maintenance](maintenance.md#arcgis-maps-sdk-for-javascript-loaded-from-esris-cdn).
