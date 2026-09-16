@@ -56,8 +56,8 @@ test("ArcGIS renderer draws the project basemap, a dropped GeoJSON layer and ide
   await page.evaluate((text) => {
     const dt = new DataTransfer();
     dt.items.add(new File([text], "smoke.geojson", { type: "application/geo+json" }));
-    const target =
-      document.querySelector("div.relative.flex.h-full.min-w-0.flex-col") ?? document.body;
+    const target = document.querySelector('[data-testid="desktop-shell"]');
+    if (!target) throw new Error("desktop shell drop target not found");
     for (const type of ["dragenter", "dragover", "drop"])
       target.dispatchEvent(
         new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }),

@@ -2455,6 +2455,7 @@ export function DesktopShell({
   return (
     <div
       ref={shellRef}
+      data-testid="desktop-shell"
       className="relative flex h-full min-w-0 flex-col overflow-hidden bg-background"
       style={shellStyle}
       onDragEnter={handleDragEnter}

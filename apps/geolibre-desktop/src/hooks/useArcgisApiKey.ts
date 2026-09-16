@@ -1,5 +1,6 @@
 import { getArcgisApiKey } from "@geolibre/core";
 import { useEffect, useState } from "react";
+import { useDesktopSettingsStore } from "./useDesktopSettings";
 
 /**
  * The current ArcGIS API key, re-resolved whenever the runtime environment
@@ -13,15 +14,25 @@ import { useEffect, useState } from "react";
  * one the pane shows a hint rather than disappearing. ArcGIS maps are recreated
  * when the key changes, since the SDK reads it at construction.
  *
+ * The device-local setting is also read directly as a fallback: an ArcGIS pane
+ * that mounts with the app (a project saved on this renderer) runs its effect
+ * before `useRuntimeEnvironmentVariables` projects the saved key into the
+ * runtime environment, and that first projection deliberately fires no change
+ * event. The resolver still wins once it answers, so a build-time or project
+ * value keeps its precedence over the device setting.
+ *
  * @returns The trimmed key, or `undefined` when none is configured.
  */
 export function useArcgisApiKey(): string | undefined {
-  const [key, setKey] = useState<string | undefined>(() => getArcgisApiKey());
+  const deviceKey = useDesktopSettingsStore((s) => s.desktopSettings.arcgisApiKey);
+  const [key, setKey] = useState<string | undefined>(
+    () => getArcgisApiKey() ?? (deviceKey.trim() || undefined),
+  );
   useEffect(() => {
-    const refresh = () => setKey(getArcgisApiKey());
+    const refresh = () => setKey(getArcgisApiKey() ?? (deviceKey.trim() || undefined));
     refresh();
     window.addEventListener("geolibre:runtime-env-change", refresh);
     return () => window.removeEventListener("geolibre:runtime-env-change", refresh);
-  }, []);
+  }, [deviceKey]);
   return key;
 }

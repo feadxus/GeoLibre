@@ -1,6 +1,6 @@
 import { ArcgisCanvas, type MapEngine } from "@geolibre/map";
 import type { ComponentType, ReactElement, RefObject } from "react";
-import { Trans } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { useArcgisApiKey } from "../../hooks/useArcgisApiKey";
 import { openSettingsSection } from "./SettingsDialog";
 
@@ -30,6 +30,7 @@ export function PrimaryArcgisCanvas({
   onEngineReady?: () => void;
   viewId?: string;
 }) {
+  const { t } = useTranslation();
   const apiKey = useArcgisApiKey();
   return (
     <div className="absolute inset-0" data-testid="primary-arcgis">
@@ -41,6 +42,7 @@ export function PrimaryArcgisCanvas({
         engineRef={engineRef}
         onEngineReady={onEngineReady}
         viewId={viewId}
+        closeLabel={t("common.close")}
       />
       {apiKey ? null : (
         <div className="pointer-events-none absolute bottom-10 start-2 z-10 max-w-[70%] rounded-md border border-input map-glass px-2 py-1 text-xs text-muted-foreground shadow-sm">

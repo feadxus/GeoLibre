@@ -20,6 +20,8 @@ export interface ArcgisCanvasProps {
   viewId?: string;
   engineRef?: RefObject<MapEngine | null>;
   onEngineReady?: () => void;
+  /** Translated accessible name for the identify popup's close button. */
+  closeLabel?: string;
 }
 
 /**
@@ -31,10 +33,20 @@ export interface ArcgisCanvasProps {
  * handlers — and hands everything after that to {@link ArcgisEngine}, the way
  * `MapboxCanvas` does for Mapbox GL JS.
  */
-export function ArcgisCanvas({ apiKey, viewId, engineRef, onEngineReady }: ArcgisCanvasProps) {
+export function ArcgisCanvas({
+  apiKey,
+  viewId,
+  engineRef,
+  onEngineReady,
+  closeLabel = "Close",
+}: ArcgisCanvasProps) {
   const container = useRef<HTMLDivElement>(null);
   const readyCallback = useRef(onEngineReady);
   readyCallback.current = onEngineReady;
+  // Read through a ref so a language change reaches the next popup without
+  // recreating the map.
+  const closeLabelRef = useRef(closeLabel);
+  closeLabelRef.current = closeLabel;
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -227,7 +239,8 @@ export function ArcgisCanvas({ apiKey, viewId, engineRef, onEngineReady }: Arcgi
               const close = document.createElement("button");
               close.type = "button";
               close.className = "geolibre-arcgis-popup-close";
-              close.setAttribute("aria-label", "Close");
+              close.setAttribute("aria-label", closeLabelRef.current);
+              close.title = closeLabelRef.current;
               close.textContent = "×";
               close.onclick = removePopup;
               content.prepend(close);

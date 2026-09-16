@@ -508,6 +508,15 @@ export function resetArcgisSdkForTests(): void {
 const CSS_STYLE_ID = "geolibre-arcgis-sdk-css";
 let cssPromise: Promise<void> | null = null;
 let cssTheme: "light" | "dark" | null = null;
+/** Bumped per request so a slow older theme fetch cannot overwrite a newer one. */
+let cssRequest = 0;
+
+/** Fetch the stylesheet text, treating an HTTP error as a failure rather than CSS. */
+async function fetchCssText(url: string): Promise<string> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`ArcGIS stylesheet request failed: HTTP ${response.status}`);
+  return response.text();
+}
 
 /**
  * Rewrite the stylesheet's relative `url(...)` references against the CDN so
@@ -537,14 +546,18 @@ export function absolutizeCssUrls(css: string, cssUrl: string): string {
  */
 export function ensureArcgisCss(
   theme: "light" | "dark",
-  fetcher: (url: string) => Promise<string> = (url) => fetch(url).then((r) => r.text()),
+  fetcher: (url: string) => Promise<string> = fetchCssText,
 ): Promise<void> {
   if (typeof document === "undefined") return Promise.resolve();
   if (cssPromise && cssTheme === theme) return cssPromise;
   cssTheme = theme;
+  const request = ++cssRequest;
   const url = arcgisCssUrl(theme);
   cssPromise = fetcher(url)
     .then((text) => {
+      // A newer theme request superseded this one while it was in flight;
+      // its stylesheet is the one that should land.
+      if (request !== cssRequest) return;
       let style = document.getElementById(CSS_STYLE_ID) as HTMLStyleElement | null;
       if (!style) {
         style = document.createElement("style");
@@ -554,8 +567,12 @@ export function ensureArcgisCss(
       style.textContent = absolutizeCssUrls(text, url);
     })
     .catch((error: unknown) => {
-      cssPromise = null;
-      cssTheme = null;
+      // Only the current request may reset the shared state: an older
+      // rejection must not forget a newer, still-pending theme.
+      if (request === cssRequest) {
+        cssPromise = null;
+        cssTheme = null;
+      }
       throw error;
     });
   return cssPromise;
@@ -565,6 +582,7 @@ export function ensureArcgisCss(
 export function resetArcgisCssForTests(): void {
   cssPromise = null;
   cssTheme = null;
+  cssRequest = 0;
   document.getElementById(CSS_STYLE_ID)?.remove();
 }
 

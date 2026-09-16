@@ -14,6 +14,8 @@ import { copyVectorOps } from "./vite-plugins/copy-vector-ops";
 import { proxyBinaryRequestGuarded } from "./vite-proxy-guard";
 
 const GEOAGENT_BROWSER_BUNDLE = "maplibre-gl-geoagent/dist/browser-";
+import { ARCGIS_SDK_HOST, ARCGIS_SDK_VERSION } from "../../packages/map/src/arcgis-sdk";
+
 const EARTH_ENGINE_CONTROL_BUNDLE = "maplibre-gl-earth-engine/dist/";
 const EARTH_ENGINE_BROWSER_BUNDLE = "@google/earthengine/build/browser.js";
 const GIS_CHUNK_WARNING_LIMIT_KB = 14000;
@@ -1084,24 +1086,37 @@ function pwaPlugin(): Plugin[] {
           // bundled under /assets/ instead and this rule simply never matches them
           // (Pyodide is always CDN-loaded regardless).
           urlPattern: ({ url }: { url: URL }) =>
-            // The ArcGIS Maps SDK for JavaScript, imported per module from
-            // Esri's versioned ES-module CDN by the ArcGIS renderer
-            // (packages/map/src/arcgis-sdk.ts). The version is in the path, so
-            // a bump mints new URLs and CacheFirst never serves a stale SDK.
-            url.hostname === "js.arcgis.com" ||
-            (url.hostname === "cdn.jsdelivr.net" &&
-              (url.pathname.startsWith("/pyodide/") ||
-                url.pathname.startsWith("/npm/@electric-sql/") ||
-                url.pathname.startsWith("/npm/@cereusdb/") ||
-                // Only populated when GEOLIBRE_DUCKDB_WASM_CDN=1 moves the engine
-                // off the origin; harmless otherwise. maplibre-gl-duckdb fetches
-                // its own DuckDB from here regardless, so this caches that too.
-                url.pathname.startsWith("/npm/@duckdb/") ||
-                url.pathname.startsWith("/npm/gdal3.js"))),
+            url.hostname === "cdn.jsdelivr.net" &&
+            (url.pathname.startsWith("/pyodide/") ||
+              url.pathname.startsWith("/npm/@electric-sql/") ||
+              url.pathname.startsWith("/npm/@cereusdb/") ||
+              // Only populated when GEOLIBRE_DUCKDB_WASM_CDN=1 moves the engine
+              // off the origin; harmless otherwise. maplibre-gl-duckdb fetches
+              // its own DuckDB from here regardless, so this caches that too.
+              url.pathname.startsWith("/npm/@duckdb/") ||
+              url.pathname.startsWith("/npm/gdal3.js")),
           handler: "CacheFirst",
           options: {
             cacheName: "geolibre-cdn-engines",
             expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            cacheableResponse: { statuses: [0, 200] },
+          },
+        },
+        {
+          // The ArcGIS Maps SDK for JavaScript, imported per module from Esri's
+          // versioned ES-module CDN by the ArcGIS renderer
+          // (packages/map/src/arcgis-sdk.ts), plus its stylesheet, fonts and
+          // workers from the same versioned prefix. Its own cache, not the
+          // engines' one above: a first load is a few hundred small modules,
+          // enough to evict a previously cached engine from a 400-entry cache
+          // and take it offline. The version is in every path, so a bump mints
+          // new URLs and CacheFirst never serves a stale SDK.
+          urlPattern: ({ url }: { url: URL }) =>
+            url.hostname === ARCGIS_SDK_HOST && url.pathname.startsWith(`/${ARCGIS_SDK_VERSION}/`),
+          handler: "CacheFirst",
+          options: {
+            cacheName: "geolibre-arcgis-sdk",
+            expiration: { maxEntries: 1500, maxAgeSeconds: 60 * 60 * 24 * 30 },
             cacheableResponse: { statuses: [0, 200] },
           },
         },
