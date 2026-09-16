@@ -153,13 +153,18 @@ export function mirrorGeomanSource(
   };
 }
 
+/**
+ * Reseed the mirror from a whole collection. Cloned for the same reason as the
+ * diff's additions: later diffs update the mirrored copies in place, and the
+ * objects handed in here are Geoman's (or the caller's) own.
+ */
 function replaceFeatures(features: Map<string | number, Feature>, data: GeoJSON): void {
   features.clear();
   const list: Feature[] =
     data.type === "FeatureCollection" ? data.features : data.type === "Feature" ? [data] : [];
   for (const feature of list) {
     const id = featureIdOf(feature);
-    if (id !== undefined) features.set(id, feature);
+    if (id !== undefined) features.set(id, structuredClone(feature));
   }
 }
 
@@ -243,6 +248,9 @@ class MapboxDomMarker extends BaseDomMarker<mapboxgl.Marker> {
 function loadImageElement(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const element = new Image();
+    // A data URL needs no CORS, but a remote icon would otherwise taint the
+    // WebGL texture `addImage` uploads and throw a security error.
+    element.crossOrigin = "anonymous";
     element.onload = () => resolve(element);
     element.onerror = () => reject(new Error(`Could not load the editor marker image: ${src}`));
     element.src = src;

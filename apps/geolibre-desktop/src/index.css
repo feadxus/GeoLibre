@@ -1108,9 +1108,11 @@ body,
    because maplibre-gl-components ships `.maplibregl-popup { z-index: 10 !important }`
    globally. mapbox-gl's popup has no such lift, so with effects on it opens
    underneath the canvas: visible through nothing and unclickable. Match the
-   MapLibre value so the two engines stack popups the same way. */
+   MapLibre value so the two engines stack popups the same way. `!important`
+   as upstream's: mapbox-gl.css is loaded by a dynamic import after this
+   sheet, so a same-specificity rule there would otherwise win. */
 .mapboxgl-popup {
-  z-index: 10;
+  z-index: 10 !important;
 }
 
 /*
