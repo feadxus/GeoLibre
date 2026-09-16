@@ -120,6 +120,7 @@ export interface ArcgisLayer {
   loadStatus: "not-loaded" | "loading" | "loaded" | "failed";
   loadError: { message: string; name?: string } | null;
   fullExtent: ArcgisExtent | null;
+  destroyed?: boolean;
   load(): Promise<unknown>;
   when(): Promise<unknown>;
   destroy(): void;
@@ -136,6 +137,8 @@ export interface ArcgisBasemap {
   baseLayers: ArcgisCollection<ArcgisLayer>;
   referenceLayers: ArcgisCollection<ArcgisLayer>;
   title?: string;
+  /** Resolves once the basemap (a named style's layers included) has loaded. */
+  when?(): Promise<unknown>;
   destroy(): void;
 }
 
@@ -358,6 +361,7 @@ export interface ArcgisSdk {
   media: {
     ImageElement: ArcgisClass<unknown>;
     ExtentAndRotationGeoreference: ArcgisClass<unknown>;
+    ControlPointsGeoreference: ArcgisClass<unknown>;
   };
   widgets: {
     Zoom: ArcgisClass<ArcgisWidget>;
@@ -401,6 +405,7 @@ const SDK_MODULES = {
   MediaLayer: "layers/MediaLayer",
   ImageElement: "layers/support/ImageElement",
   ExtentAndRotationGeoreference: "layers/support/ExtentAndRotationGeoreference",
+  ControlPointsGeoreference: "layers/support/ControlPointsGeoreference",
   Zoom: "widgets/Zoom",
   Compass: "widgets/Compass",
   ScaleBar: "widgets/ScaleBar",
@@ -458,6 +463,7 @@ export function assembleArcgisSdk(modules: Record<ModuleKey, Record<string, unkn
     media: {
       ImageElement: member("ImageElement"),
       ExtentAndRotationGeoreference: member("ExtentAndRotationGeoreference"),
+      ControlPointsGeoreference: member("ControlPointsGeoreference"),
     },
     widgets: {
       Zoom: member("Zoom"),
@@ -589,6 +595,6 @@ export function resetArcgisCssForTests(): void {
 /** Strip an ArcGIS API key or token from an error message before it reaches the UI. */
 export function redactArcgisError(message: string): string {
   return message
-    .replace(/([?&](?:token|apiKey|api_key)=)[^&\s"']+/gi, "$1[redacted]")
+    .replace(/((?:^|[?&\s"'])(?:token|apiKey|api_key)=)[^&\s"']+/gi, "$1[redacted]")
     .replace(/\bAAPT[\w.-]+/g, "[redacted]");
 }

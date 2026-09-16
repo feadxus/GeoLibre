@@ -7,6 +7,7 @@ import {
   ARCGIS_SYMBOL_FIELD,
   compileArcgisLayer,
   cssToArcgisColor,
+  filterToSql,
   isArcgisPluginLayer,
   isArcgisSupportedLayer,
   scaleToZoom,
@@ -336,6 +337,28 @@ describe("ArcGIS raster, service and media compilation", () => {
       source: { type: "geojson", url: "https://host/arcgis/rest/services/X/FeatureServer/0" },
     };
     assert.equal(compileArcgisLayer(feature).kind, "feature-service");
+    // Filters reach the service as SQL; one with no SQL form is reported.
+    const filtered = compileArcgisLayer({
+      ...feature,
+      quickFilters: [
+        { id: "a", field: "STATE", kind: "categorical", values: ["TN", "GA"] },
+        { id: "b", field: "POP", kind: "range", min: 1000, max: null },
+      ],
+    } as GeoLibreLayer);
+    if (filtered.kind !== "feature-service") throw new Error("expected feature-service");
+    // The range quick filter guards its comparison with `["has", field]`.
+    assert.equal(
+      filtered.definitionExpression,
+      "(STATE IN ('TN', 'GA')) AND ((POP IS NOT NULL) AND (POP >= 1000))",
+    );
+    assert.equal(filtered.filterUnsupported, undefined);
+    const odd = compileArcgisLayer({
+      ...feature,
+      embedFilter: ["==", ["geometry-type"], "Point"],
+    });
+    if (odd.kind !== "feature-service") throw new Error("expected feature-service");
+    assert.equal(odd.definitionExpression, undefined);
+    assert.equal(odd.filterUnsupported, true);
     const image: GeoLibreLayer = {
       ...base,
       type: "arcgis",
@@ -369,7 +392,15 @@ describe("ArcGIS raster, service and media compilation", () => {
     };
     const plan = compileArcgisLayer(layer);
     assert.equal(plan.kind, "media-image");
-    if (plan.kind === "media-image") assert.deepEqual(plan.extent, [0, 0, 3, 2]);
+    if (plan.kind === "media-image") {
+      assert.deepEqual(plan.extent, [0, 0, 3, 2]);
+      assert.deepEqual(plan.corners, [
+        [0, 2],
+        [3, 2],
+        [3, 0],
+        [0, 0],
+      ]);
+    }
   });
   it("rejects archives, custom protocols and plugin-owned mirrors", () => {
     const base = geojsonLayer({ geojson: undefined });
@@ -396,6 +427,42 @@ describe("ArcGIS raster, service and media compilation", () => {
     assert.equal(isArcgisPluginLayer(mirror), true);
     assert.equal(isArcgisSupportedLayer(mirror), false);
     assert.equal(isArcgisSupportedLayer({ ...base, type: "mbtiles", source: {} }), false);
+  });
+});
+
+describe("ArcGIS SQL filter translation", () => {
+  it("translates comparisons, sets, null checks and boolean combinators", () => {
+    assert.equal(filterToSql(["==", ["get", "a"], 1]), "a = 1");
+    assert.equal(filterToSql(["!=", ["get", "a"], "x'y"]), "a <> 'x''y'");
+    assert.equal(filterToSql([">=", ["to-number", ["get", "n"]], 5]), "n >= 5");
+    assert.equal(filterToSql(["==", ["get", "a"], null]), "a IS NULL");
+    assert.equal(filterToSql(["has", "a"]), "a IS NOT NULL");
+    assert.equal(filterToSql(["in", ["get", "a"], ["literal", ["x", 2]]]), "a IN ('x', 2)");
+    assert.equal(
+      filterToSql(["any", ["==", ["get", "a"], 1], ["!", ["has", "b"]]]),
+      "(a = 1) OR (NOT (b IS NOT NULL))",
+    );
+  });
+  it("translates the quick text filter's three operators", () => {
+    const hay = ["downcase", ["to-string", ["get", "name"]]];
+    assert.equal(filterToSql(["==", hay, "ab"]), "UPPER(name) = 'AB'");
+    assert.equal(
+      filterToSql(["==", ["index-of", "a_b", hay], 0]),
+      "UPPER(name) LIKE 'A\\_B%' ESCAPE '\\'",
+    );
+    assert.equal(
+      filterToSql(["!=", ["index-of", "50%", hay], -1]),
+      "UPPER(name) LIKE '%50\\%%' ESCAPE '\\'",
+    );
+  });
+  it("refuses what SQL cannot express", () => {
+    assert.equal(filterToSql(["==", ["geometry-type"], "Point"]), null);
+    assert.equal(filterToSql(["<", ["get", "bad name"], 1]), null);
+    assert.equal(filterToSql(["all", ["==", ["get", "a"], 1], ["within", {}]]), null);
+    assert.equal(
+      filterToSql(["==", ["slice", ["to-string", ["get", "d"]], 0, 10], "2024-01-01"]),
+      null,
+    );
   });
 });
 

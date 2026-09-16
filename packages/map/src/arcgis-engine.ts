@@ -584,6 +584,12 @@ export class ArcgisEngine implements MapEngine {
           this.natives.set(layer.id, entry);
         }
         entry.plan = plan;
+        if (plan.kind === "feature-service" && plan.filterUnsupported)
+          this.errors.set(
+            `filter:${layer.id}`,
+            `${layer.name}: this filter has no SQL form, so the ArcGIS service draws unfiltered`,
+          );
+        else this.errors.delete(`filter:${layer.id}`);
         for (const native of entry.layers) {
           native.visible = plan.visible;
           native.opacity = plan.opacity;
@@ -691,6 +697,9 @@ export class ArcgisEngine implements MapEngine {
             url: plan.url,
             popupEnabled: false,
             outFields: ["*"],
+            ...(plan.definitionExpression
+              ? { definitionExpression: plan.definitionExpression }
+              : {}),
           }),
         ];
       case "tile-service":
@@ -699,26 +708,51 @@ export class ArcgisEngine implements MapEngine {
         return [new layers.MapImageLayer({ ...common, url: plan.url })];
       case "imagery":
         return [new layers.ImageryLayer({ ...common, url: plan.url })];
-      case "media-image":
-        return [
-          new layers.MediaLayer({
-            ...common,
-            source: [
+      case "media-image": {
+        // The four corners are an arbitrary quad (the georeferencer fits an
+        // affine transform), which only a control-point georeference can
+        // express; it needs the image's pixel size, so the element is added
+        // once the image has loaded. Without a DOM `Image` (the tests) the
+        // layer stays empty.
+        const layer = new layers.MediaLayer({ ...common, source: [] });
+        if (typeof Image !== "undefined") {
+          const image = new Image();
+          image.crossOrigin = "anonymous";
+          image.onload = () => {
+            if (layer.destroyed) return;
+            const toMap = (p: Position) =>
+              this.sdk.webMercatorUtils.geographicToWebMercator(
+                new this.sdk.Point({
+                  longitude: p[0],
+                  latitude: p[1],
+                  spatialReference: { wkid: 4326 },
+                }),
+              );
+            const [tl, tr, br, bl] = plan.corners;
+            const { naturalWidth: width, naturalHeight: height } = image;
+            (layer as unknown as { source: unknown }).source = [
               new media.ImageElement({
-                image: plan.url,
-                georeference: new media.ExtentAndRotationGeoreference({
-                  extent: new this.sdk.Extent({
-                    xmin: plan.extent[0],
-                    ymin: plan.extent[1],
-                    xmax: plan.extent[2],
-                    ymax: plan.extent[3],
-                    spatialReference: { wkid: 4326 },
-                  }),
+                image,
+                georeference: new media.ControlPointsGeoreference({
+                  width,
+                  height,
+                  controlPoints: [
+                    { sourcePoint: { x: 0, y: 0 }, mapPoint: toMap(tl) },
+                    { sourcePoint: { x: width, y: 0 }, mapPoint: toMap(tr) },
+                    { sourcePoint: { x: width, y: height }, mapPoint: toMap(br) },
+                    { sourcePoint: { x: 0, y: height }, mapPoint: toMap(bl) },
+                  ],
                 }),
               }),
-            ],
-          }),
-        ];
+            ];
+          };
+          image.onerror = () => {
+            this.errors.set(`layer:${plan.id}`, `${plan.title}: image failed to load`);
+          };
+          image.src = plan.url;
+        }
+        return [layer];
+      }
     }
   }
   private removeLayer(id: string): void {
@@ -732,6 +766,7 @@ export class ArcgisEngine implements MapEngine {
     }
     this.natives.delete(id);
     this.errors.delete(`layer:${id}`);
+    this.errors.delete(`filter:${id}`);
   }
   waitAndSyncLayers(layers: GeoLibreLayer[]): void {
     this.syncLayers(layers);
@@ -796,8 +831,26 @@ export class ArcgisEngine implements MapEngine {
         });
         break;
     }
-    if (previous && previous !== map.basemap && plan.kind !== "esri-style") previous.destroy?.();
+    if (previous && previous !== map.basemap) previous.destroy?.();
     this.applyBasemap();
+    // A named Esri style fills its layers asynchronously; re-apply the stored
+    // visibility and opacity once they exist, and surface a style that fails
+    // to load (a key without the basemaps privilege, say).
+    const current = map.basemap;
+    if (current && typeof current === "object" && typeof current.when === "function") {
+      void current
+        .when()
+        .then(() => {
+          if (this.map?.basemap === current) this.applyBasemap();
+        })
+        .catch((error: unknown) => {
+          if (this.map?.basemap === current)
+            this.errors.set(
+              "basemap",
+              `Basemap: ${redactArcgisError((error as Error)?.message ?? String(error))}`,
+            );
+        });
+    }
   }
   setStyle(url: string): void {
     this.setBasemap(url, undefined);

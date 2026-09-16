@@ -83,8 +83,13 @@ override is set aside and the shared basemap is translated instead.
   layers the Mapbox engine compiles, minus text labels).
 - ArcGIS services natively: FeatureServer, MapServer (tiled and dynamic) and
   ImageServer records added through **Add Data → ArcGIS Layer** draw through the
-  SDK's own `FeatureLayer`, `TileLayer`, `MapImageLayer` and `ImageryLayer`.
-- Georeferenced images, by the extent of their four corners.
+  SDK's own `FeatureLayer`, `TileLayer`, `MapImageLayer` and `ImageryLayer`. A
+  FeatureServer layer's filters (quick filters, the expression filter, the time
+  and embed filters) become the service's SQL `definitionExpression`; a filter
+  with no SQL form is reported in the map's banner and the service draws
+  unfiltered.
+- Georeferenced images, placed by their four corners through a control-point
+  georeference, so rotated and skewed fits land where they do on MapLibre.
 - Shared layer/group visibility, opacity and ordering; synchronized or
   independent split-view cameras; the project's zoom and bounds constraints.
 - Feature picking (click identify with a popup), selection highlighting, extent

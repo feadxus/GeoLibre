@@ -115,13 +115,22 @@ export type ArcgisLayerPlan = ArcgisPlanBase &
         customParameters?: Record<string, string>;
       }
     | { kind: "vector-tile"; style: Record<string, unknown> }
-    | { kind: "feature-service"; url: string }
+    | {
+        kind: "feature-service";
+        url: string;
+        /** The layer's filters as an SQL where clause, when they translate. */
+        definitionExpression?: string;
+        /** Filters are active but have no SQL form; the service draws unfiltered. */
+        filterUnsupported?: boolean;
+      }
     | { kind: "tile-service"; url: string }
     | { kind: "map-image"; url: string }
     | { kind: "imagery"; url: string }
     | {
         kind: "media-image";
         url: string;
+        /** Top-left, top-right, bottom-right, bottom-left, as MapLibre orders them. */
+        corners: [Position, Position, Position, Position];
         extent: [number, number, number, number];
       }
   );
@@ -322,6 +331,127 @@ function filterFeature(feature: Feature) {
 
 const ZOOM_OPERAND = /\[\s*"zoom"\s*\]/;
 
+/** The layer's active filters as one MapLibre filter expression, or null. */
+function activeFilters(layer: GeoLibreLayer): unknown[] | null {
+  const filters = [
+    compileLayerFilters(layer),
+    layer.timeFilter,
+    layer.embedFilter,
+    ruleBasedVisibilityFilter(layer.style),
+  ].filter(Boolean) as unknown[][];
+  if (filters.length === 0) return null;
+  return filters.length === 1 ? filters[0] : ["all", ...filters];
+}
+
+const SQL_FIELD = /^[A-Za-z_][A-Za-z0-9_.]*$/;
+
+/** A `["get", f]`, optionally wrapped in a coercion, as the bare field name. */
+function sqlField(operand: unknown): string | null {
+  if (!Array.isArray(operand)) return null;
+  const [op, inner] = operand;
+  if (op === "get" && typeof inner === "string") return SQL_FIELD.test(inner) ? inner : null;
+  if (op === "to-number" || op === "to-string") return sqlField(inner);
+  return null;
+}
+
+function sqlLiteral(value: unknown): string | null {
+  if (typeof value === "number") return Number.isFinite(value) ? String(value) : null;
+  if (typeof value === "boolean") return value ? "1" : "0";
+  if (typeof value === "string") return `'${value.replace(/'/g, "''")}'`;
+  return null;
+}
+
+/** `["downcase", ["to-string", ["get", f]]]`, the quick text filter's haystack. */
+function sqlLowerField(operand: unknown): string | null {
+  if (!Array.isArray(operand) || operand[0] !== "downcase") return null;
+  const field = sqlField(operand[1]);
+  return field ? `UPPER(${field})` : null;
+}
+
+function sqlLike(needle: unknown, pattern: (escaped: string) => string): string | null {
+  if (typeof needle !== "string") return null;
+  const escaped = needle.replace(/'/g, "''").replace(/[%_]/g, "\\$&");
+  return `'${pattern(escaped.toUpperCase())}' ESCAPE '\\'`;
+}
+
+/**
+ * Translate a MapLibre filter expression into an ArcGIS SQL where clause, or
+ * null when it uses a construct SQL has no equivalent for. The quick filters
+ * (`quick-filters.ts`) and the expression builder's common comparisons all
+ * translate; anything else leaves the service unfiltered, which the plan
+ * reports so the engine can say so.
+ */
+export function filterToSql(filter: unknown): string | null {
+  if (!Array.isArray(filter) || filter.length === 0) return null;
+  const [op, ...args] = filter as [string, ...unknown[]];
+  switch (op) {
+    case "all":
+    case "any": {
+      const parts = args.map(filterToSql);
+      if (parts.length === 0 || parts.some((part) => part === null)) return null;
+      return parts.length === 1
+        ? parts[0]
+        : parts.map((p) => `(${p})`).join(op === "all" ? " AND " : " OR ");
+    }
+    case "!": {
+      const inner = filterToSql(args[0]);
+      return inner === null ? null : `NOT (${inner})`;
+    }
+    case "has":
+      return typeof args[0] === "string" && SQL_FIELD.test(args[0])
+        ? `${args[0]} IS NOT NULL`
+        : null;
+    case "!has":
+      return typeof args[0] === "string" && SQL_FIELD.test(args[0]) ? `${args[0]} IS NULL` : null;
+    case "in": {
+      const field = sqlField(args[0]);
+      const list = Array.isArray(args[1]) && args[1][0] === "literal" ? args[1][1] : args.slice(1);
+      if (!field || !Array.isArray(list) || list.length === 0) return null;
+      const values = list.map(sqlLiteral);
+      return values.some((v) => v === null) ? null : `${field} IN (${values.join(", ")})`;
+    }
+    case "==":
+    case "!=":
+    case "<":
+    case "<=":
+    case ">":
+    case ">=": {
+      const [left, right] = args;
+      // The quick text filter's three operators.
+      const lowered = sqlLowerField(left);
+      if (lowered) {
+        if (op !== "==" || typeof right !== "string") return null;
+        return `${lowered} = ${sqlLiteral(right.toUpperCase())}`;
+      }
+      if (Array.isArray(left) && left[0] === "index-of") {
+        const haystack = sqlLowerField(left[2]);
+        if (!haystack) return null;
+        if (op === "==" && right === 0) {
+          const like = sqlLike(left[1], (n) => `${n}%`);
+          return like ? `${haystack} LIKE ${like}` : null;
+        }
+        if (op === "!=" && right === -1) {
+          const like = sqlLike(left[1], (n) => `%${n}%`);
+          return like ? `${haystack} LIKE ${like}` : null;
+        }
+        return null;
+      }
+      const field = sqlField(left);
+      if (!field) return null;
+      if (right === null) {
+        if (op === "==") return `${field} IS NULL`;
+        if (op === "!=") return `${field} IS NOT NULL`;
+        return null;
+      }
+      const literal = sqlLiteral(right);
+      if (literal === null) return null;
+      return `${field} ${op === "==" ? "=" : op === "!=" ? "<>" : op} ${literal}`;
+    }
+    default:
+      return null;
+  }
+}
+
 /**
  * Compile the layer's active filters into one predicate, or `null` when the
  * layer has none (or one the style-spec rejects, in which case nothing is
@@ -332,14 +462,8 @@ function compileFilter(layer: GeoLibreLayer): {
   test: ((feature: Feature, zoom: number) => boolean) | null;
   zoomDependent: boolean;
 } {
-  const filters = [
-    compileLayerFilters(layer),
-    layer.timeFilter,
-    layer.embedFilter,
-    ruleBasedVisibilityFilter(layer.style),
-  ].filter(Boolean) as unknown[][];
-  if (filters.length === 0) return { test: null, zoomDependent: false };
-  const filter = filters.length === 1 ? filters[0] : ["all", ...filters];
+  const filter = activeFilters(layer);
+  if (!filter) return { test: null, zoomDependent: false };
   try {
     const compiled = featureFilter(filter as never, "layers[0].filter");
     return {
@@ -746,13 +870,24 @@ export function compileArcgisLayer(
     const serviceUrl = url ?? (typeof layer.sourcePath === "string" ? layer.sourcePath : undefined);
     if (!serviceUrl || !ARCGIS_SERVICE.test(serviceUrl))
       throw new Error("ArcGIS layer has no service URL the ArcGIS renderer can load");
-    const kind = /FeatureServer/i.test(serviceUrl)
-      ? "feature-service"
-      : /ImageServer/i.test(serviceUrl)
-        ? "imagery"
-        : layer.metadata.arcgisTiled === true
-          ? "tile-service"
-          : "map-image";
+    if (/FeatureServer/i.test(serviceUrl)) {
+      // The service filters server-side: the layer's MapLibre filters become
+      // an SQL where clause where one exists.
+      const filter = activeFilters(layer);
+      const sql = filter ? filterToSql(filter) : null;
+      return {
+        ...base,
+        kind: "feature-service",
+        url: serviceUrl,
+        ...(sql ? { definitionExpression: sql } : {}),
+        ...(filter && !sql ? { filterUnsupported: true } : {}),
+      };
+    }
+    const kind = /ImageServer/i.test(serviceUrl)
+      ? "imagery"
+      : layer.metadata.arcgisTiled === true
+        ? "tile-service"
+        : "map-image";
     return { ...base, kind, url: serviceUrl };
   }
   if (layer.type === "pmtiles" || layer.type === "mbtiles")
@@ -806,6 +941,7 @@ export function compileArcgisLayer(
       ...base,
       kind: "media-image",
       url,
+      corners: corners.map((p) => [p[0], p[1]]) as [Position, Position, Position, Position],
       extent: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)],
     };
   }

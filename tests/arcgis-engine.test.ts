@@ -37,6 +37,7 @@ interface FakeLayer extends ArcgisLayer {
 
 function makeSdk() {
   const created: FakeLayer[] = [];
+  const basemaps: { destroyed: boolean }[] = [];
   const widgets: { kind: string; props: Record<string, unknown>; destroyed: boolean }[] = [];
   const goTo: unknown[] = [];
   let watchers: (() => void)[] = [];
@@ -207,10 +208,14 @@ function makeSdk() {
     Basemap: class {
       baseLayers = collection<FakeLayer>();
       referenceLayers = collection<FakeLayer>();
+      destroyed = false;
       constructor(props: { baseLayers?: FakeLayer[] } = {}) {
         if (props.baseLayers) this.baseLayers.addMany(props.baseLayers);
+        basemaps.push(this as never);
       }
-      destroy() {}
+      destroy() {
+        this.destroyed = true;
+      }
       static fromId() {
         return null;
       }
@@ -261,7 +266,11 @@ function makeSdk() {
       ImageryTileLayer: layerClass("imagery-tile"),
       MediaLayer: layerClass("media"),
     },
-    media: { ImageElement: class {}, ExtentAndRotationGeoreference: class {} },
+    media: {
+      ImageElement: class {},
+      ExtentAndRotationGeoreference: class {},
+      ControlPointsGeoreference: class {},
+    },
     widgets: {
       Zoom: widgetClass("Zoom"),
       Compass: widgetClass("Compass"),
@@ -291,6 +300,7 @@ function makeSdk() {
     map: map as unknown as ArcgisMap,
     view: view as unknown as ArcgisMapView,
     created,
+    basemaps,
     widgets,
     goTo,
     uiAdds,
@@ -582,6 +592,14 @@ describe("ArcgisEngine basemap", () => {
     assert.equal(tiles[0].visible, false);
     engine.setBasemap(BLANK_BASEMAP, undefined);
     assert.equal(map.basemap, null);
+  });
+  it("destroys the outgoing custom basemap when switching to an Esri style", () => {
+    const { engine, map, basemaps } = makeEngine({ hasApiKey: true });
+    engine.setBasemap("https://tiles.openfreemap.org/styles/liberty", undefined);
+    assert.equal(basemaps.length, 1);
+    engine.setBasemap(undefined, "arcgis/streets");
+    assert.equal(map.basemap as unknown, "arcgis/streets");
+    assert.equal(basemaps[0].destroyed, true);
   });
   it("ignores the Esri style without an API key", () => {
     const { engine, map } = makeEngine({ hasApiKey: false });
