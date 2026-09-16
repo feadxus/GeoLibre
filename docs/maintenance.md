@@ -378,9 +378,9 @@ manual check, not a Dependabot event:
   compiler's `gl__id` field arriving. `e2e/arcgis-renderer.spec.ts` (opt-in,
   `ARCGIS_API_KEY`) is the check.
 - **CSP and caching.** `https://js.arcgis.com/` is allow-listed in `script-src`
-  in `tauri.conf.json` and `docker/nginx.conf`, and cached by the
-  `geolibre-cdn-engines` service-worker rule in `vite.config.ts`. The version is
-  in every URL, so a bump mints new cache entries.
+  and `font-src` in `tauri.conf.json` and `docker/nginx.conf`, and cached by
+  the `geolibre-arcgis-sdk` service-worker rule in `vite.config.ts`. The
+  version is in every URL, so a bump mints new cache entries.
 
 ## Adding a blend mode
 

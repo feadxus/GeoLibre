@@ -32,8 +32,9 @@ Consequences:
   first ArcGIS pane of a session takes longer to appear than a Mapbox one.
 - The content-security policies of the desktop app (`tauri.conf.json`) and the
   Docker image (`docker/nginx.conf`) allow-list `https://js.arcgis.com/` in
-  `script-src`. The SDK's stylesheet is fetched as text and inlined, since
-  neither policy allows external stylesheets.
+  `script-src` and `font-src` (the SDK's icon and text fonts). The SDK's
+  stylesheet is fetched as text and inlined, since neither policy allows
+  external stylesheets.
 
 ## API key
 
