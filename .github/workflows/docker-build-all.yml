@@ -105,10 +105,10 @@ jobs:
         run: |
           docker buildx build \
             --platform linux/amd64 \
-            --context ${{ matrix.context }} \
             --file ${{ matrix.dockerfile }} \
             --tag ${{ matrix.name }}:latest \
-            --output type=docker,dest=${{ matrix.name }}_amd64.tar .
+            --output type=docker,dest=${{ matrix.name }}_amd64.tar \
+            ${{ matrix.context }}
 
       # 1️⃣3️⃣ 极限压缩备份包 (.tar.xz)
       - name: 🗜️ Compress Archive with xz
