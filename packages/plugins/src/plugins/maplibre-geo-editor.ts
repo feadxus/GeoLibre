@@ -233,7 +233,16 @@ export const maplibreGeoEditorPlugin: GeoLibrePlugin = {
     appApi = app;
 
     if (!geoEditorControl) {
-      const mapboxGl = mapboxGlFor(app);
+      const mapboxMap = app.getMapboxMap?.() ?? null;
+      const mapboxGl = mapboxMap ? (app.getMapboxGl?.() ?? null) : null;
+      // A Mapbox map without the mapbox-gl namespace cannot host Geoman: its
+      // deferred init would run MapLibre's marker and image paths on the
+      // mapbox-gl map and fail. Refuse the activation rather than half-mount.
+      if (mapboxMap && !mapboxGl) {
+        pluginActive = false;
+        appApi = null;
+        return false;
+      }
       geoEditorControl = new GeoEditor(getGeoEditorOptions(mapboxGl));
       const map = getStyleMap(app);
       if (map) {
@@ -243,7 +252,6 @@ export const maplibreGeoEditorPlugin: GeoLibrePlugin = {
         });
         // Before anything else: Geoman's deferred init loads its marker image
         // through the adapter member this swaps.
-        const mapboxMap = app.getMapboxMap?.();
         if (mapboxGl && mapboxMap) adaptGeomanToMapbox(geomanInstance, mapboxGl, mapboxMap);
         geoEditorControl.setGeoman(geomanInstance);
         bindGeomanEditSync(map);
@@ -294,15 +302,6 @@ export const maplibreGeoEditorPlugin: GeoLibrePlugin = {
     setTimeout(() => geoEditorControl?.expand(), 0);
   },
 };
-
-/**
- * The mapbox-gl namespace when the Mapbox renderer draws the primary map, else
- * null. Read off `getMapboxMap` rather than `getMap`, so the MapLibre branch is
- * simply "no Mapbox map".
- */
-function mapboxGlFor(app: GeoLibreAppAPI): MapboxGl | null {
-  return app.getMapboxMap?.() ? (app.getMapboxGl?.() ?? null) : null;
-}
 
 function getGeoEditorOptions(mapboxGl: MapboxGl | null): GeoEditorOptions {
   return {

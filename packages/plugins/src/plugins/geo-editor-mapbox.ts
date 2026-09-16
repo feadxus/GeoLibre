@@ -5,7 +5,7 @@ import {
   type Geoman,
   type LngLatTuple,
 } from "@geoman-io/maplibre-geoman-free";
-import type { Feature, FeatureCollection, GeoJSON, Geometry } from "geojson";
+import type { Feature, GeoJSON, Geometry } from "geojson";
 import type { GeoEditorPopup, GeoEditorPopupOptions } from "maplibre-gl-geo-editor";
 import type * as mapboxgl from "mapbox-gl";
 
