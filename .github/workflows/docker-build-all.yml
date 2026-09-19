@@ -25,7 +25,7 @@ jobs:
       - name: 🐙 Checkout Repository
         uses: actions/checkout@v4.2.2
 
-      # 2️⃣ 清理 Runner 磁盘空间（避免编译多架构镜像时爆空间）
+      # 2️⃣ 清理 Runner 磁盘空间(避免编译多架构镜像时爆空间)
       - name: 🧹 Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
         with:
@@ -37,7 +37,7 @@ jobs:
           docker-images: false
           swap-storage: true
 
-      # 3️⃣ 配置 QEMU（模拟 arm64 交叉编译）
+      # 3️⃣ 配置 QEMU(模拟 arm64 交叉编译)
       - name: 🐢 Setup QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -100,7 +100,7 @@ jobs:
           rclone version
           rclone listremotes
 
-      # 1️⃣2️⃣ 为离线备份导出本服务镜像（amd64 架构副本）
+      # 1️⃣2️⃣ 为离线备份导出本服务镜像(amd64 架构副本)
       - name: 🏗️ Export Local Image Archive for Backup
         run: |
           docker buildx build \
